@@ -69,6 +69,59 @@ export function formattaData(dataStr: string): string {
 
 export const eventi: Evento[] = [
   {
+    id: "mercato-contadino-agropoli",
+    titolo: "Mercato Contadino di Agropoli",
+    data: "2026-05-21",
+    orario: "08:00",
+    luogo: "Piazza Vittorio Veneto",
+    comune: "Agropoli",
+    categoria: "Mercato",
+    descrizioneBreve:
+      "Prodotti freschi della campagna cilentana: frutta, verdura, formaggi e salumi direttamente dai produttori locali.",
+    descrizione:
+      "Ogni giovedì mattina nella piazza principale di Agropoli i produttori locali portano il meglio della stagione: verdure di campo, frutta raccolta la mattina stessa, formaggi di latte crudo, miele millefiori e salumi artigianali. Un'occasione per fare la spesa a km zero e incontrare i contadini del Cilento.",
+    pubblico: "Tutti",
+    servizi: {
+      accessibileDisabili: true,
+      parcheggio: true,
+      ingressoGratuito: true,
+      prenotazioneRichiesta: false,
+      petFriendly: true,
+    },
+    contatto: {
+      nome: "Comune di Agropoli",
+      telefono: "+39 0974 827111",
+      email: "info@comune.agropoli.sa.it",
+      sito: "https://www.comune.agropoli.sa.it",
+    },
+  },
+  {
+    id: "yoga-alba-paestum",
+    titolo: "Yoga all'Alba a Paestum",
+    data: "2026-05-21",
+    orario: "06:30",
+    luogo: "Area Archeologica di Paestum",
+    comune: "Capaccio-Paestum",
+    categoria: "Sport",
+    descrizioneBreve:
+      "Sessione di yoga al sorgere del sole tra i templi greci di Paestum: arte, storia e benessere in un'unica esperienza.",
+    descrizione:
+      "Un risveglio speciale tra le colonne doriche dei templi di Paestum, patrimonio UNESCO. La sessione di yoga all'alba è condotta da una istruttrice certificata e aperta a tutti i livelli. Portare tappetino, abbigliamento comodo e uno strato caldo. Numero limitato a 30 persone.",
+    pubblico: "Adulti",
+    servizi: {
+      accessibileDisabili: false,
+      parcheggio: true,
+      ingressoGratuito: true,
+      prenotazioneRichiesta: true,
+      petFriendly: false,
+    },
+    contatto: {
+      nome: "Associazione Benessere Cilento",
+      telefono: "+39 333 9876543",
+      email: "yoga@beneresecilento.it",
+    },
+  },
+  {
     id: "sagra-fagiolo-controne",
     titolo: "Sagra del Fagiolo di Controne",
     data: "2026-08-15",

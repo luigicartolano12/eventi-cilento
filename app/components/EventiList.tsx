@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Evento, Categoria, CATEGORIE } from "@/lib/events";
 import { EventCard } from "./EventCard";
-import { IcoCalendar, IcoMapPin } from "./icons";
+import { IcoMapPin } from "./icons";
 
 const coloriBottone: Record<string, { bg: string; text: string }> = {
   Sagra:    { bg: "#fff7ed", text: "#9a3412" },
@@ -15,28 +15,26 @@ const coloriBottone: Record<string, { bg: string; text: string }> = {
   Natura:   { bg: "#ecfdf5", text: "#065f46" },
 };
 
-// Lime green attivo (ispirazione dalle app di riferimento)
 const ACTIVE_BG   = "#a3e635";
 const ACTIVE_TEXT = "#14532d";
 
 export function EventiList({
   eventi,
   categoriaEsterna,
+  dataEsterna,
 }: {
   eventi: Evento[];
   categoriaEsterna?: Categoria | null;
+  dataEsterna?: string;
 }) {
   const [categoria, setCategoria] = useState<Categoria | null>(categoriaEsterna ?? null);
-
-  useEffect(() => {
-    if (categoriaEsterna !== undefined) {
-      setCategoria(categoriaEsterna ?? null);
-    }
-  }, [categoriaEsterna]);
-  const [dataFiltro, setDataFiltro] = useState("");
   const [comuneFiltro, setComuneFiltro] = useState("");
   const [soloGratuiti, setSoloGratuiti] = useState(false);
   const [soloAccessibili, setSoloAccessibili] = useState(false);
+
+  useEffect(() => {
+    if (categoriaEsterna !== undefined) setCategoria(categoriaEsterna ?? null);
+  }, [categoriaEsterna]);
 
   const comuni = useMemo(
     () => [...new Set(eventi.map((e) => e.comune))].sort(),
@@ -47,19 +45,17 @@ export function EventiList({
     return eventi.filter((e) => {
       if (categoria && e.categoria !== categoria) return false;
       if (comuneFiltro && e.comune !== comuneFiltro) return false;
-      if (dataFiltro && e.data < dataFiltro) return false;
+      if (dataEsterna && e.data < dataEsterna) return false;
       if (soloGratuiti && !e.servizi.ingressoGratuito) return false;
       if (soloAccessibili && !e.servizi.accessibileDisabili) return false;
       return true;
     });
-  }, [eventi, categoria, comuneFiltro, dataFiltro, soloGratuiti, soloAccessibili]);
+  }, [eventi, categoria, comuneFiltro, dataEsterna, soloGratuiti, soloAccessibili]);
 
-  const filtriAttivi =
-    categoria || comuneFiltro || dataFiltro || soloGratuiti || soloAccessibili;
+  const filtriAttivi = categoria || comuneFiltro || soloGratuiti || soloAccessibili;
 
   function resetFiltri() {
     setCategoria(null);
-    setDataFiltro("");
     setComuneFiltro("");
     setSoloGratuiti(false);
     setSoloAccessibili(false);
@@ -79,11 +75,9 @@ export function EventiList({
             <button
               onClick={() => setCategoria(null)}
               className="shrink-0 px-4 py-1.5 rounded-full text-sm font-bold border-0 transition-all cursor-pointer"
-              style={
-                !categoria
-                  ? { background: ACTIVE_BG, color: ACTIVE_TEXT }
-                  : { background: "#f5f5f4", color: "#78716c" }
-              }
+              style={!categoria
+                ? { background: ACTIVE_BG, color: ACTIVE_TEXT }
+                : { background: "#f5f5f4", color: "#78716c" }}
             >
               Tutti
             </button>
@@ -92,11 +86,9 @@ export function EventiList({
                 key={cat}
                 onClick={() => setCategoria((prev) => (prev === cat ? null : cat))}
                 className="shrink-0 px-4 py-1.5 rounded-full text-sm font-bold border-0 transition-all cursor-pointer"
-                style={
-                  categoria === cat
-                    ? { background: ACTIVE_BG, color: ACTIVE_TEXT }
-                    : { background: coloriBottone[cat].bg, color: coloriBottone[cat].text }
-                }
+                style={categoria === cat
+                  ? { background: ACTIVE_BG, color: ACTIVE_TEXT }
+                  : { background: coloriBottone[cat].bg, color: coloriBottone[cat].text }}
               >
                 {cat}
               </button>
@@ -104,39 +96,23 @@ export function EventiList({
           </div>
         </div>
 
-        {/* Data e Comune */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex flex-col gap-1.5 flex-1">
-            <label htmlFor="filtro-data" className="text-[10px] font-black text-stone-400 uppercase tracking-widest flex items-center gap-1.5">
-              <IcoCalendar size={11} />
-              Mostra eventi dal
-            </label>
-            <input
-              id="filtro-data"
-              type="date"
-              value={dataFiltro}
-              onChange={(e) => setDataFiltro(e.target.value)}
-              className="border border-stone-200 rounded-xl px-3 py-2.5 text-sm text-stone-700 bg-stone-50 focus:outline-none focus:ring-2 focus:border-transparent transition"
-              style={{ "--tw-ring-color": ACTIVE_BG } as React.CSSProperties}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5 flex-1">
-            <label htmlFor="filtro-comune" className="text-[10px] font-black text-stone-400 uppercase tracking-widest flex items-center gap-1.5">
-              <IcoMapPin size={11} />
-              Comune
-            </label>
-            <select
-              id="filtro-comune"
-              value={comuneFiltro}
-              onChange={(e) => setComuneFiltro(e.target.value)}
-              className="border border-stone-200 rounded-xl px-3 py-2.5 text-sm text-stone-700 bg-stone-50 focus:outline-none focus:ring-2 focus:border-transparent appearance-none transition"
-            >
-              <option value="">Tutti i comuni</option>
-              {comuni.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
+        {/* Comune */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="filtro-comune" className="text-[10px] font-black text-stone-400 uppercase tracking-widest flex items-center gap-1.5">
+            <IcoMapPin size={11} />
+            Comune
+          </label>
+          <select
+            id="filtro-comune"
+            value={comuneFiltro}
+            onChange={(e) => setComuneFiltro(e.target.value)}
+            className="border border-stone-200 rounded-xl px-3 py-2.5 text-sm text-stone-700 bg-stone-50 focus:outline-none focus:ring-2 focus:border-transparent appearance-none transition"
+          >
+            <option value="">Tutti i comuni</option>
+            {comuni.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
         </div>
 
         {/* Toggle + contatore */}
