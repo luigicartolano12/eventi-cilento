@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Evento, formattaData } from "@/lib/events";
 import {
-  IcoSagra, IcoMusica, IcoCultura, IcoSport, IcoReligioso, IcoMercato, IcoNatura,
   IcoMapPin, IcoCalendar, IcoClock, IcoPlay,
+  IcoCheck, IcoWheelchair, IcoParking, IcoPaw,
 } from "./icons";
 
 const testoCategoriaColore: Record<string, string> = {
@@ -25,14 +25,19 @@ const gradientCategoria: Record<string, string> = {
   Natura:   "linear-gradient(160deg, #059669 0%, #14b8a6 100%)",
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const IconeCategoria: Record<string, React.ComponentType<any>> = {
-  Sagra: IcoSagra, Musica: IcoMusica, Cultura: IcoCultura, Sport: IcoSport,
-  Religioso: IcoReligioso, Mercato: IcoMercato, Natura: IcoNatura,
-};
+function placeholderImg(id: string) {
+  return `https://picsum.photos/seed/${id}/600/300`;
+}
 
 export function EventCard({ evento }: { evento: Evento }) {
-  const IcoCategoria = IconeCategoria[evento.categoria];
+  const { servizi } = evento;
+  const imgSrc = evento.immagine || placeholderImg(evento.id);
+
+  const hasBadge =
+    servizi.ingressoGratuito ||
+    servizi.accessibileDisabili ||
+    servizi.parcheggio ||
+    servizi.petFriendly;
 
   return (
     <div
@@ -43,23 +48,41 @@ export function EventCard({ evento }: { evento: Evento }) {
           "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06), 0 16px 40px rgba(0,0,0,0.06)",
       }}
     >
-      {/* ── Immagine / Gradiente — cliccabile verso la scheda ── */}
-      <Link href={`/events/${evento.id}`} className="block relative overflow-hidden" style={{ height: 200, background: gradientCategoria[evento.categoria] }}>
-        {evento.immagine ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={evento.immagine}
-            alt={evento.titolo}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <IcoCategoria size={56} strokeWidth={1.1} className="text-white" style={{ opacity: 0.55 }} />
-          </div>
-        )}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 45%, rgba(0,0,0,0.28) 100%)" }} />
+      {/* ── Immagine — cliccabile verso la scheda ── */}
+      <Link
+        href={`/events/${evento.id}`}
+        className="block relative overflow-hidden"
+        style={{ height: 200, background: gradientCategoria[evento.categoria] }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={imgSrc}
+          alt={evento.titolo}
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          onError={(e) => {
+            // fallback: mostra icona categoria se l'immagine non carica
+            (e.currentTarget as HTMLImageElement).style.display = "none";
+          }}
+        />
+
+        {/* Overlay sfumato in basso */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.35) 100%)",
+          }}
+        />
+
+        {/* Badge video */}
         {evento.video && (
-          <span className="absolute top-3.5 right-3.5 inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full text-white" style={{ background: "rgba(0,0,0,0.38)", backdropFilter: "blur(8px)" }}>
+          <span
+            className="absolute top-3.5 right-3.5 inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full text-white"
+            style={{
+              background: "rgba(0,0,0,0.38)",
+              backdropFilter: "blur(8px)",
+            }}
+          >
             <IcoPlay size={9} />
             Video
           </span>
@@ -109,8 +132,68 @@ export function EventCard({ evento }: { evento: Evento }) {
           </a>
         </div>
 
+        {/* ── Badge servizi ── */}
+        {hasBadge && (
+          <div className="flex flex-wrap items-center gap-1.5 mt-2">
+            {servizi.ingressoGratuito && (
+              <span
+                className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                style={{ background: "#dcfce7", color: "#166534" }}
+              >
+                <IcoCheck size={9} />
+                Gratuito
+              </span>
+            )}
+            {servizi.accessibileDisabili && (
+              <span
+                className="inline-flex items-center justify-center rounded-full"
+                title="Accessibile ai disabili"
+                style={{
+                  width: 22,
+                  height: 22,
+                  background: "#dbeafe",
+                  color: "#1e40af",
+                }}
+              >
+                <IcoWheelchair size={12} />
+              </span>
+            )}
+            {servizi.parcheggio && (
+              <span
+                className="inline-flex items-center justify-center rounded-full"
+                title="Parcheggio disponibile"
+                style={{
+                  width: 22,
+                  height: 22,
+                  background: "#f5f3ef",
+                  color: "#78716c",
+                }}
+              >
+                <IcoParking size={12} />
+              </span>
+            )}
+            {servizi.petFriendly && (
+              <span
+                className="inline-flex items-center justify-center rounded-full"
+                title="Pet friendly"
+                style={{
+                  width: 22,
+                  height: 22,
+                  background: "#fef3c7",
+                  color: "#92400e",
+                }}
+              >
+                <IcoPaw size={12} />
+              </span>
+            )}
+          </div>
+        )}
+
         {/* CTA Apple-style */}
-        <Link href={`/events/${evento.id}`} className="mt-auto pt-4 flex items-center justify-between group/cta">
+        <Link
+          href={`/events/${evento.id}`}
+          className="mt-auto pt-4 flex items-center justify-between group/cta"
+        >
           <span className="text-[13px] font-semibold" style={{ color: "#16a34a" }}>
             Scopri di più
           </span>
