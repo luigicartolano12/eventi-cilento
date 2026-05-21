@@ -263,10 +263,25 @@ export default function PaginaProfilo() {
               </div>
             </Sezione>
 
+            {/* Admin */}
+            <Link
+              href="/admin"
+              className="flex items-center justify-between p-5 rounded-2xl transition-opacity hover:opacity-90"
+              style={{ background: "#1a3529" }}
+            >
+              <div>
+                <p className="font-black text-sm text-white">Pannello Admin AI</p>
+                <p className="text-xs mt-0.5" style={{ color: "#86efac" }}>
+                  Trova e approva nuovi eventi dal web
+                </p>
+              </div>
+              <span className="text-2xl text-stone-500">›</span>
+            </Link>
+
             {/* Logout */}
             <button
               onClick={logout}
-              className="w-full py-3.5 rounded-2xl text-sm font-bold border-0 cursor-pointer transition-opacity hover:opacity-70 mt-2"
+              className="w-full py-3.5 rounded-2xl text-sm font-bold border-0 cursor-pointer transition-opacity hover:opacity-70"
               style={{ background: "#fef2f2", color: "#dc2626" }}
             >
               Esci dal profilo

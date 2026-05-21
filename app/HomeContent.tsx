@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Evento, Categoria, CATEGORIE, formattaData } from "@/lib/events";
+import { getEventiApprovati } from "@/lib/eventi-dinamici";
 import { getInEvidenza, STILE_CATEGORIA, type Esperienza } from "@/lib/esperienze";
 import { getLocaliInEvidenza, STILE_LOCALE, type Locale } from "@/lib/locali";
 import { EventiList } from "./components/EventiList";
@@ -190,8 +191,38 @@ export function HomeContent({ eventi }: { eventi: Evento[] }) {
   const [categoriaAttiva, setCategoriaAttiva] = useState<Categoria | null>(null);
   const listaRef = useRef<HTMLDivElement>(null);
 
-  const comuniCount = new Set(eventi.map((e) => e.comune)).size;
-  const oggi = eventiDiOggi(eventi);
+  const [eventiExtra, setEventiExtra] = useState<Evento[]>([]);
+
+  useEffect(() => {
+    const dinamici = getEventiApprovati().map((d): Evento => ({
+      id: d.id,
+      titolo: d.titolo,
+      data: d.data,
+      dataFine: d.dataFine,
+      orario: d.orario,
+      luogo: d.luogo ?? d.comune,
+      comune: d.comune,
+      categoria: d.categoria,
+      descrizioneBreve: d.descrizione.slice(0, 120),
+      descrizione: d.descrizione,
+      pubblico: "Tutti",
+      servizi: {
+        accessibileDisabili: false,
+        parcheggio: false,
+        ingressoGratuito: d.gratuito ?? false,
+        prenotazioneRichiesta: false,
+        petFriendly: false,
+      },
+    }));
+    setEventiExtra(dinamici);
+  }, []);
+
+  const tuttiGliEventi = [...eventiExtra, ...eventi].sort((a, b) =>
+    a.data.localeCompare(b.data)
+  );
+
+  const comuniCount = new Set(tuttiGliEventi.map((e) => e.comune)).size;
+  const oggi = eventiDiOggi(tuttiGliEventi);
   const localiEvidenza = getLocaliInEvidenza();
 
   function selezionaCategoria(cat: Categoria | null) {
@@ -243,7 +274,7 @@ export function HomeContent({ eventi }: { eventi: Evento[] }) {
               >
                 <IcoCalendar size={16} style={{ color: "#4ade80" }} />
                 <div>
-                  <p className="text-2xl font-black text-white leading-none">{eventi.length}</p>
+                  <p className="text-2xl font-black text-white leading-none">{tuttiGliEventi.length}</p>
                   <p className="text-[11px] font-semibold mt-0.5" style={{ color: "#86efac" }}>eventi in programma</p>
                 </div>
               </div>
@@ -282,6 +313,7 @@ export function HomeContent({ eventi }: { eventi: Evento[] }) {
                 style={{ scrollbarWidth: "none" }}
               >
                 {oggi.map((e) => <MiniCard key={e.id} evento={e} />)}
+
               </div>
             </div>
           )}
@@ -405,7 +437,7 @@ export function HomeContent({ eventi }: { eventi: Evento[] }) {
       {/* ── LISTA EVENTI ── */}
       <div ref={listaRef} style={{ background: "#f5f3ef" }} className="pb-20">
         <div className="max-w-6xl mx-auto px-4">
-          <EventiList eventi={eventi} categoriaEsterna={categoriaAttiva} />
+          <EventiList eventi={tuttiGliEventi} categoriaEsterna={categoriaAttiva} />
         </div>
       </div>
     </>
