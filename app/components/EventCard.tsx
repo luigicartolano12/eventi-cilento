@@ -114,10 +114,15 @@ export function EventCard({ evento }: { evento: Evento }) {
 
         {/* Metadati */}
         <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-          <span className="inline-flex items-center gap-1 text-xs text-stone-400">
+          <a
+            href={`https://maps.google.com/?q=${encodeURIComponent(`${evento.luogo}, ${evento.comune}, Salerno, Campania, Italia`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-stone-400 hover:text-stone-600 transition-colors"
+          >
             <IcoMapPin size={11} />
             {evento.comune}
-          </span>
+          </a>
           <span className="inline-flex items-center gap-1 text-xs text-stone-400">
             <IcoCalendar size={11} />
             {formattaData(evento.data)}

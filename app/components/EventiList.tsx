@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Evento, Categoria, CATEGORIE } from "@/lib/events";
 import { EventCard } from "./EventCard";
 import { IcoCalendar, IcoMapPin } from "./icons";
@@ -19,8 +19,20 @@ const coloriBottone: Record<string, { bg: string; text: string }> = {
 const ACTIVE_BG   = "#a3e635";
 const ACTIVE_TEXT = "#14532d";
 
-export function EventiList({ eventi }: { eventi: Evento[] }) {
-  const [categoria, setCategoria] = useState<Categoria | null>(null);
+export function EventiList({
+  eventi,
+  categoriaEsterna,
+}: {
+  eventi: Evento[];
+  categoriaEsterna?: Categoria | null;
+}) {
+  const [categoria, setCategoria] = useState<Categoria | null>(categoriaEsterna ?? null);
+
+  useEffect(() => {
+    if (categoriaEsterna !== undefined) {
+      setCategoria(categoriaEsterna ?? null);
+    }
+  }, [categoriaEsterna]);
   const [dataFiltro, setDataFiltro] = useState("");
   const [comuneFiltro, setComuneFiltro] = useState("");
   const [soloGratuiti, setSoloGratuiti] = useState(false);

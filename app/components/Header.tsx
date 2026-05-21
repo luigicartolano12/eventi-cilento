@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { IcoSend } from "./icons";
 
 export function Header() {
   return (
@@ -15,12 +16,23 @@ export function Header() {
             Eventi Cilento
           </span>
         </Link>
-        <span
-          className="hidden sm:inline text-xs font-semibold px-2.5 py-1 rounded-full"
-          style={{ background: "rgba(255,255,255,0.1)", color: "#86efac" }}
-        >
-          BETA
-        </span>
+        <div className="flex items-center gap-3">
+          <span
+            className="hidden sm:inline text-xs font-semibold px-2.5 py-1 rounded-full"
+            style={{ background: "rgba(255,255,255,0.1)", color: "#86efac" }}
+          >
+            BETA
+          </span>
+          <Link
+            href="/proponi"
+            className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl transition-opacity hover:opacity-80"
+            style={{ background: "#a3e635", color: "#14532d" }}
+          >
+            <IcoSend size={12} />
+            <span className="hidden sm:inline">Proponi evento</span>
+            <span className="sm:hidden">+</span>
+          </Link>
+        </div>
       </div>
     </header>
   );

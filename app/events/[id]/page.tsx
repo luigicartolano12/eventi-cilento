@@ -8,6 +8,7 @@ import {
   IcoPhone, IcoMail, IcoGlobe,
   IcoArrowLeft, IcoPlay,
 } from "@/app/components/icons";
+import { ShareButton } from "@/app/components/ShareButton";
 
 const gradientCategoria: Record<string, string> = {
   Sagra:    "linear-gradient(135deg, #fb923c, #fbbf24)",
@@ -85,9 +86,12 @@ export default async function PaginaEvento({
 
             {/* Titolo */}
             <div>
-              <h1 className="text-2xl sm:text-3xl font-black text-stone-900 leading-tight mb-4">
-                {evento.titolo}
-              </h1>
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <h1 className="text-2xl sm:text-3xl font-black text-stone-900 leading-tight">
+                  {evento.titolo}
+                </h1>
+                <ShareButton titolo={evento.titolo} />
+              </div>
               <div className="flex flex-col gap-2">
                 <span className="inline-flex items-center gap-2 text-sm text-stone-500">
                   <IcoCalendar size={14} className="text-stone-400 shrink-0" />
@@ -102,21 +106,21 @@ export default async function PaginaEvento({
                     </>
                   )}
                 </span>
-                <span className="inline-flex items-center gap-2 text-sm text-stone-500">
+                <a
+                  href={`https://maps.google.com/?q=${encodeURIComponent(`${evento.luogo}, ${evento.comune}, Salerno, Campania, Italia`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-stone-500 hover:text-stone-700 transition-colors"
+                >
                   <IcoMapPin size={14} className="text-stone-400 shrink-0" />
                   {evento.luogo}, {evento.comune}
-                </span>
+                </a>
                 <span className="inline-flex items-center gap-2 text-sm text-stone-500">
                   <IcoUsers size={14} className="text-stone-400 shrink-0" />
                   Pubblico: {evento.pubblico}
                 </span>
               </div>
             </div>
-
-            {/* Descrizione */}
-            <p className="text-stone-600 leading-relaxed text-[15px]">
-              {evento.descrizione}
-            </p>
 
             {/* Video */}
             {evento.video && (
@@ -169,6 +173,11 @@ export default async function PaginaEvento({
                 />
               </div>
             </div>
+
+            {/* Descrizione */}
+            <p className="text-stone-600 leading-relaxed text-[15px]">
+              {evento.descrizione}
+            </p>
 
             {/* ── Biglietti ── */}
             <div>
