@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { IcoArrowLeft, IcoSend, IcoCalendar, IcoMapPin, IcoMail } from "@/app/components/icons";
+import { ProponiPunti } from "@/app/components/ProponiPunti";
 
 export const metadata = {
   title: "Proponi un evento — Eventi Cilento",
@@ -101,6 +102,8 @@ export default function ProponiEvento() {
 
           </div>
         </article>
+
+        <ProponiPunti />
       </div>
     </main>
   );

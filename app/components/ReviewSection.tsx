@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Evento, formattaData } from "@/lib/events";
 import { IcoMapPin, IcoLock } from "./icons";
+import { getUtente, salvaUtente, PUNTI_AZIONI } from "@/lib/utente";
 
 // Coordinate approssimative dei comuni del Cilento
 const COORD_COMUNI: Record<string, [number, number]> = {
@@ -169,6 +170,17 @@ export function ReviewSection({ evento }: { evento: Evento }) {
       verificata: stato === "verificato",
     };
     salva([nuova, ...recensioni]);
+
+    // Aggiorna punti e contatore recensioni per l'utente loggato
+    const utente = getUtente();
+    if (utente) {
+      salvaUtente({
+        ...utente,
+        punti: utente.punti + PUNTI_AZIONI.RECENSIONE,
+        recensioniInviate: utente.recensioniInviate + 1,
+      });
+    }
+
     setStato("inviato");
     setStelle(0);
     setTesto("");

@@ -9,11 +9,23 @@ export function UserButton() {
   const [punti, setPunti] = useState(0);
 
   useEffect(() => {
-    const u = getUtente();
-    if (u) {
-      setIniziali(`${u.nome[0]}${u.cognome[0]}`.toUpperCase());
-      setPunti(u.punti);
+    function aggiorna() {
+      const u = getUtente();
+      if (u) {
+        setIniziali(`${u.nome[0]}${u.cognome[0]}`.toUpperCase());
+        setPunti(u.punti);
+      } else {
+        setIniziali(null);
+        setPunti(0);
+      }
     }
+    aggiorna();
+    window.addEventListener("utente-aggiornato", aggiorna);
+    window.addEventListener("storage", aggiorna);
+    return () => {
+      window.removeEventListener("utente-aggiornato", aggiorna);
+      window.removeEventListener("storage", aggiorna);
+    };
   }, []);
 
   if (!iniziali) {

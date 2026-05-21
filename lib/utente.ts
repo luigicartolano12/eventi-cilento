@@ -56,6 +56,9 @@ export function getUtente(): UtenteProfile | null {
 
 export function salvaUtente(profilo: UtenteProfile): void {
   localStorage.setItem("utente-profilo", JSON.stringify(profilo));
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("utente-aggiornato"));
+  }
 }
 
 export function eliminaUtente(): void {
