@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Evento, Categoria, CATEGORIE } from "@/lib/events";
 import { EventCard } from "./EventCard";
+import { IcoCalendar, IcoMapPin } from "./icons";
 
 const coloriBottone: Record<string, { bg: string; text: string }> = {
   Sagra:    { bg: "#fff7ed", text: "#9a3412" },
@@ -13,6 +14,10 @@ const coloriBottone: Record<string, { bg: string; text: string }> = {
   Mercato:  { bg: "#fdf2f8", text: "#9d174d" },
   Natura:   { bg: "#ecfdf5", text: "#065f46" },
 };
+
+// Lime green attivo (ispirazione dalle app di riferimento)
+const ACTIVE_BG   = "#a3e635";
+const ACTIVE_TEXT = "#14532d";
 
 export function EventiList({ eventi }: { eventi: Evento[] }) {
   const [categoria, setCategoria] = useState<Categoria | null>(null);
@@ -50,21 +55,22 @@ export function EventiList({ eventi }: { eventi: Evento[] }) {
 
   return (
     <div>
-      {/* Pannello filtri — appare "galleggiante" sull'hero */}
+      {/* Pannello filtri */}
       <div className="bg-white rounded-2xl shadow-md border border-stone-100 p-5 mb-8 flex flex-col gap-4">
+
         {/* Categoria */}
         <div>
-          <p className="text-[11px] font-bold text-stone-400 uppercase tracking-widest mb-2.5">
+          <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2.5">
             Categoria
           </p>
           <div className="flex gap-2 overflow-x-auto pb-1">
             <button
               onClick={() => setCategoria(null)}
-              className="shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all cursor-pointer"
+              className="shrink-0 px-4 py-1.5 rounded-full text-sm font-bold border-0 transition-all cursor-pointer"
               style={
                 !categoria
-                  ? { background: "#1a3529", color: "white", borderColor: "#1a3529" }
-                  : { background: "white", color: "#6b7280", borderColor: "#e5e7eb" }
+                  ? { background: ACTIVE_BG, color: ACTIVE_TEXT }
+                  : { background: "#f5f5f4", color: "#78716c" }
               }
             >
               Tutti
@@ -73,15 +79,11 @@ export function EventiList({ eventi }: { eventi: Evento[] }) {
               <button
                 key={cat}
                 onClick={() => setCategoria((prev) => (prev === cat ? null : cat))}
-                className="shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all cursor-pointer"
+                className="shrink-0 px-4 py-1.5 rounded-full text-sm font-bold border-0 transition-all cursor-pointer"
                 style={
                   categoria === cat
-                    ? { background: "#1a3529", color: "white", borderColor: "#1a3529" }
-                    : {
-                        background: coloriBottone[cat].bg,
-                        color: coloriBottone[cat].text,
-                        borderColor: "transparent",
-                      }
+                    ? { background: ACTIVE_BG, color: ACTIVE_TEXT }
+                    : { background: coloriBottone[cat].bg, color: coloriBottone[cat].text }
                 }
               >
                 {cat}
@@ -93,10 +95,8 @@ export function EventiList({ eventi }: { eventi: Evento[] }) {
         {/* Data e Comune */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex flex-col gap-1.5 flex-1">
-            <label
-              htmlFor="filtro-data"
-              className="text-[11px] font-bold text-stone-400 uppercase tracking-widest"
-            >
+            <label htmlFor="filtro-data" className="text-[10px] font-black text-stone-400 uppercase tracking-widest flex items-center gap-1.5">
+              <IcoCalendar size={11} />
               Mostra eventi dal
             </label>
             <input
@@ -104,66 +104,78 @@ export function EventiList({ eventi }: { eventi: Evento[] }) {
               type="date"
               value={dataFiltro}
               onChange={(e) => setDataFiltro(e.target.value)}
-              className="border border-stone-200 rounded-xl px-3 py-2 text-sm text-stone-700 bg-stone-50 focus:outline-none focus:ring-2 focus:border-transparent"
-              style={{ "--tw-ring-color": "#16a34a" } as React.CSSProperties}
+              className="border border-stone-200 rounded-xl px-3 py-2.5 text-sm text-stone-700 bg-stone-50 focus:outline-none focus:ring-2 focus:border-transparent transition"
+              style={{ "--tw-ring-color": ACTIVE_BG } as React.CSSProperties}
             />
           </div>
           <div className="flex flex-col gap-1.5 flex-1">
-            <label
-              htmlFor="filtro-comune"
-              className="text-[11px] font-bold text-stone-400 uppercase tracking-widest"
-            >
+            <label htmlFor="filtro-comune" className="text-[10px] font-black text-stone-400 uppercase tracking-widest flex items-center gap-1.5">
+              <IcoMapPin size={11} />
               Comune
             </label>
             <select
               id="filtro-comune"
               value={comuneFiltro}
               onChange={(e) => setComuneFiltro(e.target.value)}
-              className="border border-stone-200 rounded-xl px-3 py-2 text-sm text-stone-700 bg-stone-50 focus:outline-none focus:ring-2 focus:border-transparent"
+              className="border border-stone-200 rounded-xl px-3 py-2.5 text-sm text-stone-700 bg-stone-50 focus:outline-none focus:ring-2 focus:border-transparent appearance-none transition"
             >
               <option value="">Tutti i comuni</option>
               {comuni.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
+                <option key={c} value={c}>{c}</option>
               ))}
             </select>
           </div>
         </div>
 
-        {/* Toggle rapidi + contatore */}
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2.5">
+        {/* Toggle + contatore */}
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2.5 pt-1 border-t border-stone-100">
           <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={soloGratuiti}
-              onChange={(e) => setSoloGratuiti(e.target.checked)}
-              className="w-4 h-4 rounded"
-              style={{ accentColor: "#16a34a" }}
-            />
+            <div
+              className="w-8 h-4 rounded-full relative transition-colors"
+              style={{ background: soloGratuiti ? ACTIVE_BG : "#e5e7eb" }}
+            >
+              <div
+                className="absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform"
+                style={{ transform: soloGratuiti ? "translateX(18px)" : "translateX(2px)" }}
+              />
+              <input
+                type="checkbox"
+                checked={soloGratuiti}
+                onChange={(e) => setSoloGratuiti(e.target.checked)}
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              />
+            </div>
             <span className="text-sm text-stone-700 font-medium">Solo gratuiti</span>
           </label>
+
           <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={soloAccessibili}
-              onChange={(e) => setSoloAccessibili(e.target.checked)}
-              className="w-4 h-4 rounded"
-              style={{ accentColor: "#16a34a" }}
-            />
-            <span className="text-sm text-stone-700 font-medium">♿ Solo accessibili</span>
+            <div
+              className="w-8 h-4 rounded-full relative transition-colors"
+              style={{ background: soloAccessibili ? ACTIVE_BG : "#e5e7eb" }}
+            >
+              <div
+                className="absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform"
+                style={{ transform: soloAccessibili ? "translateX(18px)" : "translateX(2px)" }}
+              />
+              <input
+                type="checkbox"
+                checked={soloAccessibili}
+                onChange={(e) => setSoloAccessibili(e.target.checked)}
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              />
+            </div>
+            <span className="text-sm text-stone-700 font-medium">Solo accessibili</span>
           </label>
 
           <div className="ml-auto flex items-center gap-3">
             <span className="text-sm text-stone-400">
-              <span className="font-bold text-stone-700">{eventiFiltrati.length}</span>{" "}
+              <span className="font-black text-stone-700">{eventiFiltrati.length}</span>{" "}
               {eventiFiltrati.length === 1 ? "evento" : "eventi"}
             </span>
             {filtriAttivi && (
               <button
                 onClick={resetFiltri}
-                className="text-xs font-semibold px-3 py-1 rounded-full border cursor-pointer transition-colors"
-                style={{ color: "#dc2626", borderColor: "#fecaca" }}
+                className="text-xs font-bold px-3 py-1 rounded-full cursor-pointer transition-colors border border-red-200 text-red-500 hover:bg-red-50"
               >
                 × Azzera
               </button>
@@ -175,8 +187,10 @@ export function EventiList({ eventi }: { eventi: Evento[] }) {
       {/* Griglia */}
       {eventiFiltrati.length === 0 ? (
         <div className="text-center py-24 bg-white rounded-2xl border border-stone-100">
-          <p className="text-4xl mb-4">🔍</p>
-          <p className="text-stone-500 font-semibold mb-1">Nessun evento trovato</p>
+          <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <IcoMapPin size={28} className="text-stone-300" />
+          </div>
+          <p className="text-stone-600 font-bold mb-1">Nessun evento trovato</p>
           <p className="text-stone-400 text-sm">Prova a modificare i filtri.</p>
         </div>
       ) : (
