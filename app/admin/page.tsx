@@ -219,26 +219,26 @@ export default function PaginaAdmin() {
     <main className="flex-1 pb-20" style={{ background: "#f5f3ef" }}>
       {/* Hero */}
       <div
-        style={{ background: "linear-gradient(175deg, #0a1f12 0%, #1a3529 100%)" }}
+        style={{ background: "#f5f3ef" }}
         className="px-5 pt-10 pb-14"
       >
         <div className="max-w-3xl mx-auto">
           <Link
             href="/"
             className="inline-flex items-center gap-1.5 text-sm font-bold mb-8 transition-opacity hover:opacity-70"
-            style={{ color: "#4ade80" }}
+            style={{ color: "#16a34a" }}
           >
             <IcoArrowLeft size={14} />
             Torna alla home
           </Link>
-          <p className="text-[11px] font-black uppercase tracking-[0.2em] mb-3" style={{ color: "#4ade80" }}>
+          <p className="text-[11px] font-black uppercase tracking-[0.2em] mb-3" style={{ color: "#16a34a" }}>
             Pannello Admin
           </p>
-          <h1 className="font-black text-white mb-2" style={{ fontSize: "clamp(32px, 6vw, 56px)" }}>
+          <h1 className="font-black text-stone-900 mb-2" style={{ fontSize: "clamp(32px, 6vw, 56px)" }}>
             AI Trova<br />
-            <span style={{ color: "#a3e635" }}>Eventi</span>
+            <span style={{ color: "#65a30d" }}>Eventi</span>
           </h1>
-          <p className="text-sm leading-relaxed" style={{ color: "#86efac" }}>
+          <p className="text-sm leading-relaxed" style={{ color: "#44403c" }}>
             Lascia che Claude cerchi sul web gli eventi del Cilento, poi revisiona e approva quelli da pubblicare.
           </p>
         </div>

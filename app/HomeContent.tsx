@@ -51,8 +51,9 @@ function MiniCard({ evento }: { evento: Evento }) {
       className="shrink-0 flex flex-col rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
       style={{
         width: 152,
-        background: "rgba(255,255,255,0.06)",
-        border: "1px solid rgba(255,255,255,0.10)",
+        background: "white",
+        border: "1px solid rgba(0,0,0,0.07)",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
       }}
     >
       <div
@@ -69,7 +70,7 @@ function MiniCard({ evento }: { evento: Evento }) {
       </div>
       <div className="p-3 flex flex-col gap-1.5">
         <p
-          className="text-[12px] font-bold leading-snug text-white"
+          className="text-[12px] font-bold leading-snug text-stone-900"
           style={{
             display: "-webkit-box",
             WebkitLineClamp: 2,
@@ -79,12 +80,12 @@ function MiniCard({ evento }: { evento: Evento }) {
         >
           {evento.titolo}
         </p>
-        <span className="flex items-center gap-1 text-[10px] font-medium" style={{ color: "#86efac" }}>
+        <span className="flex items-center gap-1 text-[10px] font-medium" style={{ color: "#78716c" }}>
           <IcoMapPin size={9} />
           {evento.comune}
         </span>
         {evento.orario && (
-          <span className="flex items-center gap-1 text-[10px]" style={{ color: "#4ade80" }}>
+          <span className="flex items-center gap-1 text-[10px]" style={{ color: "#16a34a" }}>
             <IcoClock size={9} />
             {evento.orario}
           </span>
@@ -236,7 +237,7 @@ export function HomeContent({ eventi }: { eventi: Evento[] }) {
     <>
       {/* ── HERO ── */}
       <div
-        style={{ background: "linear-gradient(175deg, #0a1f12 0%, #1a3529 60%, #0f2318 100%)" }}
+        style={{ background: "#f5f3ef" }}
         className="px-5 pt-14 pb-16"
       >
         <div className="max-w-6xl mx-auto flex flex-col gap-10">
@@ -246,21 +247,21 @@ export function HomeContent({ eventi }: { eventi: Evento[] }) {
             <div>
               <p
                 className="text-[11px] font-black uppercase tracking-[0.2em] mb-6"
-                style={{ color: "#4ade80" }}
+                style={{ color: "#16a34a" }}
               >
                 Cilento &amp; Vallo di Diano
               </p>
               <h1
-                className="font-black leading-[0.88] tracking-tight text-white mb-6"
+                className="font-black leading-[0.88] tracking-tight text-stone-900 mb-6"
                 style={{ fontSize: "clamp(52px, 9vw, 96px)" }}
               >
                 Scopri gli<br />
-                <span style={{ color: "#a3e635" }}>eventi</span><br />
+                <span style={{ color: "#65a30d" }}>eventi</span><br />
                 del Cilento.
               </h1>
               <p
                 className="text-base sm:text-lg leading-relaxed max-w-sm"
-                style={{ color: "#86efac" }}
+                style={{ color: "#78716c" }}
               >
                 Sagre, concerti, mostre, sport e natura nel Parco Nazionale del Cilento.
               </p>
@@ -270,22 +271,22 @@ export function HomeContent({ eventi }: { eventi: Evento[] }) {
             <div className="flex flex-row lg:flex-col gap-3 shrink-0">
               <div
                 className="flex items-center gap-2.5 px-4 py-3 rounded-2xl"
-                style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.10)" }}
+                style={{ background: "white", border: "1px solid rgba(0,0,0,0.07)", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}
               >
-                <IcoCalendar size={16} style={{ color: "#4ade80" }} />
+                <IcoCalendar size={16} style={{ color: "#16a34a" }} />
                 <div>
-                  <p className="text-2xl font-black text-white leading-none">{tuttiGliEventi.length}</p>
-                  <p className="text-[11px] font-semibold mt-0.5" style={{ color: "#86efac" }}>eventi in programma</p>
+                  <p className="text-2xl font-black text-stone-900 leading-none">{tuttiGliEventi.length}</p>
+                  <p className="text-[11px] font-semibold mt-0.5" style={{ color: "#78716c" }}>eventi in programma</p>
                 </div>
               </div>
               <div
                 className="flex items-center gap-2.5 px-4 py-3 rounded-2xl"
-                style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.10)" }}
+                style={{ background: "white", border: "1px solid rgba(0,0,0,0.07)", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}
               >
-                <IcoMapPin size={16} style={{ color: "#4ade80" }} />
+                <IcoMapPin size={16} style={{ color: "#16a34a" }} />
                 <div>
-                  <p className="text-2xl font-black text-white leading-none">{comuniCount}</p>
-                  <p className="text-[11px] font-semibold mt-0.5" style={{ color: "#86efac" }}>comuni del territorio</p>
+                  <p className="text-2xl font-black text-stone-900 leading-none">{comuniCount}</p>
+                  <p className="text-[11px] font-semibold mt-0.5" style={{ color: "#78716c" }}>comuni del territorio</p>
                 </div>
               </div>
             </div>
@@ -297,13 +298,13 @@ export function HomeContent({ eventi }: { eventi: Evento[] }) {
               <div className="flex items-center gap-3 mb-4">
                 <span
                   className="text-[11px] font-black uppercase tracking-[0.15em]"
-                  style={{ color: "#4ade80" }}
+                  style={{ color: "#16a34a" }}
                 >
                   Oggi
                 </span>
                 <span
                   className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full capitalize"
-                  style={{ background: "rgba(163,230,53,0.15)", color: "#a3e635" }}
+                  style={{ background: "#dcfce7", color: "#166534" }}
                 >
                   {formattaData(oggiISO())}
                 </span>

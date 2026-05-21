@@ -14,7 +14,41 @@ const geist = Geist({
 export const metadata: Metadata = {
   title: "Eventi Cilento — Cilento e Vallo di Diano",
   description:
-    "Tutti gli eventi del Cilento e del Vallo di Diano: sagre, concerti, mostre, sport e molto altro.",
+    "Tutti gli eventi del Cilento e del Vallo di Diano: sagre, concerti, mostre, sport e molto altro. Scopri locali, esperienze e serate.",
+  metadataBase: new URL("https://eventicilentoapp.vercel.app"),
+  keywords: ["cilento", "eventi", "sagre", "vallo di diano", "campania", "serate", "concerti", "locali"],
+  authors: [{ name: "Eventi Cilento" }],
+  openGraph: {
+    title: "Eventi Cilento — Cilento e Vallo di Diano",
+    description: "Scopri sagre, concerti, mostre e serate nel Cilento. La guida agli eventi del Parco Nazionale del Cilento.",
+    url: "https://eventicilentoapp.vercel.app",
+    siteName: "Eventi Cilento",
+    locale: "it_IT",
+    type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Eventi Cilento",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Eventi Cilento",
+    description: "Sagre, concerti, mostre e serate nel Cilento e Vallo di Diano.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({

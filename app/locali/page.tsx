@@ -134,14 +134,14 @@ export default function PaginaLocali() {
     <main className="flex-1" style={{ background: "#f5f3ef" }}>
       {/* Hero */}
       <div
-        style={{ background: "linear-gradient(175deg, #0a1f12 0%, #1a3529 60%, #0f2318 100%)" }}
+        style={{ background: "#f5f3ef" }}
         className="px-5 pt-12 pb-14"
       >
         <div className="max-w-6xl mx-auto">
           <Link
             href="/"
             className="inline-flex items-center gap-1.5 text-sm font-bold mb-8 transition-opacity hover:opacity-70"
-            style={{ color: "#4ade80" }}
+            style={{ color: "#16a34a" }}
           >
             <IcoArrowLeft size={14} />
             Torna alla home
@@ -149,18 +149,18 @@ export default function PaginaLocali() {
 
           <p
             className="text-[11px] font-black uppercase tracking-[0.2em] mb-4"
-            style={{ color: "#4ade80" }}
+            style={{ color: "#16a34a" }}
           >
             Cilento &amp; Vallo di Diano
           </p>
           <h1
-            className="font-black leading-[0.9] tracking-tight text-white mb-5"
+            className="font-black leading-[0.9] tracking-tight text-stone-900 mb-5"
             style={{ fontSize: "clamp(40px, 7vw, 76px)" }}
           >
             Locali &amp;<br />
-            <span style={{ color: "#a3e635" }}>Serate</span>.
+            <span style={{ color: "#65a30d" }}>Serate</span>.
           </h1>
-          <p className="text-base max-w-md leading-relaxed" style={{ color: "#86efac" }}>
+          <p className="text-base max-w-md leading-relaxed" style={{ color: "#44403c" }}>
             {locali.length} locali selezionati: bar, ristoranti, discoteche, agriturismi e
             beach club che animano le notti del Cilento.
           </p>
@@ -225,16 +225,16 @@ export default function PaginaLocali() {
         {/* CTA proponi il tuo locale */}
         <div
           className="rounded-3xl p-8 flex flex-col sm:flex-row items-center gap-6 mb-16"
-          style={{ background: "linear-gradient(135deg, #1a3529, #0f2318)" }}
+          style={{ background: "#f0fdf4", border: "1px solid rgba(22,163,74,0.15)" }}
         >
           <div className="flex-1 text-center sm:text-left">
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] mb-2" style={{ color: "#4ade80" }}>
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] mb-2" style={{ color: "#16a34a" }}>
               Sei un gestore?
             </p>
-            <h2 className="text-xl font-black text-white mb-2">
+            <h2 className="text-xl font-black text-stone-900 mb-2">
               Proponi il tuo locale
             </h2>
-            <p className="text-sm leading-relaxed" style={{ color: "#86efac" }}>
+            <p className="text-sm leading-relaxed" style={{ color: "#44403c" }}>
               Fai conoscere il tuo bar, ristorante o locale a migliaia di visitatori del Cilento.
               La pubblicazione è completamente gratuita.
             </p>

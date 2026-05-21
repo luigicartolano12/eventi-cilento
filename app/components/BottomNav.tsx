@@ -8,7 +8,7 @@ import { getUtente } from "@/lib/utente";
 function IcoHome({ active }: { active: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-      stroke={active ? "#a3e635" : "#78716c"} strokeWidth={active ? 2.2 : 1.75} strokeLinecap="round" strokeLinejoin="round">
+      stroke={active ? "#16a34a" : "#a8a29e"} strokeWidth={active ? 2.2 : 1.75} strokeLinecap="round" strokeLinejoin="round">
       <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
       <polyline points="9 21 9 12 15 12 15 21" />
     </svg>
@@ -18,7 +18,7 @@ function IcoHome({ active }: { active: boolean }) {
 function IcoCompass({ active }: { active: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-      stroke={active ? "#a3e635" : "#78716c"} strokeWidth={active ? 2.2 : 1.75} strokeLinecap="round" strokeLinejoin="round">
+      stroke={active ? "#16a34a" : "#a8a29e"} strokeWidth={active ? 2.2 : 1.75} strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10" />
       <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
     </svg>
@@ -28,7 +28,7 @@ function IcoCompass({ active }: { active: boolean }) {
 function IcoUser({ active }: { active: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-      stroke={active ? "#a3e635" : "#78716c"} strokeWidth={active ? 2.2 : 1.75} strokeLinecap="round" strokeLinejoin="round">
+      stroke={active ? "#16a34a" : "#a8a29e"} strokeWidth={active ? 2.2 : 1.75} strokeLinecap="round" strokeLinejoin="round">
       <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
       <circle cx="12" cy="7" r="4" />
     </svg>
@@ -65,9 +65,9 @@ export function BottomNav() {
     <nav
       className="sm:hidden fixed bottom-0 left-0 right-0 z-50 flex items-stretch"
       style={{
-        background: "rgba(15,35,24,0.96)",
+        background: "rgba(245,243,239,0.96)",
         backdropFilter: "blur(16px)",
-        borderTop: "1px solid rgba(255,255,255,0.08)",
+        borderTop: "1px solid rgba(0,0,0,0.07)",
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
@@ -82,7 +82,7 @@ export function BottomNav() {
             {tab.icon(active)}
             <span
               className="text-[10px] font-bold"
-              style={{ color: active ? "#a3e635" : "#78716c" }}
+              style={{ color: active ? "#16a34a" : "#a8a29e" }}
             >
               {tab.label}
             </span>

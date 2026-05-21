@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Blocca le pagine admin e API
+Disallow: /admin
+Disallow: /api/
+
+Sitemap: https://eventicilentoapp.vercel.app/sitemap.xml

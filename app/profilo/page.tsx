@@ -107,14 +107,14 @@ export default function PaginaProfilo() {
     <main className="flex-1 pb-16" style={{ background: "#f5f3ef" }}>
       {/* ── Header profilo ── */}
       <div
-        style={{ background: "linear-gradient(175deg, #0a1f12 0%, #1a3529 100%)" }}
+        style={{ background: "#f5f3ef" }}
         className="px-5 pt-10 pb-16"
       >
         <div className="max-w-2xl mx-auto">
           <Link
             href="/"
             className="inline-flex items-center gap-1.5 text-sm font-bold mb-8 transition-opacity hover:opacity-70"
-            style={{ color: "#4ade80" }}
+            style={{ color: "#16a34a" }}
           >
             <IcoArrowLeft size={14} />
             Torna alla home
@@ -129,12 +129,12 @@ export default function PaginaProfilo() {
               {iniziali}
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-black text-white leading-tight truncate">
+              <h1 className="text-xl font-black text-stone-900 leading-tight truncate">
                 {utente.nome} {utente.cognome}
               </h1>
-              <p className="text-sm truncate" style={{ color: "#86efac" }}>{utente.email}</p>
+              <p className="text-sm truncate" style={{ color: "#44403c" }}>{utente.email}</p>
               {utente.comune && (
-                <p className="text-xs mt-0.5" style={{ color: "#4ade80" }}>
+                <p className="text-xs mt-0.5" style={{ color: "#16a34a" }}>
                   📍 {utente.comune}
                 </p>
               )}
@@ -149,16 +149,16 @@ export default function PaginaProfilo() {
           </div>
 
           {/* Punti e progress */}
-          <div className="mt-5 p-4 rounded-2xl" style={{ background: "rgba(255,255,255,0.07)" }}>
+          <div className="mt-5 p-4 rounded-2xl" style={{ background: "white", border: "1px solid rgba(0,0,0,0.07)" }}>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-2xl font-black text-white">{utente.punti} pt</span>
+              <span className="text-2xl font-black text-stone-900">{utente.punti} pt</span>
               {livelloSucc && (
-                <span className="text-xs font-semibold" style={{ color: "#86efac" }}>
+                <span className="text-xs font-semibold" style={{ color: "#44403c" }}>
                   {livelloSucc.minPunti - utente.punti} pt al livello {livelloSucc.nome}
                 </span>
               )}
             </div>
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.15)" }}>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.08)" }}>
               <div
                 className="h-full rounded-full transition-all"
                 style={{ width: `${progressoPercent}%`, background: "#a3e635" }}
@@ -271,7 +271,7 @@ export default function PaginaProfilo() {
             >
               <div>
                 <p className="font-black text-sm text-white">Pannello Admin AI</p>
-                <p className="text-xs mt-0.5" style={{ color: "#86efac" }}>
+                <p className="text-xs mt-0.5" style={{ color: "#44403c" }}>
                   Trova e approva nuovi eventi dal web
                 </p>
               </div>
@@ -445,7 +445,7 @@ export default function PaginaProfilo() {
             >
               <div>
                 <p className="font-black text-base">Proponi un evento</p>
-                <p className="text-sm mt-0.5" style={{ color: "#86efac" }}>
+                <p className="text-sm mt-0.5" style={{ color: "#44403c" }}>
                   Guadagna +{PUNTI_AZIONI.EVENTO_PROPOSTO} punti
                 </p>
               </div>

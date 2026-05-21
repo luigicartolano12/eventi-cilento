@@ -138,14 +138,14 @@ export default function PaginaEsperienze() {
     <main className="flex-1" style={{ background: "#f5f3ef" }}>
       {/* ── Hero ── */}
       <div
-        style={{ background: "linear-gradient(175deg, #0a1f12 0%, #1a3529 60%, #0f2318 100%)" }}
+        style={{ background: "#f5f3ef" }}
         className="px-5 pt-12 pb-14"
       >
         <div className="max-w-6xl mx-auto">
           <Link
             href="/"
             className="inline-flex items-center gap-1.5 text-sm font-bold mb-8 transition-opacity hover:opacity-70"
-            style={{ color: "#4ade80" }}
+            style={{ color: "#16a34a" }}
           >
             <IcoArrowLeft size={14} />
             Torna alla home
@@ -153,18 +153,18 @@ export default function PaginaEsperienze() {
 
           <p
             className="text-[11px] font-black uppercase tracking-[0.2em] mb-4"
-            style={{ color: "#4ade80" }}
+            style={{ color: "#16a34a" }}
           >
             Cilento &amp; Vallo di Diano
           </p>
           <h1
-            className="font-black leading-[0.9] tracking-tight text-white mb-5"
+            className="font-black leading-[0.9] tracking-tight text-stone-900 mb-5"
             style={{ fontSize: "clamp(40px, 7vw, 76px)" }}
           >
             Vivi il<br />
-            <span style={{ color: "#a3e635" }}>Cilento</span>.
+            <span style={{ color: "#65a30d" }}>Cilento</span>.
           </h1>
-          <p className="text-base max-w-md leading-relaxed" style={{ color: "#86efac" }}>
+          <p className="text-base max-w-md leading-relaxed" style={{ color: "#44403c" }}>
             {esperienze.length} esperienze autentiche tra natura, mare, cultura, gastronomia e
             benessere nel Parco Nazionale del Cilento.
           </p>

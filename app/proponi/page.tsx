@@ -30,16 +30,16 @@ export default function ProponiEvento() {
           {/* Banner */}
           <div
             className="h-36 flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, #1a3529, #065f46)" }}
+            style={{ background: "#f0fdf4", borderBottom: "1px solid rgba(0,0,0,0.05)" }}
           >
             <div className="flex flex-col items-center gap-3">
               <div
                 className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                style={{ background: "#a3e635" }}
+                style={{ background: "#16a34a" }}
               >
-                <IcoSend size={28} className="text-green-900" />
+                <IcoSend size={28} className="text-white" />
               </div>
-              <p className="text-white font-black text-xl">Proponi un evento</p>
+              <p className="font-black text-xl" style={{ color: "#14532d" }}>Proponi un evento</p>
             </div>
           </div>
 
