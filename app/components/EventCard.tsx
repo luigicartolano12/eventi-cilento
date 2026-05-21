@@ -2,28 +2,27 @@ import Link from "next/link";
 import { Evento, formattaData } from "@/lib/events";
 import {
   IcoSagra, IcoMusica, IcoCultura, IcoSport, IcoReligioso, IcoMercato, IcoNatura,
-  IcoMapPin, IcoCalendar, IcoClock,
-  IcoWheelchair, IcoParking, IcoCheck, IcoTicket, IcoCalendarCheck, IcoPaw, IcoPlay,
+  IcoMapPin, IcoCalendar, IcoClock, IcoPlay,
 } from "./icons";
 
 const testoCategoriaColore: Record<string, string> = {
-  Sagra:    "#9a3412",
-  Musica:   "#6b21a8",
-  Cultura:  "#1e40af",
-  Sport:    "#166534",
-  Religioso:"#92400e",
-  Mercato:  "#9d174d",
-  Natura:   "#065f46",
+  Sagra:    "#ea580c",
+  Musica:   "#9333ea",
+  Cultura:  "#2563eb",
+  Sport:    "#16a34a",
+  Religioso:"#d97706",
+  Mercato:  "#db2777",
+  Natura:   "#059669",
 };
 
 const gradientCategoria: Record<string, string> = {
-  Sagra:    "linear-gradient(135deg, #fb923c, #fbbf24)",
-  Musica:   "linear-gradient(135deg, #a855f7, #818cf8)",
-  Cultura:  "linear-gradient(135deg, #3b82f6, #22d3ee)",
-  Sport:    "linear-gradient(135deg, #22c55e, #10b981)",
-  Religioso:"linear-gradient(135deg, #facc15, #f59e0b)",
-  Mercato:  "linear-gradient(135deg, #f472b6, #fb7185)",
-  Natura:   "linear-gradient(135deg, #059669, #14b8a6)",
+  Sagra:    "linear-gradient(160deg, #fb923c 0%, #fbbf24 100%)",
+  Musica:   "linear-gradient(160deg, #a855f7 0%, #818cf8 100%)",
+  Cultura:  "linear-gradient(160deg, #3b82f6 0%, #22d3ee 100%)",
+  Sport:    "linear-gradient(160deg, #22c55e 0%, #10b981 100%)",
+  Religioso:"linear-gradient(160deg, #facc15 0%, #f59e0b 100%)",
+  Mercato:  "linear-gradient(160deg, #f472b6 0%, #fb7185 100%)",
+  Natura:   "linear-gradient(160deg, #059669 0%, #14b8a6 100%)",
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -32,123 +31,90 @@ const IconeCategoria: Record<string, React.ComponentType<any>> = {
   Religioso: IcoReligioso, Mercato: IcoMercato, Natura: IcoNatura,
 };
 
-function ServiziStrip({ evento }: { evento: Evento }) {
-  const { servizi } = evento;
-
-  type Voce = { icona: React.ReactNode; etichetta: string };
-  const voci: Voce[] = [];
-
-  if (servizi.accessibileDisabili)
-    voci.push({ icona: <IcoWheelchair size={11} />, etichetta: "Accessibile" });
-  if (servizi.parcheggio)
-    voci.push({ icona: <IcoParking size={11} />, etichetta: "Parcheggio" });
-  if (servizi.ingressoGratuito)
-    voci.push({ icona: <IcoCheck size={11} />, etichetta: "Gratuito" });
-  else if (servizi.costoDescrizione)
-    voci.push({ icona: <IcoTicket size={11} />, etichetta: servizi.costoDescrizione });
-  else
-    voci.push({ icona: <IcoTicket size={11} />, etichetta: "A pagamento" });
-  if (servizi.prenotazioneRichiesta)
-    voci.push({ icona: <IcoCalendarCheck size={11} />, etichetta: "Prenotazione" });
-  if (servizi.petFriendly)
-    voci.push({ icona: <IcoPaw size={11} />, etichetta: "Pet friendly" });
-
-  return (
-    <div className="flex flex-wrap gap-1.5 pt-3 border-t border-stone-100">
-      {voci.map((v) => (
-        <span
-          key={v.etichetta}
-          className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-stone-100 text-stone-500 font-medium"
-        >
-          {v.icona}
-          <span>{v.etichetta}</span>
-        </span>
-      ))}
-    </div>
-  );
-}
-
 export function EventCard({ evento }: { evento: Evento }) {
   const IcoCategoria = IconeCategoria[evento.categoria];
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-stone-200/80 flex flex-col hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
-      {/* Area visuale */}
-      <div
-        className="relative h-44 flex items-center justify-center"
-        style={{ background: gradientCategoria[evento.categoria] }}
-      >
+    <div
+      className="group flex flex-col rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
+      style={{
+        background: "#fff",
+        boxShadow:
+          "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06), 0 16px 40px rgba(0,0,0,0.06)",
+      }}
+    >
+      {/* ── Immagine / Gradiente — cliccabile verso la scheda ── */}
+      <Link href={`/events/${evento.id}`} className="block relative overflow-hidden" style={{ height: 200, background: gradientCategoria[evento.categoria] }}>
         {evento.immagine ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={evento.immagine}
             alt={evento.titolo}
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <IcoCategoria size={44} strokeWidth={1.25} className="text-white opacity-70" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <IcoCategoria size={56} strokeWidth={1.1} className="text-white" style={{ opacity: 0.55 }} />
+          </div>
         )}
-
-        {/* Badge categoria */}
-        <div className="absolute bottom-3 left-3 flex items-center gap-2">
-          <span
-            className="text-xs font-bold px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm"
-            style={{ color: testoCategoriaColore[evento.categoria] }}
-          >
-            {evento.categoria}
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 45%, rgba(0,0,0,0.28) 100%)" }} />
+        {evento.video && (
+          <span className="absolute top-3.5 right-3.5 inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full text-white" style={{ background: "rgba(0,0,0,0.38)", backdropFilter: "blur(8px)" }}>
+            <IcoPlay size={9} />
+            Video
           </span>
-          {evento.video && (
-            <span className="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-black/50 text-white">
-              <IcoPlay size={10} />
-              Video
-            </span>
-          )}
-        </div>
-      </div>
+        )}
+      </Link>
 
-      {/* Corpo */}
-      <div className="p-5 flex flex-col gap-2 flex-1">
-        <h2 className="text-[15px] font-bold text-stone-900 leading-snug">
+      {/* ── Corpo ── */}
+      <div className="flex flex-col gap-1.5 px-5 pt-4 pb-5 flex-1">
+
+        {/* Categoria */}
+        <span
+          className="text-[11px] font-black uppercase tracking-widest"
+          style={{ color: testoCategoriaColore[evento.categoria] }}
+        >
+          {evento.categoria}
+        </span>
+
+        {/* Titolo */}
+        <h2 className="text-[17px] font-bold text-black leading-snug tracking-tight">
           {evento.titolo}
         </h2>
 
-        {/* Metadati */}
-        <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+        {/* Data + Orario + Comune */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
+          <span className="inline-flex items-center gap-1 text-[13px] text-stone-400 font-medium">
+            <IcoCalendar size={11} className="text-stone-300" />
+            <span className="capitalize">
+              {formattaData(evento.data)}
+              {evento.dataFine && ` – ${formattaData(evento.dataFine)}`}
+            </span>
+          </span>
+          {evento.orario && (
+            <span className="inline-flex items-center gap-1 text-[13px] text-stone-400 font-medium">
+              <IcoClock size={11} className="text-stone-300" />
+              {evento.orario}
+            </span>
+          )}
           <a
             href={`https://maps.google.com/?q=${encodeURIComponent(`${evento.luogo}, ${evento.comune}, Salerno, Campania, Italia`)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-stone-400 hover:text-stone-600 transition-colors"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1 text-[13px] text-stone-400 font-medium hover:text-stone-600 transition-colors"
           >
-            <IcoMapPin size={11} />
+            <IcoMapPin size={11} className="text-stone-300" />
             {evento.comune}
           </a>
-          <span className="inline-flex items-center gap-1 text-xs text-stone-400">
-            <IcoCalendar size={11} />
-            {formattaData(evento.data)}
-            {evento.dataFine && ` – ${formattaData(evento.dataFine)}`}
-          </span>
-          {evento.orario && (
-            <span className="inline-flex items-center gap-1 text-xs text-stone-400">
-              <IcoClock size={11} />
-              {evento.orario}
-            </span>
-          )}
         </div>
 
-        <p className="text-sm text-stone-600 leading-relaxed flex-1 mt-1">
-          {evento.descrizioneBreve}
-        </p>
-
-        <ServiziStrip evento={evento} />
-
-        <Link
-          href={`/events/${evento.id}`}
-          className="mt-2 inline-flex items-center gap-1 text-sm font-bold transition-colors"
-          style={{ color: "#65a30d" }}
-        >
-          Scopri di più
-          <span className="text-base leading-none">→</span>
+        {/* CTA Apple-style */}
+        <Link href={`/events/${evento.id}`} className="mt-auto pt-4 flex items-center justify-between group/cta">
+          <span className="text-[13px] font-semibold" style={{ color: "#16a34a" }}>
+            Scopri di più
+          </span>
+          <span className="text-[18px] text-stone-300 font-light leading-none">›</span>
         </Link>
       </div>
     </div>
