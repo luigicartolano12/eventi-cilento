@@ -2,9 +2,10 @@ type IconProps = {
   size?: number;
   className?: string;
   strokeWidth?: number;
+  style?: React.CSSProperties;
 };
 
-function Svg({ size = 16, className = "", strokeWidth = 1.75, children }: IconProps & { children: React.ReactNode }) {
+function Svg({ size = 16, className = "", strokeWidth = 1.75, style, children }: IconProps & { children: React.ReactNode }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -17,6 +18,7 @@ function Svg({ size = 16, className = "", strokeWidth = 1.75, children }: IconPr
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
+      style={style}
       aria-hidden="true"
     >
       {children}

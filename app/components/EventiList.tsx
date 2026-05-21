@@ -3,24 +3,35 @@
 import { useEffect, useMemo, useState } from "react";
 import { Evento, Categoria } from "@/lib/events";
 import { EventCard } from "./EventCard";
-import { IcoMapPin, IcoSearch } from "./icons";
+import { IcoMapPin, IcoSearch, IcoCalendar, IcoLocate } from "./icons";
 
-const ACTIVE_BG   = "#a3e635";
-const ACTIVE_TEXT = "#14532d";
+async function reverseGeocode(lat: number, lon: number): Promise<string> {
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&accept-language=it`,
+    { headers: { "User-Agent": "EventiCilento/1.0" } }
+  );
+  const data = await res.json();
+  return (
+    data.address?.city ||
+    data.address?.town ||
+    data.address?.village ||
+    data.address?.municipality ||
+    ""
+  );
+}
 
 export function EventiList({
   eventi,
   categoriaEsterna,
-  dataEsterna,
-  locationFiltro,
 }: {
   eventi: Evento[];
   categoriaEsterna?: Categoria | null;
-  dataEsterna?: string;
-  locationFiltro?: string;
 }) {
   const [categoria, setCategoria] = useState<Categoria | null>(categoriaEsterna ?? null);
   const [cerca, setCerca] = useState("");
+  const [dataFiltro, setDataFiltro] = useState("");
+  const [locationLabel, setLocationLabel] = useState("");
+  const [locationLoading, setLocationLoading] = useState(false);
   const [soloGratuiti, setSoloGratuiti] = useState(false);
   const [soloAccessibili, setSoloAccessibili] = useState(false);
 
@@ -28,14 +39,33 @@ export function EventiList({
     if (categoriaEsterna !== undefined) setCategoria(categoriaEsterna ?? null);
   }, [categoriaEsterna]);
 
+  function rilevaPosizione() {
+    if (!navigator.geolocation) return;
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const citta = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+          setLocationLabel(citta || "Posizione rilevata");
+        } catch {
+          /* ignore */
+        } finally {
+          setLocationLoading(false);
+        }
+      },
+      () => setLocationLoading(false),
+      { timeout: 10000 }
+    );
+  }
+
   const eventiFiltrati = useMemo(() => {
     return eventi.filter((e) => {
       if (categoria && e.categoria !== categoria) return false;
-      if (dataEsterna && e.data < dataEsterna) return false;
+      if (dataFiltro && e.data < dataFiltro) return false;
       if (soloGratuiti && !e.servizi.ingressoGratuito) return false;
       if (soloAccessibili && !e.servizi.accessibileDisabili) return false;
-      if (locationFiltro) {
-        const lf = locationFiltro.toLowerCase();
+      if (locationLabel) {
+        const lf = locationLabel.toLowerCase();
         const comune = e.comune.toLowerCase();
         if (!comune.includes(lf) && !lf.includes(comune.split(/[-\s]/)[0])) return false;
       }
@@ -48,107 +78,135 @@ export function EventiList({
       }
       return true;
     });
-  }, [eventi, categoria, dataEsterna, locationFiltro, cerca, soloGratuiti, soloAccessibili]);
+  }, [eventi, categoria, dataFiltro, locationLabel, cerca, soloGratuiti, soloAccessibili]);
 
-  const filtriAttivi = categoria || cerca || soloGratuiti || soloAccessibili;
+  const filtriAttivi = categoria || cerca || soloGratuiti || soloAccessibili || dataFiltro || locationLabel;
 
   function resetFiltri() {
     setCategoria(null);
     setCerca("");
+    setDataFiltro("");
+    setLocationLabel("");
     setSoloGratuiti(false);
     setSoloAccessibili(false);
   }
 
   return (
     <div>
-      {/* Barra di ricerca */}
-      <div className="bg-white rounded-2xl shadow-md border border-stone-100 p-4 mb-8 flex flex-col gap-3">
+      {/* ── Intestazione lista ── */}
+      <div className="flex items-center justify-between mb-5 pt-2">
+        <p className="text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: "#78716c" }}>
+          Tutti gli eventi
+        </p>
+        <span className="text-sm text-stone-400">
+          <span className="font-black text-stone-700">{eventiFiltrati.length}</span>{" "}
+          {eventiFiltrati.length === 1 ? "risultato" : "risultati"}
+        </span>
+      </div>
 
-        {/* Input cerca */}
-        <div className="flex items-center gap-3 rounded-xl px-4 py-3 border border-stone-200 bg-stone-50 focus-within:border-stone-300 transition-colors">
-          <IcoSearch size={17} className="text-stone-400 shrink-0" />
+      {/* ── Barra filtri ── */}
+      <div
+        className="bg-white rounded-3xl p-5 mb-8"
+        style={{
+          boxShadow:
+            "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06), 0 16px 40px rgba(0,0,0,0.04)",
+        }}
+      >
+        {/* Ricerca */}
+        <div
+          className="flex items-center gap-3 rounded-2xl px-4 py-3.5 mb-4"
+          style={{ background: "#f5f3ef" }}
+        >
+          <IcoSearch size={16} className="text-stone-400 shrink-0" />
           <input
             type="search"
             value={cerca}
             onChange={(e) => setCerca(e.target.value)}
             placeholder="Cerca eventi, luoghi, categorie…"
-            className="flex-1 bg-transparent text-sm text-stone-700 placeholder:text-stone-400 focus:outline-none"
+            className="flex-1 bg-transparent text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none font-medium"
           />
           {cerca && (
             <button
               onClick={() => setCerca("")}
-              className="text-stone-400 hover:text-stone-600 transition-colors border-0 bg-transparent cursor-pointer text-base leading-none"
+              className="text-stone-400 hover:text-stone-600 border-0 bg-transparent cursor-pointer text-xl leading-none transition-colors"
             >
               ×
             </button>
           )}
         </div>
 
-        {/* Toggle + contatore */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <div
-              className="w-8 h-4 rounded-full relative transition-colors"
-              style={{ background: soloGratuiti ? ACTIVE_BG : "#e5e7eb" }}
-            >
-              <div
-                className="absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform"
-                style={{ transform: soloGratuiti ? "translateX(18px)" : "translateX(2px)" }}
-              />
-              <input
-                type="checkbox"
-                checked={soloGratuiti}
-                onChange={(e) => setSoloGratuiti(e.target.checked)}
-                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-              />
-            </div>
-            <span className="text-sm text-stone-600 font-medium">Solo gratuiti</span>
-          </label>
-
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <div
-              className="w-8 h-4 rounded-full relative transition-colors"
-              style={{ background: soloAccessibili ? ACTIVE_BG : "#e5e7eb" }}
-            >
-              <div
-                className="absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform"
-                style={{ transform: soloAccessibili ? "translateX(18px)" : "translateX(2px)" }}
-              />
-              <input
-                type="checkbox"
-                checked={soloAccessibili}
-                onChange={(e) => setSoloAccessibili(e.target.checked)}
-                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-              />
-            </div>
-            <span className="text-sm text-stone-600 font-medium">Solo accessibili</span>
-          </label>
-
-          <div className="ml-auto flex items-center gap-3">
-            <span className="text-sm text-stone-400">
-              <span className="font-black text-stone-700">{eventiFiltrati.length}</span>{" "}
-              {eventiFiltrati.length === 1 ? "evento" : "eventi"}
-            </span>
-            {filtriAttivi && (
+        {/* Data + Posizione */}
+        <div className="flex gap-3 mb-4">
+          <div
+            className="flex-1 flex items-center gap-2.5 rounded-2xl px-4 py-3"
+            style={{ background: "#f5f3ef" }}
+          >
+            <IcoCalendar size={14} className="text-stone-400 shrink-0" />
+            <input
+              type="date"
+              value={dataFiltro}
+              onChange={(e) => setDataFiltro(e.target.value)}
+              className="flex-1 bg-transparent text-sm font-medium text-stone-700 focus:outline-none"
+              style={{ colorScheme: "light" }}
+            />
+            {dataFiltro && (
               <button
-                onClick={resetFiltri}
-                className="text-xs font-bold px-3 py-1 rounded-full cursor-pointer transition-colors border border-red-200 text-red-500 hover:bg-red-50"
+                onClick={() => setDataFiltro("")}
+                className="text-stone-400 border-0 bg-transparent cursor-pointer text-xl leading-none hover:text-stone-600 transition-colors"
               >
-                × Azzera
+                ×
               </button>
             )}
           </div>
+
+          <button
+            onClick={locationLabel ? () => setLocationLabel("") : rilevaPosizione}
+            disabled={locationLoading}
+            className="flex items-center gap-2 px-4 py-3 rounded-2xl border-0 cursor-pointer transition-all font-semibold text-sm shrink-0 disabled:opacity-50"
+            style={
+              locationLabel
+                ? { background: "#dcfce7", color: "#166534" }
+                : { background: "#f5f3ef", color: "#78716c" }
+            }
+          >
+            <IcoLocate size={14} />
+            <span className="hidden sm:inline max-w-[120px] truncate">
+              {locationLoading ? "Rilevamento…" : locationLabel || "Vicino a me"}
+            </span>
+          </button>
+        </div>
+
+        {/* Toggles + azzera */}
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+          <Toggle label="Solo gratuiti" value={soloGratuiti} onChange={setSoloGratuiti} />
+          <Toggle label="Solo accessibili" value={soloAccessibili} onChange={setSoloAccessibili} />
+
+          {filtriAttivi && (
+            <button
+              onClick={resetFiltri}
+              className="ml-auto text-xs font-bold px-3 py-1.5 rounded-full cursor-pointer border-0 transition-colors"
+              style={{ background: "#fef2f2", color: "#dc2626" }}
+            >
+              × Azzera filtri
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Griglia */}
+      {/* ── Griglia ── */}
       {eventiFiltrati.length === 0 ? (
-        <div className="text-center py-24 bg-white rounded-2xl border border-stone-100">
-          <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div
+          className="text-center py-28 bg-white rounded-3xl"
+          style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06)" }}
+        >
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+            style={{ background: "#f5f3ef" }}
+          >
             <IcoMapPin size={28} className="text-stone-300" />
           </div>
-          <p className="text-stone-600 font-bold mb-1">Nessun evento trovato</p>
-          <p className="text-stone-400 text-sm">Prova a modificare la ricerca.</p>
+          <p className="text-stone-700 font-bold mb-1">Nessun evento trovato</p>
+          <p className="text-stone-400 text-sm">Prova a modificare i filtri.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -158,5 +216,46 @@ export function EventiList({
         </div>
       )}
     </div>
+  );
+}
+
+function Toggle({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label className="flex items-center gap-2.5 cursor-pointer select-none">
+      <div
+        className="relative transition-colors duration-200"
+        style={{
+          width: 36,
+          height: 20,
+          borderRadius: 10,
+          background: value ? "#a3e635" : "#e5e7eb",
+        }}
+      >
+        <div
+          className="absolute bg-white rounded-full shadow transition-transform duration-200"
+          style={{
+            width: 14,
+            height: 14,
+            top: 3,
+            transform: value ? "translateX(19px)" : "translateX(3px)",
+          }}
+        />
+        <input
+          type="checkbox"
+          checked={value}
+          onChange={(e) => onChange(e.target.checked)}
+          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+        />
+      </div>
+      <span className="text-sm font-medium text-stone-600">{label}</span>
+    </label>
   );
 }
