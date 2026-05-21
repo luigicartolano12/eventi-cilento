@@ -37,6 +37,9 @@ export function Footer() {
               <Link href="/esperienze" className="text-sm font-medium hover:text-white transition-colors">
                 Esperienze
               </Link>
+              <Link href="/locali" className="text-sm font-medium hover:text-white transition-colors">
+                Locali &amp; Serate
+              </Link>
               <Link href="/proponi" className="text-sm font-medium hover:text-white transition-colors">
                 Proponi un evento
               </Link>

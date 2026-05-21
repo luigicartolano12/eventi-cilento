@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { Evento, Categoria, CATEGORIE, formattaData } from "@/lib/events";
 import { getInEvidenza, STILE_CATEGORIA, type Esperienza } from "@/lib/esperienze";
+import { getLocaliInEvidenza, STILE_LOCALE, type Locale } from "@/lib/locali";
 import { EventiList } from "./components/EventiList";
 import {
   IcoSagra, IcoMusica, IcoCultura, IcoSport, IcoReligioso, IcoMercato, IcoNatura,
@@ -139,6 +140,51 @@ function EsperienzaMiniCard({ esp }: { esp: Esperienza }) {
   );
 }
 
+// ── Mini card locale per la home ─────────────────────────────────────────────
+function LocaleMiniCard({ locale }: { locale: Locale }) {
+  const stile = STILE_LOCALE[locale.categoria];
+  return (
+    <Link
+      href="/locali"
+      className="shrink-0 relative overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1 flex flex-col justify-end"
+      style={{ width: 160, height: 200, background: stile.gradient }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={`https://picsum.photos/seed/locale-${locale.id}/400/300`}
+        alt={locale.nome}
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      <div
+        className="absolute inset-0"
+        style={{ background: "linear-gradient(to bottom, transparent 25%, rgba(0,0,0,0.75) 100%)" }}
+      />
+      <div className="relative p-3.5 flex flex-col gap-1">
+        <span
+          className="text-[9px] font-black px-2 py-0.5 rounded-full w-fit"
+          style={{ background: stile.bg, color: stile.color }}
+        >
+          {locale.categoria}
+        </span>
+        <p
+          className="text-[13px] font-bold text-white leading-snug"
+          style={{
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
+          {locale.nome}
+        </p>
+        <span className="text-[10px] font-medium" style={{ color: "rgba(255,255,255,0.65)" }}>
+          {locale.comune}
+        </span>
+      </div>
+    </Link>
+  );
+}
+
 // ── Componente principale ─────────────────────────────────────────────────────
 export function HomeContent({ eventi }: { eventi: Evento[] }) {
   const [categoriaAttiva, setCategoriaAttiva] = useState<Categoria | null>(null);
@@ -146,6 +192,7 @@ export function HomeContent({ eventi }: { eventi: Evento[] }) {
 
   const comuniCount = new Set(eventi.map((e) => e.comune)).size;
   const oggi = eventiDiOggi(eventi);
+  const localiEvidenza = getLocaliInEvidenza();
 
   function selezionaCategoria(cat: Categoria | null) {
     setCategoriaAttiva(cat);
@@ -324,6 +371,32 @@ export function HomeContent({ eventi }: { eventi: Evento[] }) {
           <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
             {getInEvidenza().map((esp) => (
               <EsperienzaMiniCard key={esp.id} esp={esp} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── LOCALI & SERATE ── */}
+      <div style={{ background: "#f5f3ef" }}>
+        <div className="max-w-6xl mx-auto px-5 pb-8">
+          <div className="flex items-end justify-between mb-5">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] mb-1" style={{ color: "#78716c" }}>
+                Locali &amp; Serate
+              </p>
+              <h2 className="text-xl font-black text-stone-900">Dove uscire stanotte</h2>
+            </div>
+            <Link
+              href="/locali"
+              className="text-sm font-bold transition-opacity hover:opacity-70"
+              style={{ color: "#16a34a" }}
+            >
+              Tutti i locali →
+            </Link>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
+            {localiEvidenza.map((l) => (
+              <LocaleMiniCard key={l.id} locale={l} />
             ))}
           </div>
         </div>
