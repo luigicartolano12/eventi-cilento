@@ -9,6 +9,7 @@ import {
   IcoArrowLeft, IcoPlay,
 } from "@/app/components/icons";
 import { ShareButton } from "@/app/components/ShareButton";
+import { MenuAccordion } from "@/app/components/MenuAccordion";
 
 const gradientCategoria: Record<string, string> = {
   Sagra:    "linear-gradient(135deg, #fb923c, #fbbf24)",
@@ -173,6 +174,16 @@ export default async function PaginaEvento({
                 />
               </div>
             </div>
+
+            {/* ── Menu ── */}
+            {evento.menu && (
+              <div>
+                <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3">
+                  Menu
+                </p>
+                <MenuAccordion menu={evento.menu} />
+              </div>
+            )}
 
             {/* Descrizione */}
             <p className="text-stone-600 leading-relaxed text-[15px]">

@@ -29,6 +29,29 @@ export type Biglietteria = {
   note?: string;
 };
 
+export type IntolleranzaTag =
+  | "vegetariano"
+  | "vegano"
+  | "senzaGlutine"
+  | "senzaLattosio";
+
+export type MenuVoce = {
+  nome: string;
+  descrizione?: string;
+  prezzo?: string;
+  intolleranze?: IntolleranzaTag[];
+};
+
+export type MenuSezione = {
+  titolo: string;
+  voci: MenuVoce[];
+};
+
+export type Menu = {
+  sezioni: MenuSezione[];
+  noteIntolleranze?: string;
+};
+
 export type Evento = {
   id: string;
   titolo: string;
@@ -46,6 +69,7 @@ export type Evento = {
   servizi: Servizi;
   contatto?: Contatto;
   biglietteria?: Biglietteria;
+  menu?: Menu;
 };
 
 export const CATEGORIE: Categoria[] = [
@@ -146,6 +170,85 @@ export const eventi: Evento[] = [
       telefono: "+39 0828 771234",
       email: "proloco.controne@cilento.it",
       sito: "https://www.prolococontrone.it",
+    },
+    menu: {
+      sezioni: [
+        {
+          titolo: "Antipasti",
+          voci: [
+            {
+              nome: "Bruschette al fagiolo di Controne",
+              descrizione: "Pane casereccio tostato con crema di fagioli DOP e olio extravergine d'oliva.",
+              prezzo: "€3",
+              intolleranze: ["vegetariano", "vegano"],
+            },
+            {
+              nome: "Salumi e formaggi locali",
+              descrizione: "Selezione di salumi artigianali cilentani e formaggi stagionati.",
+              prezzo: "€6",
+            },
+          ],
+        },
+        {
+          titolo: "Primi",
+          voci: [
+            {
+              nome: "Pasta e fagioli",
+              descrizione: "Pasta mista con fagioli di Controne DOP in brodo di pomodoro.",
+              prezzo: "€7",
+              intolleranze: ["vegetariano"],
+            },
+            {
+              nome: "Lagane e fagioli",
+              descrizione: "Pasta fresca all'uovo tirata a mano con fagioli e aglio.",
+              prezzo: "€7",
+              intolleranze: ["vegetariano"],
+            },
+            {
+              nome: "Zuppa di fagioli",
+              descrizione: "Zuppa rustica con fagioli interi, rosmarino e peperoncino.",
+              prezzo: "€5",
+              intolleranze: ["vegetariano", "vegano", "senzaGlutine"],
+            },
+          ],
+        },
+        {
+          titolo: "Secondi",
+          voci: [
+            {
+              nome: "Fagioli con cotenne",
+              descrizione: "Piatto tradizionale cilentano: fagioli stufati con cotenna di maiale.",
+              prezzo: "€9",
+              intolleranze: ["senzaGlutine"],
+            },
+            {
+              nome: "Salsicce alla brace con fagioli",
+              descrizione: "Salsiccia artigianale di maiale cotta alla brace, servita con fagioli in umido.",
+              prezzo: "€10",
+              intolleranze: ["senzaGlutine"],
+            },
+          ],
+        },
+        {
+          titolo: "Dolci",
+          voci: [
+            {
+              nome: "Mostaccioli al miele",
+              descrizione: "Biscotti tradizionali al miele e spezie, tipici del Cilento.",
+              prezzo: "€2",
+              intolleranze: ["vegetariano"],
+            },
+            {
+              nome: "Castagnaccio",
+              descrizione: "Torta di farina di castagne con pinoli, noci e rosmarino.",
+              prezzo: "€3",
+              intolleranze: ["vegetariano", "vegano", "senzaGlutine", "senzaLattosio"],
+            },
+          ],
+        },
+      ],
+      noteIntolleranze:
+        "Informare il personale di eventuali allergie o intolleranze prima di ordinare. Possibile presenza di tracce di frutta a guscio.",
     },
   },
   {
@@ -346,6 +449,85 @@ export const eventi: Evento[] = [
       telefono: "+39 0974 973456",
       email: "info@prolocopisciotta.it",
       sito: "https://www.prolocopisciotta.it",
+    },
+    menu: {
+      sezioni: [
+        {
+          titolo: "Antipasti",
+          voci: [
+            {
+              nome: "Alici di Menaica marinate",
+              descrizione: "Le pregiate alici di Pisciotta marinate in olio, aglio e prezzemolo.",
+              prezzo: "€5",
+              intolleranze: ["senzaGlutine", "senzaLattosio"],
+            },
+            {
+              nome: "Bruschetta con alici e pomodorino",
+              descrizione: "Pane di grano duro tostato con alici fresche e pomodorino del Cilento.",
+              prezzo: "€3",
+            },
+            {
+              nome: "Alici in carpione",
+              descrizione: "Alici fritte e poi marinate in aceto, cipolla e alloro.",
+              prezzo: "€5",
+              intolleranze: ["senzaLattosio"],
+            },
+          ],
+        },
+        {
+          titolo: "Primi",
+          voci: [
+            {
+              nome: "Spaghetti alle alici di Menaica",
+              descrizione: "Spaghetti con alici fresche saltate in padella con aglio, olio e peperoncino.",
+              prezzo: "€8",
+              intolleranze: ["senzaLattosio"],
+            },
+            {
+              nome: "Vermicelli con colatura di alici",
+              descrizione: "Pasta con colatura di alici di Pisciotta, olive nere e capperi.",
+              prezzo: "€9",
+              intolleranze: ["senzaLattosio"],
+            },
+            {
+              nome: "Risotto alle alici e limone",
+              descrizione: "Risotto mantecato con alici di Menaica e scorza di limone del Cilento.",
+              prezzo: "€10",
+              intolleranze: ["senzaGlutine"],
+            },
+          ],
+        },
+        {
+          titolo: "Secondi",
+          voci: [
+            {
+              nome: "Alici fritte croccanti",
+              descrizione: "Alici intere infarinate e fritte in olio extravergine d'oliva.",
+              prezzo: "€7",
+              intolleranze: ["senzaLattosio"],
+            },
+            {
+              nome: "Alici in tortiera",
+              descrizione: "Alici a strati con pomodoro, patate, aglio e origano cotte al forno.",
+              prezzo: "€8",
+              intolleranze: ["senzaGlutine", "senzaLattosio"],
+            },
+          ],
+        },
+        {
+          titolo: "Degustazioni",
+          voci: [
+            {
+              nome: "Assaggio di alici di Menaica",
+              descrizione: "Mini porzione per scoprire il presidio Slow Food.",
+              prezzo: "€3",
+              intolleranze: ["senzaGlutine", "senzaLattosio"],
+            },
+          ],
+        },
+      ],
+      noteIntolleranze:
+        "Tutti i piatti contengono pesce. Alcune preparazioni potrebbero contenere tracce di crostacei e molluschi. Avvisare il personale in caso di allergie.",
     },
   },
 ];
