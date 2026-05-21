@@ -6,7 +6,7 @@ import { Evento, Categoria, CATEGORIE, formattaData } from "@/lib/events";
 import { EventiList } from "./components/EventiList";
 import {
   IcoSagra, IcoMusica, IcoCultura, IcoSport, IcoReligioso, IcoMercato, IcoNatura,
-  IcoCalendar, IcoMapPin, IcoClock,
+  IcoCalendar, IcoMapPin, IcoClock, IcoLocate,
 } from "./components/icons";
 
 const gradientCategoria: Record<string, string> = {
@@ -103,10 +103,29 @@ function MiniCard({ evento }: { evento: Evento }) {
   );
 }
 
+// ── Geolocalizzazione via Nominatim ───────────────────────────────────────────
+async function reverseGeocode(lat: number, lon: number): Promise<string> {
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&accept-language=it`,
+    { headers: { "User-Agent": "EventiCilento/1.0" } }
+  );
+  const data = await res.json();
+  return (
+    data.address?.city ||
+    data.address?.town ||
+    data.address?.village ||
+    data.address?.municipality ||
+    ""
+  );
+}
+
 // ── Componente principale ─────────────────────────────────────────────────────
 export function HomeContent({ eventi }: { eventi: Evento[] }) {
   const [categoriaAttiva, setCategoriaAttiva] = useState<Categoria | null>(null);
   const [dataFiltro, setDataFiltro] = useState("");
+  const [locationLabel, setLocationLabel] = useState("");
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationError, setLocationError] = useState("");
   const listaRef = useRef<HTMLDivElement>(null);
 
   const comuniCount = new Set(eventi.map((e) => e.comune)).size;
@@ -114,6 +133,33 @@ export function HomeContent({ eventi }: { eventi: Evento[] }) {
     .filter((e) => e.data >= oggiISO())
     .sort((a, b) => a.data.localeCompare(b.data))[0];
   const oggi = eventiDiOggi(eventi);
+
+  function rilevaPosizione() {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocalizzazione non supportata dal browser");
+      return;
+    }
+    setLocationLoading(true);
+    setLocationError("");
+    setLocationLabel("");
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const citta = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+          setLocationLabel(citta || "Posizione rilevata");
+        } catch {
+          setLocationError("Impossibile determinare la posizione");
+        } finally {
+          setLocationLoading(false);
+        }
+      },
+      () => {
+        setLocationError("Permesso negato o posizione non disponibile");
+        setLocationLoading(false);
+      },
+      { timeout: 10000 }
+    );
+  }
 
   function selezionaCategoria(cat: Categoria | null) {
     setCategoriaAttiva(cat);
@@ -202,35 +248,91 @@ export function HomeContent({ eventi }: { eventi: Evento[] }) {
             </div>
           )}
 
-          {/* ── Barra data ── */}
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: "#4ade80" }}>
-              Mostra eventi dal
-            </p>
-            <div className="flex items-center gap-3">
-              <div
-                className="flex items-center gap-3 flex-1 rounded-2xl px-4 py-3"
-                style={{ background: "rgba(255,255,255,0.10)" }}
-              >
-                <IcoCalendar size={16} className="text-green-400 shrink-0" />
-                <input
-                  type="date"
-                  value={dataFiltro}
-                  onChange={(e) => setDataFiltro(e.target.value)}
-                  className="flex-1 bg-transparent text-white text-sm font-semibold focus:outline-none placeholder:text-green-300"
-                  style={{ colorScheme: "dark" }}
-                />
-              </div>
-              {dataFiltro && (
-                <button
-                  onClick={() => setDataFiltro("")}
-                  className="text-xs font-bold px-3 py-3 rounded-2xl border-0 cursor-pointer transition-opacity hover:opacity-70"
-                  style={{ background: "rgba(255,255,255,0.10)", color: "#86efac" }}
+          {/* ── Barre data + posizione ── */}
+          <div className="flex flex-col sm:flex-row gap-3">
+
+            {/* Data */}
+            <div className="flex-1">
+              <p className="text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: "#4ade80" }}>
+                Mostra eventi dal
+              </p>
+              <div className="flex items-center gap-2">
+                <div
+                  className="flex items-center gap-3 flex-1 rounded-2xl px-4 py-3"
+                  style={{ background: "rgba(255,255,255,0.10)" }}
                 >
-                  × Rimuovi
-                </button>
+                  <IcoCalendar size={16} className="text-green-400 shrink-0" />
+                  <input
+                    type="date"
+                    value={dataFiltro}
+                    onChange={(e) => setDataFiltro(e.target.value)}
+                    className="flex-1 bg-transparent text-white text-sm font-semibold focus:outline-none"
+                    style={{ colorScheme: "dark" }}
+                  />
+                </div>
+                {dataFiltro && (
+                  <button
+                    onClick={() => setDataFiltro("")}
+                    className="text-xs font-bold px-3 py-3 rounded-2xl border-0 cursor-pointer transition-opacity hover:opacity-70 shrink-0"
+                    style={{ background: "rgba(255,255,255,0.10)", color: "#86efac" }}
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Posizione */}
+            <div className="flex-1">
+              <p className="text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: "#4ade80" }}>
+                Posizione
+              </p>
+              <div className="flex items-center gap-2">
+                <div
+                  className="flex items-center gap-3 flex-1 rounded-2xl px-4 py-3"
+                  style={{ background: "rgba(255,255,255,0.10)" }}
+                >
+                  <IcoMapPin size={16} className="text-green-400 shrink-0" />
+                  {locationLoading ? (
+                    <span className="text-sm flex-1" style={{ color: "#86efac" }}>
+                      Rilevamento…
+                    </span>
+                  ) : locationLabel ? (
+                    <span className="text-sm font-semibold flex-1 text-white truncate">
+                      {locationLabel}
+                    </span>
+                  ) : (
+                    <span className="text-sm flex-1" style={{ color: "rgba(134,239,172,0.6)" }}>
+                      Nessuna posizione
+                    </span>
+                  )}
+                  <button
+                    onClick={rilevaPosizione}
+                    disabled={locationLoading}
+                    title="Rileva la mia posizione"
+                    className="w-7 h-7 rounded-xl flex items-center justify-center border-0 cursor-pointer transition-all shrink-0 hover:scale-110 disabled:opacity-50"
+                    style={{ background: "#a3e635", color: "#14532d" }}
+                  >
+                    <IcoLocate size={13} />
+                  </button>
+                </div>
+                {locationLabel && (
+                  <button
+                    onClick={() => { setLocationLabel(""); setLocationError(""); }}
+                    className="text-xs font-bold px-3 py-3 rounded-2xl border-0 cursor-pointer transition-opacity hover:opacity-70 shrink-0"
+                    style={{ background: "rgba(255,255,255,0.10)", color: "#86efac" }}
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+              {locationError && (
+                <p className="text-[11px] mt-1.5 pl-1" style={{ color: "#fca5a5" }}>
+                  {locationError}
+                </p>
               )}
             </div>
+
           </div>
 
           {/* ── Tile categorie ── */}
@@ -278,6 +380,7 @@ export function HomeContent({ eventi }: { eventi: Evento[] }) {
           eventi={eventi}
           categoriaEsterna={categoriaAttiva}
           dataEsterna={dataFiltro}
+          locationFiltro={locationLabel}
         />
       </div>
     </>

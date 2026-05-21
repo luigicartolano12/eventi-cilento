@@ -22,10 +22,12 @@ export function EventiList({
   eventi,
   categoriaEsterna,
   dataEsterna,
+  locationFiltro,
 }: {
   eventi: Evento[];
   categoriaEsterna?: Categoria | null;
   dataEsterna?: string;
+  locationFiltro?: string;
 }) {
   const [categoria, setCategoria] = useState<Categoria | null>(categoriaEsterna ?? null);
   const [comuneFiltro, setComuneFiltro] = useState("");
@@ -48,9 +50,15 @@ export function EventiList({
       if (dataEsterna && e.data < dataEsterna) return false;
       if (soloGratuiti && !e.servizi.ingressoGratuito) return false;
       if (soloAccessibili && !e.servizi.accessibileDisabili) return false;
+      if (locationFiltro) {
+        const lf = locationFiltro.toLowerCase();
+        const comune = e.comune.toLowerCase();
+        // partial match: "paestum" matches "capaccio-paestum", "palinuro" matches "centola-palinuro"
+        if (!comune.includes(lf) && !lf.includes(comune.split(/[-\s]/)[0])) return false;
+      }
       return true;
     });
-  }, [eventi, categoria, comuneFiltro, dataEsterna, soloGratuiti, soloAccessibili]);
+  }, [eventi, categoria, comuneFiltro, dataEsterna, locationFiltro, soloGratuiti, soloAccessibili]);
 
   const filtriAttivi = categoria || comuneFiltro || soloGratuiti || soloAccessibili;
 
