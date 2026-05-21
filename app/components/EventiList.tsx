@@ -4,14 +4,14 @@ import { useMemo, useState } from "react";
 import { Evento, Categoria, CATEGORIE } from "@/lib/events";
 import { EventCard } from "./EventCard";
 
-const coloriBottone: Record<string, string> = {
-  Sagra: "bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200",
-  Musica: "bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200",
-  Cultura: "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200",
-  Sport: "bg-green-100 text-green-800 border-green-200 hover:bg-green-200",
-  Religioso: "bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-200",
-  Mercato: "bg-pink-100 text-pink-800 border-pink-200 hover:bg-pink-200",
-  Natura: "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200",
+const coloriBottone: Record<string, { bg: string; text: string }> = {
+  Sagra:    { bg: "#fff7ed", text: "#9a3412" },
+  Musica:   { bg: "#faf5ff", text: "#6b21a8" },
+  Cultura:  { bg: "#eff6ff", text: "#1e40af" },
+  Sport:    { bg: "#f0fdf4", text: "#166534" },
+  Religioso:{ bg: "#fffbeb", text: "#92400e" },
+  Mercato:  { bg: "#fdf2f8", text: "#9d174d" },
+  Natura:   { bg: "#ecfdf5", text: "#065f46" },
 };
 
 export function EventiList({ eventi }: { eventi: Evento[] }) {
@@ -50,21 +50,22 @@ export function EventiList({ eventi }: { eventi: Evento[] }) {
 
   return (
     <div>
-      {/* Pannello filtri */}
-      <div className="bg-white rounded-2xl border border-stone-200 p-5 mb-8 flex flex-col gap-5">
-        {/* Riga 1: categoria */}
+      {/* Pannello filtri — appare "galleggiante" sull'hero */}
+      <div className="bg-white rounded-2xl shadow-md border border-stone-100 p-5 mb-8 flex flex-col gap-4">
+        {/* Categoria */}
         <div>
-          <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-2.5">
+          <p className="text-[11px] font-bold text-stone-400 uppercase tracking-widest mb-2.5">
             Categoria
           </p>
           <div className="flex gap-2 overflow-x-auto pb-1">
             <button
               onClick={() => setCategoria(null)}
-              className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-colors cursor-pointer ${
+              className="shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all cursor-pointer"
+              style={
                 !categoria
-                  ? "bg-stone-800 text-white border-stone-800"
-                  : "bg-white text-stone-600 border-stone-300 hover:bg-stone-100"
-              }`}
+                  ? { background: "#1a3529", color: "white", borderColor: "#1a3529" }
+                  : { background: "white", color: "#6b7280", borderColor: "#e5e7eb" }
+              }
             >
               Tutti
             </button>
@@ -72,11 +73,16 @@ export function EventiList({ eventi }: { eventi: Evento[] }) {
               <button
                 key={cat}
                 onClick={() => setCategoria((prev) => (prev === cat ? null : cat))}
-                className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-colors cursor-pointer ${
+                className="shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all cursor-pointer"
+                style={
                   categoria === cat
-                    ? "bg-stone-800 text-white border-stone-800"
-                    : coloriBottone[cat]
-                }`}
+                    ? { background: "#1a3529", color: "white", borderColor: "#1a3529" }
+                    : {
+                        background: coloriBottone[cat].bg,
+                        color: coloriBottone[cat].text,
+                        borderColor: "transparent",
+                      }
+                }
               >
                 {cat}
               </button>
@@ -84,12 +90,12 @@ export function EventiList({ eventi }: { eventi: Evento[] }) {
           </div>
         </div>
 
-        {/* Riga 2: data e comune */}
-        <div className="flex flex-col sm:flex-row gap-4">
+        {/* Data e Comune */}
+        <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex flex-col gap-1.5 flex-1">
             <label
               htmlFor="filtro-data"
-              className="text-xs font-semibold text-stone-400 uppercase tracking-wider"
+              className="text-[11px] font-bold text-stone-400 uppercase tracking-widest"
             >
               Mostra eventi dal
             </label>
@@ -98,14 +104,14 @@ export function EventiList({ eventi }: { eventi: Evento[] }) {
               type="date"
               value={dataFiltro}
               onChange={(e) => setDataFiltro(e.target.value)}
-              className="border border-stone-300 rounded-xl px-3 py-2 text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="border border-stone-200 rounded-xl px-3 py-2 text-sm text-stone-700 bg-stone-50 focus:outline-none focus:ring-2 focus:border-transparent"
+              style={{ "--tw-ring-color": "#16a34a" } as React.CSSProperties}
             />
           </div>
-
           <div className="flex flex-col gap-1.5 flex-1">
             <label
               htmlFor="filtro-comune"
-              className="text-xs font-semibold text-stone-400 uppercase tracking-wider"
+              className="text-[11px] font-bold text-stone-400 uppercase tracking-widest"
             >
               Comune
             </label>
@@ -113,7 +119,7 @@ export function EventiList({ eventi }: { eventi: Evento[] }) {
               id="filtro-comune"
               value={comuneFiltro}
               onChange={(e) => setComuneFiltro(e.target.value)}
-              className="border border-stone-300 rounded-xl px-3 py-2 text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+              className="border border-stone-200 rounded-xl px-3 py-2 text-sm text-stone-700 bg-stone-50 focus:outline-none focus:ring-2 focus:border-transparent"
             >
               <option value="">Tutti i comuni</option>
               {comuni.map((c) => (
@@ -125,52 +131,53 @@ export function EventiList({ eventi }: { eventi: Evento[] }) {
           </div>
         </div>
 
-        {/* Riga 3: toggle rapidi e reset */}
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+        {/* Toggle rapidi + contatore */}
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2.5">
           <label className="flex items-center gap-2 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={soloGratuiti}
               onChange={(e) => setSoloGratuiti(e.target.checked)}
-              className="w-4 h-4 accent-green-600"
+              className="w-4 h-4 rounded"
+              style={{ accentColor: "#16a34a" }}
             />
-            <span className="text-sm text-stone-700">Solo gratuiti</span>
+            <span className="text-sm text-stone-700 font-medium">Solo gratuiti</span>
           </label>
-
           <label className="flex items-center gap-2 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={soloAccessibili}
               onChange={(e) => setSoloAccessibili(e.target.checked)}
-              className="w-4 h-4 accent-green-600"
+              className="w-4 h-4 rounded"
+              style={{ accentColor: "#16a34a" }}
             />
-            <span className="text-sm text-stone-700">♿ Solo accessibili</span>
+            <span className="text-sm text-stone-700 font-medium">♿ Solo accessibili</span>
           </label>
 
           <div className="ml-auto flex items-center gap-3">
-            <span className="text-sm text-stone-500">
-              {eventiFiltrati.length}{" "}
-              {eventiFiltrati.length === 1 ? "evento trovato" : "eventi trovati"}
+            <span className="text-sm text-stone-400">
+              <span className="font-bold text-stone-700">{eventiFiltrati.length}</span>{" "}
+              {eventiFiltrati.length === 1 ? "evento" : "eventi"}
             </span>
             {filtriAttivi && (
               <button
                 onClick={resetFiltri}
-                className="text-sm text-red-500 hover:text-red-700 font-medium transition-colors cursor-pointer"
+                className="text-xs font-semibold px-3 py-1 rounded-full border cursor-pointer transition-colors"
+                style={{ color: "#dc2626", borderColor: "#fecaca" }}
               >
-                × Azzera filtri
+                × Azzera
               </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Griglia eventi */}
+      {/* Griglia */}
       {eventiFiltrati.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-stone-400 text-lg mb-2">Nessun evento trovato</p>
-          <p className="text-stone-400 text-sm">
-            Prova a modificare i filtri di ricerca.
-          </p>
+        <div className="text-center py-24 bg-white rounded-2xl border border-stone-100">
+          <p className="text-4xl mb-4">🔍</p>
+          <p className="text-stone-500 font-semibold mb-1">Nessun evento trovato</p>
+          <p className="text-stone-400 text-sm">Prova a modificare i filtri.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">

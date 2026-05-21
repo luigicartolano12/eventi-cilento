@@ -16,6 +16,19 @@ export type Servizi = {
   petFriendly: boolean;
 };
 
+export type Contatto = {
+  nome?: string;
+  telefono?: string;
+  email?: string;
+  sito?: string;
+};
+
+export type Biglietteria = {
+  url?: string;
+  prezzo?: string;
+  note?: string;
+};
+
 export type Evento = {
   id: string;
   titolo: string;
@@ -31,6 +44,8 @@ export type Evento = {
   immagine?: string;
   video?: string;
   servizi: Servizi;
+  contatto?: Contatto;
+  biglietteria?: Biglietteria;
 };
 
 export const CATEGORIE: Categoria[] = [
@@ -73,6 +88,12 @@ export const eventi: Evento[] = [
       prenotazioneRichiesta: false,
       petFriendly: true,
     },
+    contatto: {
+      nome: "Pro Loco di Controne",
+      telefono: "+39 0828 771234",
+      email: "proloco.controne@cilento.it",
+      sito: "https://www.prolococontrone.it",
+    },
   },
   {
     id: "concerto-estate-vallo",
@@ -85,7 +106,7 @@ export const eventi: Evento[] = [
     descrizioneBreve:
       "Una serata di musica jazz e blues nel cuore di Vallo della Lucania, con artisti locali e ospiti speciali.",
     descrizione:
-      "La Piazza Vittorio Emanuele di Vallo della Lucania si trasforma in un grande palcoscenico per una serata di jazz e blues. Sul palco si alterneranno musicisti locali di alto livello e ospiti speciali provenienti da tutta la Campania. L'evento è organizzato dall'associazione culturale 'Musica nel Cilento' con il patrocinio del Comune. I posti in piazza sono liberi e gratuiti. Si consiglia di portare sedie o cuscini per maggiore comfort. In caso di pioggia l'evento potrebbe essere posticipato.",
+      "La Piazza Vittorio Emanuele di Vallo della Lucania si trasforma in un grande palcoscenico per una serata di jazz e blues. Sul palco si alterneranno musicisti locali di alto livello e ospiti speciali provenienti da tutta la Campania. L'evento è organizzato dall'associazione culturale 'Musica nel Cilento' con il patrocinio del Comune. I posti in piazza sono liberi e gratuiti. Si consiglia di portare sedie o cuscini per maggiore comfort.",
     pubblico: "Tutti",
     servizi: {
       accessibileDisabili: true,
@@ -93,6 +114,11 @@ export const eventi: Evento[] = [
       ingressoGratuito: true,
       prenotazioneRichiesta: false,
       petFriendly: true,
+    },
+    contatto: {
+      nome: "Associazione Musica nel Cilento",
+      telefono: "+39 0974 712345",
+      email: "info@musicanelcilento.it",
     },
   },
   {
@@ -107,7 +133,7 @@ export const eventi: Evento[] = [
     descrizioneBreve:
       "Immagini aeree del Cilento realizzate con drone: paesaggi, borghi e coste viste da una prospettiva inedita.",
     descrizione:
-      "Una mostra fotografica straordinaria che esplora il Cilento visto dall'alto. Il fotografo Marco Esposito ha trascorso tre anni a sorvolare il territorio con il suo drone, catturando immagini spettacolari di borghi arroccati, coste frastagliate, foreste e spiagge dorate. La mostra sarà allestita negli spazi del Museo Narrante con oltre 50 stampe di grande formato. Apertura tutti i giorni dalle 10:00 alle 19:00. Ingresso gratuito per i residenti nel Parco Nazionale del Cilento. Prezzo intero: 5€.",
+      "Una mostra fotografica straordinaria che esplora il Cilento visto dall'alto. Il fotografo Marco Esposito ha trascorso tre anni a sorvolare il territorio con il suo drone, catturando immagini spettacolari di borghi arroccati, coste frastagliate, foreste e spiagge dorate. La mostra sarà allestita negli spazi del Museo Narrante con oltre 50 stampe di grande formato. Apertura tutti i giorni dalle 10:00 alle 19:00. Ingresso gratuito per i residenti nel Parco Nazionale del Cilento.",
     pubblico: "Tutti",
     servizi: {
       accessibileDisabili: true,
@@ -116,6 +142,16 @@ export const eventi: Evento[] = [
       costoDescrizione: "€5 (gratuito per residenti)",
       prenotazioneRichiesta: false,
       petFriendly: false,
+    },
+    contatto: {
+      nome: "Museo Narrante — Capaccio Paestum",
+      telefono: "+39 0828 723456",
+      email: "museo@capacciopaestum.it",
+      sito: "https://www.museonarrante.it",
+    },
+    biglietteria: {
+      prezzo: "€5",
+      note: "Gratuito per i residenti nel Parco Nazionale del Cilento",
     },
   },
   {
@@ -129,7 +165,7 @@ export const eventi: Evento[] = [
     descrizioneBreve:
       "La regata velica più attesa del Cilento: imbarcazioni di ogni tipo si sfidano lungo le acque cristalline del Capo.",
     descrizione:
-      "La Regata del Capo Palinuro è un appuntamento storico per gli appassionati di vela del Mediterraneo. Quest'anno partecipano oltre 40 imbarcazioni provenienti da tutto il Sud Italia. Il percorso costeggia le scogliere rosse del Capo e le grotte marine, offrendo uno spettacolo magnifico anche per chi assiste dalla riva. Le premiazioni si terranno nel pomeriggio sul lungomare di Palinuro con musica e aperitivi. Possibilità di seguire la regata dalle barche a noleggio disponibili in porto.",
+      "La Regata del Capo Palinuro è un appuntamento storico per gli appassionati di vela del Mediterraneo. Quest'anno partecipano oltre 40 imbarcazioni provenienti da tutto il Sud Italia. Il percorso costeggia le scogliere rosse del Capo e le grotte marine, offrendo uno spettacolo magnifico anche per chi assiste dalla riva. Le premiazioni si terranno nel pomeriggio sul lungomare di Palinuro con musica e aperitivi.",
     pubblico: "Adulti",
     servizi: {
       accessibileDisabili: false,
@@ -137,6 +173,12 @@ export const eventi: Evento[] = [
       ingressoGratuito: true,
       prenotazioneRichiesta: false,
       petFriendly: false,
+    },
+    contatto: {
+      nome: "Circolo Nautico Palinuro",
+      telefono: "+39 0974 938100",
+      email: "info@circolonauticopalinuro.it",
+      sito: "https://www.circolonauticopalinuro.it",
     },
   },
   {
@@ -150,7 +192,7 @@ export const eventi: Evento[] = [
     descrizioneBreve:
       "La tradizionale processione al Santuario di Novi Velia: migliaia di fedeli in cammino verso la cima del monte.",
     descrizione:
-      "Il Santuario della Madonna del Sacro Monte di Novi Velia è uno dei luoghi di culto più importanti del Cilento. Ogni anno, il giorno della Natività di Maria (8 settembre), migliaia di fedeli provenienti da tutto il territorio si radunano per il pellegrinaggio verso la cima del monte. La processione parte all'alba dal centro del paese e risale il sentiero storico tra preghiere e canti tradizionali. In cima, alle ore 11:00 circa, si celebra la Santa Messa all'aperto.",
+      "Il Santuario della Madonna del Sacro Monte di Novi Velia è uno dei luoghi di culto più importanti del Cilento. Ogni anno, il giorno della Natività di Maria (8 settembre), migliaia di fedeli provenienti da tutto il territorio si radunano per il pellegrinaggio verso la cima del monte. La processione parte all'alba dal centro del paese e risale il sentiero storico tra preghiere e canti tradizionali. In cima si celebra la Santa Messa all'aperto.",
     pubblico: "Tutti",
     servizi: {
       accessibileDisabili: false,
@@ -158,6 +200,11 @@ export const eventi: Evento[] = [
       ingressoGratuito: true,
       prenotazioneRichiesta: false,
       petFriendly: false,
+    },
+    contatto: {
+      nome: "Parrocchia di Novi Velia",
+      telefono: "+39 0974 985001",
+      email: "parrocchia.novivelia@diocesivallo.it",
     },
   },
   {
@@ -172,7 +219,7 @@ export const eventi: Evento[] = [
     descrizioneBreve:
       "Tra i vicoli del borgo medievale di Teggiano, artigiani e produttori locali espongono le loro eccellenze.",
     descrizione:
-      "Il centro storico di Teggiano, uno dei borghi più belli del Vallo di Diano, ospita il Mercatino dell'Artigianato e dei Sapori. Tra palazzi nobiliari e chiese antiche, i visitatori troveranno bancarelle di ceramiche, tessuti, prodotti alimentari tipici, formaggi, salumi e dolci tradizionali. L'evento si svolge su due giorni con apertura dalle 9:00 alle 23:00. Previsti spettacoli di rievocazione medievale e musici itineranti. Ingresso libero. Parcheggi disponibili alla periferia del paese con navette gratuite.",
+      "Il centro storico di Teggiano, uno dei borghi più belli del Vallo di Diano, ospita il Mercatino dell'Artigianato e dei Sapori. Tra palazzi nobiliari e chiese antiche, i visitatori troveranno bancarelle di ceramiche, tessuti, prodotti alimentari tipici, formaggi, salumi e dolci tradizionali. L'evento si svolge su due giorni con apertura dalle 9:00 alle 23:00. Previsti spettacoli di rievocazione medievale e musici itineranti. Ingresso libero.",
     pubblico: "Famiglie",
     servizi: {
       accessibileDisabili: false,
@@ -180,6 +227,12 @@ export const eventi: Evento[] = [
       ingressoGratuito: true,
       prenotazioneRichiesta: false,
       petFriendly: true,
+    },
+    contatto: {
+      nome: "Comune di Teggiano — Ufficio Cultura",
+      telefono: "+39 0975 577011",
+      email: "cultura@comune.teggiano.sa.it",
+      sito: "https://www.comune.teggiano.sa.it",
     },
   },
   {
@@ -193,7 +246,7 @@ export const eventi: Evento[] = [
     descrizioneBreve:
       "Escursione guidata sul Monte Bulgheria (1225 m): panorami mozzafiato sul Golfo di Policastro.",
     descrizione:
-      "Il Monte Bulgheria è una delle vette più belle del Parco Nazionale del Cilento. Questa escursione guidata percorre il sentiero principale da Celle di Bulgheria fino alla cima, con un dislivello di circa 900 metri. In vetta, in giornate limpide, si può vedere fino alla Sicilia e alla Calabria. La guida è Roberto Sellitto, escursionista esperto con 20 anni di esperienza. Difficoltà: media. Equipaggiamento richiesto: scarpe da trekking, abbigliamento a strati, almeno 2 litri d'acqua. Iscrizione obbligatoria entro il 12 giugno.",
+      "Il Monte Bulgheria è una delle vette più belle del Parco Nazionale del Cilento. Questa escursione guidata percorre il sentiero principale da Celle di Bulgheria fino alla cima, con un dislivello di circa 900 metri. In vetta, in giornate limpide, si può vedere fino alla Sicilia e alla Calabria. Difficoltà: media. Equipaggiamento richiesto: scarpe da trekking, abbigliamento a strati, almeno 2 litri d'acqua. Iscrizione obbligatoria entro il 12 giugno.",
     pubblico: "Adulti",
     servizi: {
       accessibileDisabili: false,
@@ -202,6 +255,16 @@ export const eventi: Evento[] = [
       costoDescrizione: "€15 a persona",
       prenotazioneRichiesta: true,
       petFriendly: false,
+    },
+    contatto: {
+      nome: "Roberto Sellitto — Guida Escursionistica",
+      telefono: "+39 333 1234567",
+      email: "roberto.sellitto@guidecilento.it",
+      sito: "https://www.guidecilento.it",
+    },
+    biglietteria: {
+      prezzo: "€15 a persona",
+      note: "Iscrizione obbligatoria. Minimo 6 partecipanti per confermare l'uscita.",
     },
   },
   {
@@ -224,6 +287,12 @@ export const eventi: Evento[] = [
       costoDescrizione: "Degustazioni da €3",
       prenotazioneRichiesta: false,
       petFriendly: true,
+    },
+    contatto: {
+      nome: "Pro Loco di Pisciotta",
+      telefono: "+39 0974 973456",
+      email: "info@prolocopisciotta.it",
+      sito: "https://www.prolocopisciotta.it",
     },
   },
 ];
