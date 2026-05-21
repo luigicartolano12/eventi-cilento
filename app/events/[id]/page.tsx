@@ -10,6 +10,7 @@ import {
 } from "@/app/components/icons";
 import { ShareButton } from "@/app/components/ShareButton";
 import { MenuAccordion } from "@/app/components/MenuAccordion";
+import { ReviewSection } from "@/app/components/ReviewSection";
 
 const gradientCategoria: Record<string, string> = {
   Sagra:    "linear-gradient(135deg, #fb923c, #fbbf24)",
@@ -294,6 +295,14 @@ export default async function PaginaEvento({
                 </div>
               </div>
             )}
+
+            {/* ── Recensioni ── */}
+            <div>
+              <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3">
+                Recensioni
+              </p>
+              <ReviewSection evento={evento} />
+            </div>
 
           </div>
         </article>
