@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { IcoSend } from "./icons";
+import { UserButton } from "./UserButton";
 
 export function Header() {
   return (
@@ -16,22 +17,28 @@ export function Header() {
             Eventi Cilento
           </span>
         </Link>
-        <div className="flex items-center gap-3">
-          <span
-            className="hidden sm:inline text-xs font-semibold px-2.5 py-1 rounded-full"
-            style={{ background: "rgba(255,255,255,0.1)", color: "#86efac" }}
+
+        {/* Nav centrale */}
+        <nav className="hidden sm:flex items-center gap-1">
+          <Link
+            href="/esperienze"
+            className="text-sm font-semibold px-3 py-1.5 rounded-xl transition-all hover:bg-white/10"
+            style={{ color: "#86efac" }}
           >
-            BETA
-          </span>
+            Esperienze
+          </Link>
+        </nav>
+
+        <div className="flex items-center gap-2">
           <Link
             href="/proponi"
-            className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl transition-opacity hover:opacity-80"
-            style={{ background: "#a3e635", color: "#14532d" }}
+            className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl transition-opacity hover:opacity-80"
+            style={{ background: "rgba(255,255,255,0.10)", color: "#86efac" }}
           >
             <IcoSend size={12} />
-            <span className="hidden sm:inline">Proponi evento</span>
-            <span className="sm:hidden">+</span>
+            Proponi
           </Link>
+          <UserButton />
         </div>
       </div>
     </header>
