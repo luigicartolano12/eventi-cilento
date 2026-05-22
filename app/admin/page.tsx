@@ -513,9 +513,13 @@ function TabCron() {
   const [running, setRunning] = useState<null|"light"|"full">(null);
   const [periodo, setPeriodo] = useState("");
   const [testo, setTesto] = useState("");
+  const [urlImport, setUrlImport] = useState("");
   const [importando, setImportando] = useState(false);
   const [importMsg, setImportMsg] = useState("");
+  const [importUrlMsg, setImportUrlMsg] = useState("");
+  const [importandoUrl, setImportandoUrl] = useState(false);
   const [resettando, setResettando] = useState(false);
+  const [mostraGuida, setMostraGuida] = useState(false);
 
   // ── Seed diretto: eventi reali verificati (senza AI) ──────────────────────
   async function seedEventiReali(conReset = true) {
@@ -668,6 +672,33 @@ function TabCron() {
     }
   }
 
+  async function importaDaUrl() {
+    const u = urlImport.trim();
+    if (!u || !u.startsWith("http")) return;
+    setImportandoUrl(true); setImportUrlMsg("⏳ Scarico la pagina…");
+    try {
+      const res = await fetch("/api/import-da-url", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: u, chiave: "cilento2025" }),
+      });
+      const d = await res.json();
+      if (d.ok) {
+        if (d.salvati > 0) {
+          setImportUrlMsg(`✓ ${d.salvati} event${d.salvati === 1 ? "o" : "i"} pubblicat${d.salvati === 1 ? "o" : "i"} (trovati ${d.estratti}, tipo: ${d.tipo})`);
+          setUrlImport("");
+        } else {
+          setImportUrlMsg(`ℹ️ ${d.messaggio} — trovati ${d.estratti ?? 0} eventi`);
+        }
+      } else {
+        setImportUrlMsg(`✕ ${d.errore}${d.suggerimento ? "\n💡 " + d.suggerimento : ""}`);
+      }
+    } catch (err) {
+      setImportUrlMsg(`✕ ${err instanceof Error ? err.message : "Errore di rete"}`);
+    } finally {
+      setImportandoUrl(false);
+    }
+  }
+
   const [mostraOpus, setMostraOpus] = useState(false);
   const isBusy = !!running || resettando;
 
@@ -730,6 +761,88 @@ function TabCron() {
           <p className="text-[10px]" style={{color:"#9ca3af"}}>
             💡 Prendi il testo da Facebook · Pro Loco Teggiano · Sala Consilina · Padula · Sassano · Atena Lucana · Polla
           </p>
+
+          {/* Divider */}
+          <div className="h-px mx-2 mt-1" style={{background:"#f3f4f6"}}/>
+
+          {/* Import da URL */}
+          <p className="text-[10px] font-black uppercase tracking-widest" style={{color:"#78716c"}}>
+            Oppure incolla direttamente un link (sito, RSS, pagina)
+          </p>
+          <div className="flex gap-2">
+            <input
+              value={urlImport}
+              onChange={e => { setUrlImport(e.target.value); setImportUrlMsg(""); }}
+              placeholder="https://rss.app/feeds/… oppure sito Pro Loco…"
+              type="url"
+              className={CL + " flex-1"}
+              style={{...IS, fontSize:13}}
+            />
+            <button
+              onClick={importaDaUrl}
+              disabled={importandoUrl || !urlImport.trim().startsWith("http")}
+              className="shrink-0 py-3 px-4 rounded-2xl font-black text-sm flex items-center gap-1.5 border-0 cursor-pointer disabled:opacity-40 transition-opacity hover:opacity-90"
+              style={{background:"linear-gradient(135deg,#7c3aed,#6d28d9)",color:"white"}}
+            >
+              {importandoUrl
+                ? <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"/>
+                : <IcoDownload size={14}/>}
+            </button>
+          </div>
+          {importUrlMsg && (
+            <p className="text-xs px-3 py-2.5 rounded-xl leading-relaxed whitespace-pre-line"
+              style={{
+                background: importUrlMsg.startsWith("✓") ? "#f0fdf4" : importUrlMsg.startsWith("✕") ? "#fef2f2" : "#f0f9ff",
+                color: importUrlMsg.startsWith("✓") ? "#166534" : importUrlMsg.startsWith("✕") ? "#dc2626" : "#0369a1",
+              }}>
+              {importUrlMsg}
+            </p>
+          )}
+
+          {/* Guida RSS Facebook */}
+          <button
+            onClick={() => setMostraGuida(v => !v)}
+            className="flex items-center gap-2 text-[11px] font-bold border-0 bg-transparent cursor-pointer text-left"
+            style={{color:"#1877f2"}}
+          >
+            <span>{mostraGuida ? "▲" : "▼"}</span>
+            Come importare da Facebook/Instagram automaticamente (guida RSS)
+          </button>
+
+          {mostraGuida && (
+            <div className="rounded-2xl p-4 flex flex-col gap-3 text-[12px] leading-relaxed"
+              style={{background:"#eff6ff",color:"#1e40af",border:"1.5px solid #bfdbfe"}}>
+              <p className="font-black text-[11px] uppercase tracking-widest" style={{color:"#1d4ed8"}}>
+                📘 Come leggere le pagine Facebook con RSS (gratuito)
+              </p>
+              <ol className="flex flex-col gap-2 list-decimal list-inside">
+                <li>Vai su <strong>rss.app</strong> (rss.app) e crea un account gratuito</li>
+                <li>Clicca <strong>"New Feed"</strong> → <strong>"From URL"</strong></li>
+                <li>Incolla l&apos;URL della pagina Facebook (es. <code style={{background:"#dbeafe",padding:"1px 4px",borderRadius:3}}>facebook.com/proloco.teggiano</code>)</li>
+                <li>rss.app genera un link RSS del tipo <code style={{background:"#dbeafe",padding:"1px 4px",borderRadius:3}}>https://rss.app/feeds/xxxxx.xml</code></li>
+                <li>Incolla quel link nel campo URL qui sopra e clicca il pulsante viola</li>
+              </ol>
+              <p className="text-[11px]" style={{color:"#3b82f6"}}>
+                ✅ Funziona anche con pagine Instagram, Telegram pubblico, e qualsiasi sito web.<br/>
+                ✅ Puoi ripetere questo per ogni Pro Loco e comune del Cilento.<br/>
+                🆓 Il piano gratuito di rss.app permette ~5 feed.
+              </p>
+              <p className="font-bold text-[11px]" style={{color:"#1d4ed8"}}>Pagine consigliate da seguire:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  "Pro Loco Teggiano","Pro Loco Sala Consilina","Pro Loco Padula",
+                  "Comune di Polla","Pro Loco Sassano","Pro Loco Atena Lucana",
+                  "Pro Loco Agropoli","Pro Loco Castellabate","Pro Loco Pisciotta",
+                  "Comune Camerota","Pro Loco Sapri",
+                ].map(p => (
+                  <span key={p} className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    style={{background:"#dbeafe",color:"#1e40af"}}>
+                    {p}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

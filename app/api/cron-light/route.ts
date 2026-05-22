@@ -83,6 +83,29 @@ const SORGENTI = [
   { url: "https://www.comune.santa-marina.sa.it",                          label: "Comune Santa Marina" },
   { url: "https://www.comune.san-giovanni-a-piro.sa.it",                   label: "Comune San Giovanni a Piro" },
 
+  // ══ FEED RSS — FACEBOOK VIA RSS.APP (aggiungi qui i tuoi feed) ═══════════
+  // Per aggiungere una pagina Facebook: vai su rss.app → incolla l'URL FB →
+  // copia il link RSS generato e incollalo qui nel formato:
+  // { url: "https://rss.app/feeds/TUO-CODICE.xml", label: "Pro Loco NomeComune (FB)" },
+  //
+  // Esempi da configurare su rss.app:
+  //   facebook.com/proloco.teggiano
+  //   facebook.com/comunedipolla
+  //   facebook.com/proloco.salaconsulina
+  //   facebook.com/proloco.padula
+  //   facebook.com/proloco.sassano
+  //   facebook.com/comuneatena
+  //   facebook.com/proloco.agropoli
+  //   facebook.com/prolococastellabate
+  //   facebook.com/proloco.pisciotta
+  //   facebook.com/proloco.camerota
+  //   facebook.com/comunesapri
+  //
+  // Una volta configurati, de-commenta le righe e inserisci i codici RSS reali:
+  // { url: "https://rss.app/feeds/CODICE1.xml", label: "Pro Loco Teggiano (FB)" },
+  // { url: "https://rss.app/feeds/CODICE2.xml", label: "Comune Polla (FB)" },
+  // { url: "https://rss.app/feeds/CODICE3.xml", label: "Pro Loco Sala Consilina (FB)" },
+
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
