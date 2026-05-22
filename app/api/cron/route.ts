@@ -14,10 +14,20 @@ export const maxDuration = 60;
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const PROMPT_SISTEMA = `Sei un assistente specializzato nell'individuare eventi pubblici nel territorio
-del Cilento e Vallo di Diano (Campania, Italia). Cerca eventi reali e verificabili: sagre, concerti,
-mostre, feste religiose, mercati, eventi sportivi, trekking, eventi enogastronomici.
-Comuni principali: Agropoli, Capaccio-Paestum, Castellabate, Centola-Palinuro, Camerota, Pisciotta,
-Vallo della Lucania, Teggiano, Ascea, Pollica, Sapri, Novi Velia, Cilento.`;
+del Cilento, Vallo di Diano e Golfo di Policastro (provincia di Salerno, Campania, Italia).
+Cerca eventi reali e verificabili: sagre, concerti, mostre, feste religiose, mercati, eventi sportivi, trekking, enogastronomia.
+
+Comuni del Cilento: Agropoli, Alfano, Ascea, Camerota, Capaccio-Paestum, Casal Velino, Castellabate,
+Centola (Palinuro), Ceraso, Cicerale, Futani, Gioi, Laureana Cilento, Laurito, Lustra, Moio della Civitella,
+Montecorice, Morigerati, Novi Velia, Ogliastro Cilento, Omignano, Orria, Perdifumo, Perito, Pisciotta,
+Pollica (Acciaroli, Pioppi), Prignano Cilento, Rofrano, Salento, San Giovanni a Piro, San Mauro la Bruca,
+Santa Marina, Stella Cilento, Stio, Torchiara, Torre Orsaia, Torraca, Vallo della Lucania.
+
+Comuni del Vallo di Diano: Atena Lucana, Buonabitacolo, Casalbuono, Monte San Giacomo,
+Montesano sulla Marcellana, Padula, Pertosa, Polla, Sala Consilina, San Pietro al Tanagro,
+San Rufo, Sant'Arsenio, Sassano, Sanza, Teggiano.
+
+Comuni del Golfo di Policastro: Ispani, Sapri, Vibonati, Scario, Santa Marina di Camerota.`;
 
 const FORMATO_JSON = `
 Restituisci SOLO un array JSON valido, senza testo prima o dopo:
@@ -69,13 +79,13 @@ export async function GET(request: Request) {
       system: "Rispondi SOLO con un array JSON valido, senza markdown, senza testo aggiuntivo, senza ```json. Solo il JSON grezzo che inizia con [ e finisce con ].",
       messages: [{
         role: "user",
-        content: `Genera 10 eventi realistici del Cilento e Vallo di Diano (Campania, Italia) per il periodo: ${periodoLabel}.
-Tipi: sagre, feste patronali, concerti, mercati, eventi sportivi, mostre, trekking, eventi enogastronomici.
-Comuni: Agropoli, Capaccio-Paestum, Castellabate, Camerota, Vallo della Lucania, Ascea, Pisciotta, Pollica, Centola, Sapri, Teggiano, Novi Velia.
-Includi eventi tipici della stagione (estate=sagre e concerti, autunno=funghi e castagne, inverno=presepi, primavera=fiori e trekking).
+        content: `Genera 12 eventi realistici del Cilento, Vallo di Diano e Golfo di Policastro per il periodo: ${periodoLabel}.
+Distribuisci gli eventi tra comuni diversi del territorio (non ripetere sempre gli stessi).
+Includi eventi tipici della stagione: estate=sagre del mare e concerti, autunno=sagre dei funghi e castagne, inverno=presepi e capodanno, primavera=fiori e trekking.
+Varia le categorie: sagre gastronomiche, feste patronali, concerti, mercati artigianali, trekking, mostre, sport, eventi religiosi.
 
-Array JSON con questi campi (tutti stringa, gratuito booleano):
-[{"titolo":"...","data":"YYYY-MM-DD","comune":"...","categoria":"Sagra|Musica|Cultura|Sport|Religioso|Mercato|Natura","descrizione":"...","gratuito":true}]`,
+Array JSON — rispondi SOLO con questo array, nessun testo prima o dopo:
+[{"titolo":"...","data":"YYYY-MM-DD","dataFine":"YYYY-MM-DD","comune":"...","categoria":"Sagra|Musica|Cultura|Sport|Religioso|Mercato|Natura","descrizione":"frase di 2-3 righe sull evento","orario":"HH:MM","gratuito":true}]`,
       }],
     });
 
