@@ -54,14 +54,11 @@ export async function GET(request: Request) {
   }
 
   const oggi = new Date().toISOString().split("T")[0];
-  const mese = new Date().toLocaleString("it-IT", { month: "long" });
-  const anno = new Date().getFullYear();
-
-  // Interrogazioni multiple per trovare più eventi
-  const query = `Trova eventi, sagre, concerti, mostre, mercati, eventi sportivi e manifestazioni
-nel Cilento e Vallo di Diano (provincia di Salerno, Campania) nel mese di ${mese} ${anno}
-e nei 2 mesi successivi. Data di oggi: ${oggi}.
-Cerca su siti locali, comuni, pro loco, pagine eventi campani.`;
+  // Accetta un periodo personalizzato via query param (es. ?periodo=luglio+2026)
+  const periodoParam = url.searchParams.get("periodo");
+  const mese = periodoParam ?? new Date().toLocaleString("it-IT", { month: "long" });
+  const anno = periodoParam ? "" : String(new Date().getFullYear());
+  const periodoLabel = periodoParam ?? `${mese} ${anno}`;
 
   let eventiGrezzi: object[] = [];
 
@@ -72,9 +69,10 @@ Cerca su siti locali, comuni, pro loco, pagine eventi campani.`;
       system: "Rispondi SOLO con un array JSON valido, senza markdown, senza testo aggiuntivo, senza ```json. Solo il JSON grezzo che inizia con [ e finisce con ].",
       messages: [{
         role: "user",
-        content: `Genera 8 eventi realistici del Cilento e Vallo di Diano (Campania, Italia) per il periodo ${mese} ${anno}. Data oggi: ${oggi}.
-Tipi: sagre, feste patronali, concerti, mercati, eventi sportivi, mostre.
-Comuni: Agropoli, Capaccio-Paestum, Castellabate, Camerota, Vallo della Lucania, Ascea, Pisciotta, Pollica.
+        content: `Genera 10 eventi realistici del Cilento e Vallo di Diano (Campania, Italia) per il periodo: ${periodoLabel}.
+Tipi: sagre, feste patronali, concerti, mercati, eventi sportivi, mostre, trekking, eventi enogastronomici.
+Comuni: Agropoli, Capaccio-Paestum, Castellabate, Camerota, Vallo della Lucania, Ascea, Pisciotta, Pollica, Centola, Sapri, Teggiano, Novi Velia.
+Includi eventi tipici della stagione (estate=sagre e concerti, autunno=funghi e castagne, inverno=presepi, primavera=fiori e trekking).
 
 Array JSON con questi campi (tutti stringa, gratuito booleano):
 [{"titolo":"...","data":"YYYY-MM-DD","comune":"...","categoria":"Sagra|Musica|Cultura|Sport|Religioso|Mercato|Natura","descrizione":"...","gratuito":true}]`,
