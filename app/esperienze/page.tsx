@@ -6,9 +6,19 @@ import {
   esperienze,
   CATEGORIE_ESPERIENZA,
   STILE_CATEGORIA,
+  IMG_KEYWORDS_CATEGORIA,
   type CategoriaEsperienza,
   type Esperienza,
 } from "@/lib/esperienze";
+
+/** Converte un ID stringa in un numero per il lock di loremflickr (immagine coerente) */
+function hashId(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h) % 9999 + 1;
+}
 import { IcoArrowLeft, IcoMapPin, IcoClock } from "@/app/components/icons";
 
 function EsperienzaCard({ esp }: { esp: Esperienza }) {
@@ -29,7 +39,7 @@ function EsperienzaCard({ esp }: { esp: Esperienza }) {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={`https://picsum.photos/seed/exp-${esp.id}/600/300`}
+          src={`https://loremflickr.com/600/300/${esp.imgKeywords ?? IMG_KEYWORDS_CATEGORIA[esp.categoria]}?lock=${hashId(esp.id)}`}
           alt={esp.titolo}
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />

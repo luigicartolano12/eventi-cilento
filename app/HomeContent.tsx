@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Evento, Categoria, CATEGORIE, formattaData } from "@/lib/events";
 import { getEventiApprovati, type EventoDinamico } from "@/lib/eventi-dinamici";
-import { getInEvidenza, STILE_CATEGORIA, type Esperienza } from "@/lib/esperienze";
+import { getInEvidenza, STILE_CATEGORIA, IMG_KEYWORDS_CATEGORIA, type Esperienza } from "@/lib/esperienze";
 import { getLocaliInEvidenza, STILE_LOCALE, type Locale } from "@/lib/locali";
 import { EventiList } from "./components/EventiList";
 import {
@@ -32,6 +32,23 @@ const descCategoria: Record<string, string> = {
   Sagra: "Gusto locale", Musica: "Concerti", Cultura: "Arte e mostre",
   Sport: "Competizioni", Religioso: "Fede e storia", Mercato: "Artigianato", Natura: "Trekking",
 };
+
+const keywordsLocale: Record<string, string> = {
+  "Bar & Aperitivo": "bar,aperitivo,italy,outdoor,evening",
+  "Ristorante":      "restaurant,food,italy,dinner,traditional",
+  "Discoteca":       "nightclub,music,dance,night,party",
+  "Agriturismo":     "farmhouse,countryside,italy,nature,farm",
+  "Beach Club":      "beach,sea,club,summer,coast",
+};
+
+/** Numero coerente da stringa (lock loremflickr) */
+function hashId(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h) % 9999 + 1;
+}
 
 function oggiISO() {
   return new Date().toISOString().split("T")[0];
@@ -106,7 +123,7 @@ function EsperienzaMiniCard({ esp }: { esp: Esperienza }) {
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={`https://picsum.photos/seed/exp-${esp.id}/400/300`}
+        src={`https://loremflickr.com/400/300/${esp.imgKeywords ?? IMG_KEYWORDS_CATEGORIA[esp.categoria]}?lock=${hashId(esp.id)}`}
         alt={esp.titolo}
         className="absolute inset-0 w-full h-full object-cover"
       />
@@ -153,7 +170,7 @@ function LocaleMiniCard({ locale }: { locale: Locale }) {
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={`https://picsum.photos/seed/locale-${locale.id}/400/300`}
+        src={`https://loremflickr.com/400/300/${keywordsLocale[locale.categoria] ?? "restaurant,italy,food,local"}?lock=${hashId(locale.id)}`}
         alt={locale.nome}
         className="absolute inset-0 w-full h-full object-cover"
       />

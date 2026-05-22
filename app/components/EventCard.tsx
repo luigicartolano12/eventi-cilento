@@ -25,13 +25,34 @@ const gradientCategoria: Record<string, string> = {
   Natura:   "linear-gradient(160deg, #059669 0%, #14b8a6 100%)",
 };
 
-function placeholderImg(id: string) {
-  return `https://picsum.photos/seed/${id}/600/300`;
+/** Keyword Unsplash/Flickr per categoria evento */
+const keywordsCategoria: Record<string, string> = {
+  Sagra:    "food,festival,italy,traditional,local",
+  Musica:   "concert,music,festival,summer,outdoor",
+  Cultura:  "ruins,museum,italy,history,archaeological",
+  Sport:    "sport,outdoor,nature,activity,italy",
+  Religioso:"church,procession,italy,religious,faith",
+  Mercato:  "market,crafts,artisan,italy,local",
+  Natura:   "nature,forest,landscape,italy,park",
+};
+
+/** Numero coerente da ID stringa (per immagine stabile con loremflickr) */
+function hashId(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h) % 9999 + 1;
+}
+
+function placeholderImg(id: string, categoria: string) {
+  const keywords = keywordsCategoria[categoria] ?? "italy,landscape,nature";
+  return `https://loremflickr.com/600/300/${keywords}?lock=${hashId(id)}`;
 }
 
 export function EventCard({ evento }: { evento: Evento }) {
   const { servizi } = evento;
-  const imgSrc = evento.immagine || placeholderImg(evento.id);
+  const imgSrc = evento.immagine || placeholderImg(evento.id, evento.categoria);
 
   const hasBadge =
     servizi.ingressoGratuito ||
