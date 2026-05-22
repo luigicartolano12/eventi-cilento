@@ -1,5 +1,5 @@
 /**
- * GET  /api/proposte  → lista tutte le proposte (admin)
+ * GET  /api/proposte  → lista tutte le proposte (solo admin con chiave)
  * POST /api/proposte  → invia una proposta (pubblica, da /proponi)
  */
 import { NextResponse } from "next/server";
@@ -7,7 +7,16 @@ import { getProposte, aggiungiProposta } from "@/lib/kv-proposte";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+const ADMIN_KEY = process.env.TRIGGER_KEY ?? "cilento2025";
+
+export async function GET(request: Request) {
+  // GET è riservato all'admin panel
+  const url = new URL(request.url);
+  const chiave = url.searchParams.get("chiave");
+  const auth = request.headers.get("authorization");
+  if (chiave !== ADMIN_KEY && auth !== `Bearer ${ADMIN_KEY}`) {
+    return NextResponse.json({ errore: "Non autorizzato" }, { status: 401 });
+  }
   const proposte = await getProposte();
   // Ordina per data invio, più recenti prima
   const ordinate = [...proposte].sort(

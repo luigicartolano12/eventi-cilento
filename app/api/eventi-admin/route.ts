@@ -1,6 +1,8 @@
 /**
  * POST /api/eventi-admin → crea un evento direttamente nel KV (usato dall'admin)
  * DELETE /api/eventi-admin?id=... → rimuove un evento dal KV
+ *
+ * Tutti i metodi richiedono il parametro ?chiave=cilento2025
  */
 import { NextResponse } from "next/server";
 import { aggiungiEventiKV, getEventiKV, svuotaEventiKV } from "@/lib/kv-store";
@@ -8,13 +10,28 @@ import { kv } from "@vercel/kv";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+const ADMIN_KEY = process.env.TRIGGER_KEY ?? "cilento2025";
+
+function autenticato(request: Request): boolean {
+  const url = new URL(request.url);
+  const chiave = url.searchParams.get("chiave");
+  const authHeader = request.headers.get("authorization");
+  return chiave === ADMIN_KEY || authHeader === `Bearer ${ADMIN_KEY}`;
+}
+
+export async function GET(request: Request) {
+  if (!autenticato(request)) {
+    return NextResponse.json({ errore: "Non autorizzato" }, { status: 401 });
+  }
   const eventi = await getEventiKV();
   const ordinati = [...eventi].sort((a, b) => a.data.localeCompare(b.data));
   return NextResponse.json(ordinati);
 }
 
 export async function POST(request: Request) {
+  if (!autenticato(request)) {
+    return NextResponse.json({ errore: "Non autorizzato" }, { status: 401 });
+  }
   try {
     const body = await request.json();
     const { titolo, data, comune, categoria, descrizione } = body;
@@ -49,6 +66,9 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  if (!autenticato(request)) {
+    return NextResponse.json({ errore: "Non autorizzato" }, { status: 401 });
+  }
   try {
     const url = new URL(request.url);
     const id = url.searchParams.get("id");

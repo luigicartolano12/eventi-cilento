@@ -9,19 +9,6 @@ import {
   IcoSagra, IcoMusica, IcoCultura, IcoSport, IcoReligioso, IcoMercato, IcoNatura, IcoSalute,
 } from "./components/icons";
 
-// ── Mappatura keyword immagini per categoria ──────────────────────────────────
-
-const kwCategoria: Record<string, string> = {
-  Sagra:     "food,festival",
-  Musica:    "concert,music",
-  Cultura:   "ruins,columns",
-  Sport:     "sport,outdoor",
-  Religioso: "church,procession",
-  Mercato:   "market,stalls",
-  Natura:    "nature,trail",
-  Salute:    "health,wellness",
-};
-
 // ── Colori e icone per categoria ─────────────────────────────────────────────
 
 const gradientCategoria: Record<string, string> = {
@@ -43,14 +30,6 @@ const IconeCategoria: Record<string, React.ComponentType<any>> = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function hashId(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) {
-    h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  }
-  return Math.abs(h) % 9999 + 1;
-}
-
 function oggiISO() {
   return new Date().toISOString().split("T")[0];
 }
@@ -62,8 +41,6 @@ function eventiDiOggi(eventi: Evento[]): Evento[] {
 
 // ── Mini card: evento di oggi ─────────────────────────────────────────────────
 function MiniCard({ evento }: { evento: Evento }) {
-  const kw = kwCategoria[evento.categoria] ?? "nature,trail";
-  const lock = hashId(evento.id);
   const gradient = gradientCategoria[evento.categoria] ?? "linear-gradient(135deg, #059669, #14b8a6)";
   const Ico = IconeCategoria[evento.categoria];
 
@@ -78,33 +55,32 @@ function MiniCard({ evento }: { evento: Evento }) {
         boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
       }}
     >
-      {/* Copertina */}
-      <div className="relative" style={{ height: 88 }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={`https://loremflickr.com/160/100/${kw}/all?lock=${lock}`}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        {/* Overlay scuro leggero in basso */}
+      {/* Copertina — gradiente categoria + icona centrata */}
+      <div
+        className="relative flex items-center justify-center"
+        style={{ height: 88, background: gradient }}
+      >
+        {/* Icona grande centrata */}
+        {Ico && (
+          <Ico size={32} strokeWidth={1.2} className="text-white opacity-30" />
+        )}
+        {/* Overlay in basso */}
         <div
           className="absolute inset-0"
-          style={{ background: "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.35) 100%)" }}
+          style={{ background: "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.30) 100%)" }}
         />
-
-        {/* Tag categoria colorato — in alto a sinistra */}
+        {/* Tag categoria */}
         <span
           className="absolute top-2 left-2 z-10 text-[9px] font-black px-2 py-0.5 rounded-full text-white"
-          style={{ background: gradient }}
+          style={{ background: "rgba(0,0,0,0.28)", backdropFilter: "blur(6px)" }}
         >
           {evento.categoria}
         </span>
-
-        {/* Icona rotonda — in basso a destra */}
+        {/* Icona rotonda in basso a destra */}
         {Ico && (
           <div
             className="absolute bottom-2 right-2 z-10 w-7 h-7 rounded-full flex items-center justify-center"
-            style={{ background: gradient, boxShadow: "0 1px 4px rgba(0,0,0,0.3)" }}
+            style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(4px)" }}
           >
             <Ico size={13} strokeWidth={1.8} className="text-white" />
           </div>

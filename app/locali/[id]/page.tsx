@@ -13,20 +13,12 @@ export async function generateStaticParams() {
 
 export const dynamicParams = false;
 
-function hashId(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) {
-    h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  }
-  return Math.abs(h) % 9999 + 1;
-}
-
-const kwLocale: Record<string, string> = {
-  "Bar & Aperitivo": "bar,aperitivo",
-  "Ristorante":      "restaurant,food",
-  "Discoteca":       "nightclub,dance",
-  "Agriturismo":     "farmhouse,countryside",
-  "Beach Club":      "beach,club",
+const emojiLocale: Record<string, string> = {
+  "Bar & Aperitivo": "🍹",
+  "Ristorante":      "🍽️",
+  "Discoteca":       "🎉",
+  "Agriturismo":     "🌾",
+  "Beach Club":      "🏖️",
 };
 
 export default async function PaginaLocale({
@@ -39,9 +31,7 @@ export default async function PaginaLocale({
   if (!locale) notFound();
 
   const stile = STILE_LOCALE[locale.categoria];
-  const kw = kwLocale[locale.categoria] ?? "restaurant,food";
-  const lock = hashId(locale.id);
-  const heroUrl = `https://loremflickr.com/600/300/${kw}/all?lock=${lock}`;
+  const emoji = emojiLocale[locale.categoria] ?? "🌿";
 
   return (
     <main style={{ background: "#f5f3ef" }} className="min-h-screen pb-20">
@@ -57,17 +47,12 @@ export default async function PaginaLocale({
         </Link>
       </div>
 
-      {/* ── Hero immagine ── */}
+      {/* ── Hero gradiente + emoji ── */}
       <div
-        className="relative overflow-hidden"
+        className="relative overflow-hidden flex items-center justify-center"
         style={{ height: "clamp(220px, 52vw, 360px)", background: stile.gradient }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={heroUrl}
-          alt={locale.nome}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+        <span className="text-[100px] opacity-20 select-none">{emoji}</span>
         <div
           className="absolute inset-0"
           style={{

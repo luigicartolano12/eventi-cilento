@@ -11,26 +11,17 @@ import {
 } from "@/lib/locali";
 import { IcoArrowLeft, IcoMapPin, IcoClock, IcoMail } from "@/app/components/icons";
 
-function hashId(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) {
-    h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  }
-  return Math.abs(h) % 9999 + 1;
-}
-
-const kwLocale: Record<string, string> = {
-  "Bar & Aperitivo": "bar,aperitivo",
-  "Ristorante":      "restaurant,food",
-  "Discoteca":       "nightclub,dance",
-  "Agriturismo":     "farmhouse,countryside",
-  "Beach Club":      "beach,club",
+const emojiLocale: Record<string, string> = {
+  "Bar & Aperitivo": "🍹",
+  "Ristorante":      "🍽️",
+  "Discoteca":       "🎉",
+  "Agriturismo":     "🌾",
+  "Beach Club":      "🏖️",
 };
 
 function LocaleCard({ locale }: { locale: Locale }) {
   const stile = STILE_LOCALE[locale.categoria];
-  const kw = kwLocale[locale.categoria] ?? "restaurant,food";
-  const lock = hashId(locale.id);
+  const emoji = emojiLocale[locale.categoria] ?? "🌿";
   return (
     <Link
       href={`/locali/${locale.id}`}
@@ -41,20 +32,17 @@ function LocaleCard({ locale }: { locale: Locale }) {
           "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06), 0 16px 40px rgba(0,0,0,0.06)",
       }}
     >
-      {/* Immagine */}
+      {/* Gradiente categoria + emoji */}
       <div
-        className="relative overflow-hidden"
+        className="relative overflow-hidden flex items-center justify-center"
         style={{ height: 180, background: stile.gradient }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={`https://loremflickr.com/600/300/${kw}/all?lock=${lock}`}
-          alt={locale.nome}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
+        <span className="text-5xl opacity-25 group-hover:opacity-35 transition-opacity select-none">
+          {emoji}
+        </span>
         <div
           className="absolute inset-0"
-          style={{ background: "linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.45) 100%)" }}
+          style={{ background: "linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.40) 100%)" }}
         />
         {/* Categoria */}
         <span

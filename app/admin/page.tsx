@@ -319,9 +319,11 @@ function TabProposte({refreshKey}:{refreshKey:number}) {
   const [filtro, setFiltro] = useState<"in_attesa"|"approvata"|"rifiutata">("in_attesa");
   const [modifica, setModifica] = useState<Proposta|null>(null);
 
+  const AK = "?chiave=cilento2025";
+
   const carica = useCallback(async () => {
     setLoading(true);
-    try { const r = await fetch("/api/proposte"); setProposte(await r.json()); }
+    try { const r = await fetch(`/api/proposte${AK}`); setProposte(await r.json()); }
     finally { setLoading(false); }
   },[]);
 
@@ -329,18 +331,18 @@ function TabProposte({refreshKey}:{refreshKey:number}) {
 
   async function azione(id:string, stato:string) {
     setBusy(id);
-    await fetch(`/api/proposte/${id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({stato})});
+    await fetch(`/api/proposte/${id}${AK}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({stato})});
     await carica(); setBusy(null);
   }
   async function elimina(id:string) {
     if(!confirm("Eliminare?")) return;
     setBusy(id);
-    await fetch(`/api/proposte/${id}`,{method:"DELETE"});
+    await fetch(`/api/proposte/${id}${AK}`,{method:"DELETE"});
     await carica(); setBusy(null);
   }
   async function approvaConMod(dati:F) {
     if(!modifica) return;
-    await fetch(`/api/proposte/${modifica.id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({...dati,stato:"approvata"})});
+    await fetch(`/api/proposte/${modifica.id}${AK}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({...dati,stato:"approvata"})});
     setModifica(null); await carica();
   }
 
@@ -442,9 +444,11 @@ function TabArchivio({refreshKey}:{refreshKey:number}) {
   const [cerca, setCerca] = useState("");
   const [delId, setDelId] = useState<string|null>(null);
 
+  const AK = "?chiave=cilento2025";
+
   const carica = useCallback(async()=>{
     setLoading(true);
-    try { const r=await fetch("/api/eventi-admin"); setEventi(await r.json()); }
+    try { const r=await fetch(`/api/eventi-admin${AK}`); setEventi(await r.json()); }
     finally { setLoading(false); }
   },[]);
 
@@ -453,7 +457,7 @@ function TabArchivio({refreshKey}:{refreshKey:number}) {
   async function elimina(id:string) {
     if(!confirm("Rimuovere?")) return;
     setDelId(id);
-    await fetch(`/api/eventi-admin?id=${id}`,{method:"DELETE"});
+    await fetch(`/api/eventi-admin?id=${id}&chiave=cilento2025`,{method:"DELETE"});
     await carica(); setDelId(null);
   }
 
@@ -468,7 +472,7 @@ function TabArchivio({refreshKey}:{refreshKey:number}) {
         <input value={cerca} onChange={e=>setCerca(e.target.value)}
           placeholder="Cerca per titolo, comune, categoria…"
           className={CL+" flex-1"} style={IS}/>
-        <button onClick={()=>{if(confirm("Svuotare TUTTI gli eventi KV?"))fetch("/api/eventi-admin",{method:"DELETE"}).then(carica);}}
+        <button onClick={()=>{if(confirm("Svuotare TUTTI gli eventi KV?"))fetch(`/api/eventi-admin${AK}`,{method:"DELETE"}).then(carica);}}
           className="shrink-0 text-xs font-bold px-3 py-2.5 rounded-2xl border-0 cursor-pointer"
           style={{background:"#fef2f2",color:"#dc2626"}}>Reset</button>
       </div>
@@ -993,8 +997,8 @@ export default function PaginaAdmin() {
     // Controlla se il PIN è già stato validato in questa sessione
     if(sessionStorage.getItem("admin-access") === "1") setPinOk(true);
     setAuth(true);
-    fetch("/api/proposte").then(r=>r.json()).then((l:Proposta[])=>
-      setBadge(l.filter(p=>p.stato==="in_attesa").length)
+    fetch("/api/proposte?chiave=cilento2025").then(r=>r.json()).then((l:Proposta[])=>
+      setBadge(Array.isArray(l) ? l.filter(p=>p.stato==="in_attesa").length : 0)
     ).catch(()=>{});
   },[router,rk]);
 
