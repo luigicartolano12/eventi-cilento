@@ -200,54 +200,30 @@ export async function GET(request: Request) {
 }]`;
 
   const promptConContesto = `Analizza questo testo estratto da ${funzionanti} siti di eventi e notizie locali del Cilento, Vallo di Diano e Golfo di Policastro.
-Identifica TUTTI gli eventi reali menzionati. Poi aggiungi eventi verosimili per raggiungere 30 totali.
-Stagionalità ${mese} ${anno}: ${stagione}
 
 TESTO ESTRATTO:
 ${contesto.slice(0, 16000)}
 
-DISTRIBUZIONE OBBLIGATORIA:
-• Vallo di Diano (PRIORITÀ ASSOLUTA): min 12 eventi
-  Comuni: Sala Consilina, Teggiano, Padula, Polla, Atena Lucana, Sassano, Montesano, Buonabitacolo, Sanza, Sant'Arsenio, Pertosa, San Rufo
-  Sagre note: Soppressata (Sassano), Fagiolo (Montesano), Caciocavallo (Teggiano), Castagna (Sanza)
-  Feste: San Cono (Teggiano), San Rocco (Sala Consilina)
-  Siti: Certosa Padula UNESCO, Grotte Pertosa, Grotta Castelcivita
-• Cilento costiero: min 10 eventi
-  Comuni: Agropoli, Castellabate, Acciaroli, Pisciotta, Palinuro, Camerota, Ascea, Capaccio-Paestum
-• Golfo Policastro + entroterra: min 5 eventi
-  Comuni: Sapri, Santa Marina, San Giovanni a Piro, Vallo della Lucania, Rofrano
+━━━ REGOLE FONDAMENTALI ━━━
+⛔ NON inventare eventi. NON aggiungere eventi non trovati esplicitamente nel testo.
+⛔ NON completare con "eventi verosimili" o tradizioni storiche.
+✅ Estrai SOLO eventi con titolo e data verificabili nel testo sopra.
+✅ Se la data è approssimativa (es. "luglio ${anno}") usa il 1° del mese.
+✅ Se trovi URL Facebook (facebook.com/...) o Instagram, includili.
+✅ Stagionalità di riferimento per ${mese} ${anno}: ${stagione}
 
-REGOLE:
-- Se trovi link a Facebook (facebook.com/...) o Instagram (instagram.com/...) vicini a un evento, includili
-- Usa organizzatori reali: Pro Loco, Comuni, Legambiente, ARCI, bande musicali, associazioni sportive
-- Varietà categorie: Sagra, Musica, Cultura, Sport, Religioso, Mercato, Natura, Salute
+PRIORITÀ nell'estrazione:
+1. Vallo di Diano: Sala Consilina, Teggiano, Padula, Polla, Atena Lucana, Sassano, Montesano, Buonabitacolo, Sanza, Sant'Arsenio, Pertosa
+2. Cilento costiero: Agropoli, Castellabate, Acciaroli, Pisciotta, Palinuro, Camerota, Ascea, Capaccio-Paestum
+3. Golfo Policastro: Sapri, Santa Marina, San Giovanni a Piro, Vibonati
+4. Entroterra Cilento: Vallo della Lucania, Rofrano, Morigerati
 
-Rispondi SOLO con l'array JSON valido, nessun testo:
+Rispondi SOLO con l'array JSON degli eventi REALI trovati — nessun testo prima o dopo:
 ${schemaJSON}`;
 
-  const promptSenzaContesto = `Genera 30 eventi realistici del Cilento, Vallo di Diano e Golfo di Policastro per ${mese} ${anno}.
-Stagionalità: ${stagione}
-
-━━━ VALLO DI DIANO — PRIORITÀ ASSOLUTA (min 12 eventi) ━━━
-Comuni: Sala Consilina, Teggiano, Padula, Polla, Atena Lucana, Sassano, Montesano s/M, Buonabitacolo, Sanza, Sant'Arsenio, Pertosa, San Rufo, San Pietro al Tanagro
-Sagre storiche: Soppressata (Sassano/ago), Fagiolo (Montesano/ago), Caciocavallo (Teggiano/ago), Castagna (Sanza/ott)
-Feste patronali: San Cono (Teggiano/lug), San Rocco (Sala Consilina/ago), Sant'Arsenio (ago)
-Siti: Certosa Padula UNESCO, Grotte di Pertosa, Grotta Castelcivita, Rocca di Teggiano
-Estate: concerti in piazza, cinema all'aperto, rassegne teatrali, mercatini notturni artigianali
-
-━━━ CILENTO COSTIERO (min 10 eventi) ━━━
-Comuni: Agropoli, Castellabate, Acciaroli, Pioppi, Ascea, Pisciotta, Palinuro, Camerota, Capaccio-Paestum
-Sagre: Tonno (Agropoli/giu), Fico Bianco (Pisciotta/ago), Alici (Pisciotta/set)
-Feste: Sant'Erasmo (Agropoli/giu), Madonna della Neve (Pollica/ago)
-
-━━━ GOLFO POLICASTRO + ENTROTERRA (min 5 eventi) ━━━
-Comuni: Sapri, Santa Marina, Vibonati, San Giovanni a Piro, Torre Orsaia, Vallo della Lucania, Rofrano
-Feste: Martiri di Sapri (lug), Festa del mare (Santa Marina/ago)
-
-Per gli eventi noti includi il link Facebook ufficiale della Pro Loco / Comune organizzatore.
-
-Rispondi SOLO con l'array JSON valido:
-${schemaJSON}`;
+  const promptSenzaContesto = `I siti web non hanno restituito dati utili in questo momento.
+Non inventare eventi.
+Restituisci un array JSON vuoto: []`;
 
   try {
     const risposta = await client.messages.create({

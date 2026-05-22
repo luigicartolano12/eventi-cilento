@@ -287,40 +287,24 @@ Per ogni evento trovato riporta: titolo, data, comune, organizzatore, URL fonte 
 DATI RACCOLTI:
 ${contestoTotale}
 
-━━━ ISTRUZIONI ━━━
-1. Estrai TUTTI gli eventi reali identificabili (anche se menzionati brevemente o con data approssimativa)
-2. PRIORITÀ ASSOLUTA Vallo di Diano: Sala Consilina, Teggiano, Padula, Polla, Atena Lucana, Sassano, Montesano, Buonabitacolo, Sanza, Sant'Arsenio, Pertosa, Monte San Giacomo, San Rufo, San Pietro al Tanagro
-3. Se trovi URL Facebook/Instagram associati all'evento, includili
-4. Completa con eventi VEROSIMILI (basati su tradizioni locali documentate) fino a 40 totali
-5. Distribuzione: min 15 Vallo di Diano · min 12 Cilento costiero · min 5 Golfo Policastro · min 5 entroterra · 3 liberi
-6. Stagionalità ${periodoLabel}: ${stagione}
-7. Usa dati reali come organizzatori (Pro Loco, Comuni, Legambiente, ARCI, bande musicali, associazioni sportive locali)
+━━━ REGOLE FONDAMENTALI ━━━
+⛔ NON inventare eventi. NON aggiungere eventi non trovati esplicitamente nei dati.
+⛔ NON completare con "eventi verosimili" o tradizioni. Solo dati reali trovati online.
+✅ Estrai SOLO eventi con titolo e data verificabili dal testo sopra.
+✅ Se un evento ha data approssimativa (es. "luglio ${anno}") usa il 1° del mese come data.
+✅ Se trovi URL Facebook/Instagram, includili.
+✅ Se non hai dati per una categoria o area → ometti, non inventare.
 
-Rispondi SOLO con l'array JSON — nessun testo prima o dopo:
+PRIORITÀ nell'estrazione:
+1. Vallo di Diano: Sala Consilina, Teggiano, Padula, Polla, Atena Lucana, Sassano, Montesano, Buonabitacolo, Sanza, Sant'Arsenio, Pertosa
+2. Cilento costiero: Agropoli, Castellabate, Acciaroli, Pisciotta, Palinuro, Camerota, Ascea, Capaccio-Paestum
+3. Golfo Policastro: Sapri, Santa Marina, San Giovanni a Piro, Vibonati
+4. Entroterra Cilento: Vallo della Lucania, Rofrano, Morigerati
+
+Rispondi SOLO con l'array JSON degli eventi REALI trovati — nessun testo prima o dopo:
 ${schemaJSON}`
-    : `Genera 40 eventi reali e verosimili del Cilento, Vallo di Diano e Golfo di Policastro per ${periodoLabel}.
-
-━━━ VALLO DI DIANO — PRIORITÀ (min 15 eventi) ━━━
-Comuni: Sala Consilina, Teggiano, Padula, Polla, Atena Lucana, Sassano, Montesano s/M, Buonabitacolo, Sanza, San Rufo, Sant'Arsenio, Pertosa, Monte San Giacomo, Casalbuono, San Pietro al Tanagro
-Sagre storiche: Soppressata (Sassano), Fagiolo (Montesano), Caciocavallo (Teggiano), Castagna (Sanza)
-Feste: San Cono (Teggiano/lug), San Rocco (Sala Consilina/ago), Sant'Arsenio (ago)
-Siti: Certosa Padula UNESCO, Grotte Pertosa, Grotta Castelcivita, Rocca Teggiano, Castello Sala Consilina
-Associazioni: Pro Loco di ogni comune, ARCI, Legambiente, bande musicali locali
-Estate: concerti in piazza, cinema all'aperto, rassegne teatrali, mercatini artigianali notturni
-
-━━━ CILENTO COSTIERO (min 12 eventi) ━━━
-Agropoli, Acciaroli, Castellabate, Pioppi, Ascea, Pisciotta, Palinuro, Camerota, Marina di Camerota, Capaccio-Paestum
-Sagre: Tonno (Agropoli), Fico Bianco (Pisciotta), Alici (Pisciotta), Mozzarella (Paestum)
-Feste: Sant'Erasmo (Agropoli/giu), Madonna della Neve (Pollica/ago)
-
-━━━ GOLFO POLICASTRO + ENTROTERRA (min 8 eventi) ━━━
-Sapri, Santa Marina, Vibonati, San Giovanni a Piro, Torre Orsaia, Vallo della Lucania, Rofrano, Morigerati
-
-Stagionalità ${periodoLabel}: ${stagione}
-Varietà categorie: min 6 Sagra · 3 Religioso · 4 Musica · 3 Sport · 3 Natura · 2 Mercato · 2 Cultura · 2 Salute
-
-Rispondi SOLO con l'array JSON:
-${schemaJSON}`;
+    : `Non sono disponibili dati reali dai siti scraper in questo momento.
+Restituisci un array JSON vuoto: []`;
 
   let eventiGrezzi: object[] = [];
   try {

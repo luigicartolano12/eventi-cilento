@@ -1,10 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import {
-  esperienze,
-  STILE_CATEGORIA,
-  IMG_KEYWORDS_CATEGORIA,
-} from "@/lib/esperienze";
+import { esperienze, STILE_CATEGORIA } from "@/lib/esperienze";
+import { fotoEsperienza, fotoGallery } from "@/lib/photos";
 import { IcoArrowLeft, IcoMapPin, IcoClock, IcoGlobe, IcoFacebook, IcoInstagram, IcoPhone, IcoMail, IcoExternalLink } from "@/app/components/icons";
 
 export async function generateStaticParams() {
@@ -13,24 +10,6 @@ export async function generateStaticParams() {
 
 export const dynamicParams = false;
 
-/** Hash numerica stabile dall'ID (per lock loremflickr) */
-function hashId(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) {
-    h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  }
-  return Math.abs(h) % 9999 + 1;
-}
-
-/** URL loremflickr con /all (entrambe le keyword richieste → immagine più coerente) */
-function imgUrl(keywords: string, lockNum: number, w = 800, h = 500): string {
-  const parts = keywords
-    .split(",")
-    .map((k) => k.trim())
-    .filter(Boolean);
-  const primary = parts.slice(0, 2).join(",");
-  return `https://loremflickr.com/${w}/${h}/${primary}/all?lock=${lockNum}`;
-}
 
 function etaConsigliata(difficolta?: string): string {
   if (difficolta === "Facile") return "Adatto a tutti · famiglie e bambini";
@@ -49,16 +28,14 @@ export default async function PaginaEsperienza({
   if (!esp) notFound();
 
   const stile = STILE_CATEGORIA[esp.categoria];
-  const kw = esp.imgKeywords ?? IMG_KEYWORDS_CATEGORIA[esp.categoria];
-  const base = hashId(esp.id);
 
-  /* 5 immagini: 1 hero + 4 gallery con keyword diverse per varietà */
+  /* 5 immagini Unsplash contestuali: 1 hero + 4 gallery */
   const galleryImgs = [
-    imgUrl(kw, base, 1400, 700),          // hero principale
-    imgUrl(kw, base + 1, 700, 500),       // gallery 1
-    imgUrl(kw, base + 2, 700, 500),       // gallery 2
-    imgUrl(kw, base + 3, 700, 500),       // gallery 3
-    imgUrl(kw, base + 4, 700, 500),       // gallery 4
+    fotoEsperienza(esp.id, esp.categoria, 1400, 700),
+    fotoGallery(esp.id, esp.categoria, 1, 700, 500, "esperienza"),
+    fotoGallery(esp.id, esp.categoria, 2, 700, 500, "esperienza"),
+    fotoGallery(esp.id, esp.categoria, 3, 700, 500, "esperienza"),
+    fotoGallery(esp.id, esp.categoria, 4, 700, 500, "esperienza"),
   ];
 
   return (

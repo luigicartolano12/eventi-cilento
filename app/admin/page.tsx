@@ -553,6 +553,27 @@ function TabCron() {
     }
   }
 
+  // ── Cron esperienze (~25s) ────────────────────────────────────────────────
+  async function avviaEsperienze(conReset = false) {
+    if (conReset && !confirm("Sostituire tutte le esperienze con nuovi dati reali?")) return;
+    setRunning("light");
+    setLog(conReset ? ["Ricerca esperienze (reset)…"] : ["Ricerca nuove esperienze…"]);
+    try {
+      const p = new URLSearchParams({ chiave: "cilento2025" });
+      if (conReset) p.set("reset", "1");
+      const r = await fetch(`/api/cron-esperienze?${p}`);
+      const d = await r.json();
+      if (d.log) setLog(d.log);
+      setLog(prev => [...prev, d.ok
+        ? `✓ ${d.trovate} esperienze trovate, ${d.nuove} nuove (siti: ${d.funzionanti}/${d.sorgenti})`
+        : `✕ ${d.messaggio}`]);
+    } catch (err) {
+      setLog(prev => [...prev, `✕ ${err instanceof Error ? err.message : "Errore"}`]);
+    } finally {
+      setRunning(null);
+    }
+  }
+
   // ── Cron completo (scraping + web search + opus, ~2min) ──────────────────
   async function avviaFull() {
     setRunning("full"); setLog(["Avvio pipeline completa (può richiedere ~2 minuti)…"]);
@@ -645,6 +666,28 @@ function TabCron() {
             ? <><span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"/>Ricerca in corso…</>
             : <><IcoSparkle size={15}/>Aggiungi nuovi eventi (veloce)</>}
         </button>
+      </div>
+
+      {/* ── Esperienze ────────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-3 pt-4 border-t border-stone-100">
+        <p className="text-[10px] font-black uppercase tracking-widest text-stone-400">
+          🧗 Esperienze — ricerca approfondita
+        </p>
+        <p className="text-xs text-stone-400 -mt-1">
+          ~30 siti: booking, associazioni, privati, agriturismi, diving, kayak, trekking... ~30 secondi.
+        </p>
+        <div className="flex gap-2">
+          <button onClick={() => avviaEsperienze(false)} disabled={isBusy}
+            className="flex-1 py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
+            style={{background:"#f0fdf4",color:"#15803d"}}>
+            {running === "light" ? <><span className="w-3.5 h-3.5 rounded-full border-2 border-green-300 border-t-green-600 animate-spin"/>In corso…</> : <>+ Aggiungi esperienze</>}
+          </button>
+          <button onClick={() => avviaEsperienze(true)} disabled={isBusy}
+            className="flex-1 py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
+            style={{background:"#fef3c7",color:"#92400e"}}>
+            🔄 Reset + Ricarica
+          </button>
+        </div>
       </div>
 
       {/* ── Cron completo ─────────────────────────────────────────────────── */}

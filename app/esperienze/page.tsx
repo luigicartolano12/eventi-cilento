@@ -1,36 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-  esperienze,
+  esperienze as esperienzeStatiche,
   CATEGORIE_ESPERIENZA,
   STILE_CATEGORIA,
-  IMG_KEYWORDS_CATEGORIA,
   type CategoriaEsperienza,
   type Esperienza,
 } from "@/lib/esperienze";
+import type { EsperienzaDinamica } from "@/lib/kv-store";
+import { fotoEsperienza } from "@/lib/photos";
 import { IcoArrowLeft, IcoMapPin, IcoClock, IcoSearch, IcoCheck } from "@/app/components/icons";
 
-/** Numero stabile per lock loremflickr */
-function hashId(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) {
-    h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  }
-  return Math.abs(h) % 9999 + 1;
-}
-
-/** loremflickr /all: richiede ENTRAMBE le keyword → immagini più pertinenti */
-function espImgUrl(keywords: string, lockNum: number, w = 600, h = 300): string {
-  const parts = keywords.split(",").map((k) => k.trim()).filter(Boolean);
-  const primary = parts.slice(0, 2).join(",");
-  return `https://loremflickr.com/${w}/${h}/${primary}/all?lock=${lockNum}`;
-}
 
 function EsperienzaCard({ esp }: { esp: Esperienza }) {
   const stile = STILE_CATEGORIA[esp.categoria];
-  const kw = esp.imgKeywords ?? IMG_KEYWORDS_CATEGORIA[esp.categoria];
   return (
     <Link
       href={`/esperienze/${esp.id}`}
@@ -48,7 +33,7 @@ function EsperienzaCard({ esp }: { esp: Esperienza }) {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={espImgUrl(kw, hashId(esp.id))}
+          src={fotoEsperienza(esp.id, esp.categoria, 600, 300)}
           alt={esp.titolo}
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           onError={(e) => {
@@ -172,8 +157,47 @@ function EsperienzaCard({ esp }: { esp: Esperienza }) {
 export default function PaginaEsperienze() {
   const [categoriaAttiva, setCategoriaAttiva] = useState<CategoriaEsperienza | null>(null);
   const [cerca, setCerca] = useState("");
+  const [dinamiche, setDinamiche] = useState<Esperienza[]>([]);
 
-  const esperienzeFiltrate = esperienze.filter((e) => {
+  // Carica esperienze dinamiche dal KV
+  useEffect(() => {
+    fetch("/api/esperienze-live")
+      .then((r) => r.json())
+      .then((data: EsperienzaDinamica[]) => {
+        // Converte EsperienzaDinamica → Esperienza (formato compatibile con la card)
+        const convertite: Esperienza[] = data.map((d) => ({
+          id: d.id,
+          titolo: d.titolo,
+          categoria: d.categoria as CategoriaEsperienza,
+          comune: d.comune,
+          luogo: d.luogo ?? d.comune,
+          durata: d.durata,
+          difficolta: d.difficolta as Esperienza["difficolta"],
+          prezzo: d.prezzo,
+          descrizione: d.descrizione,
+          linkEsterno: d.linkEsterno,
+          facebook: d.facebook,
+          instagram: d.instagram,
+          telefono: d.telefono,
+          email: d.email,
+          tags: d.tags,
+        }));
+        setDinamiche(convertite);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Unifica statiche + dinamiche (le dinamiche in coda, dedup per titolo)
+  const tutteEsperienze = [
+    ...esperienzeStatiche,
+    ...dinamiche.filter(
+      (d) => !esperienzeStatiche.some(
+        (s) => s.titolo.toLowerCase() === d.titolo.toLowerCase()
+      )
+    ),
+  ];
+
+  const esperienzeFiltrate = tutteEsperienze.filter((e) => {
     if (categoriaAttiva && e.categoria !== categoriaAttiva) return false;
     if (cerca) {
       const q = cerca.toLowerCase();
@@ -215,7 +239,7 @@ export default function PaginaEsperienze() {
             <span style={{ color: "#65a30d" }}>Cilento</span>.
           </h1>
           <p className="text-base max-w-md leading-relaxed" style={{ color: "#44403c" }}>
-            {esperienze.length} esperienze autentiche tra natura, mare, cultura, gastronomia e
+            {tutteEsperienze.length} esperienze autentiche tra natura, mare, cultura, gastronomia e
             benessere nel Parco Nazionale del Cilento.
           </p>
         </div>
@@ -264,11 +288,11 @@ export default function PaginaEsperienze() {
                   : { background: "#fff", color: "#78716c", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }
               }
             >
-              Tutte ({esperienze.length})
+              Tutte ({tutteEsperienze.length})
             </button>
             {CATEGORIE_ESPERIENZA.map((cat) => {
-              const count = esperienze.filter((e) => e.categoria === cat).length;
-              if (count === 0) return null;
+              const count = tutteEsperienze.filter((e) => e.categoria === cat).length;
+              if (!count) return null;
               const attivo = categoriaAttiva === cat;
               const stile = STILE_CATEGORIA[cat];
               return (

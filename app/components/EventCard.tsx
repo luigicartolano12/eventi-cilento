@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Evento, formattaData } from "@/lib/events";
+import { fotoEvento } from "@/lib/photos";
 import {
   IcoMapPin, IcoCalendar, IcoClock, IcoPlay,
   IcoCheck, IcoWheelchair, IcoParking, IcoPaw, IcoBooking,
@@ -34,39 +35,10 @@ const IconeCategoria: Record<string, React.ComponentType<any>> = {
   Religioso: IcoReligioso, Mercato: IcoMercato, Natura: IcoNatura, Salute: IcoSalute,
 };
 
-/**
- * Keyword primarie (2 parole) per categoria evento.
- * Usate con loremflickr /all → la foto deve contenere ENTRAMBE le keyword.
- */
-const kwCategoria: Record<string, string> = {
-  Sagra:    "food,festival",
-  Musica:   "concert,music",
-  Cultura:  "ruins,columns",
-  Sport:    "sport,outdoor",
-  Religioso:"church,procession",
-  Mercato:  "market,stalls",
-  Natura:   "nature,trail",
-  Salute:   "health,wellness",
-};
-
-/** Numero coerente da ID stringa (lock loremflickr) */
-function hashId(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) {
-    h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  }
-  return Math.abs(h) % 9999 + 1;
-}
-
-/** loremflickr /all: richiede ENTRAMBE le keyword → molto più coerente */
-function placeholderImg(id: string, categoria: string) {
-  const kw = kwCategoria[categoria] ?? "italy,landscape";
-  return `https://loremflickr.com/600/300/${kw}/all?lock=${hashId(id)}`;
-}
 
 export function EventCard({ evento }: { evento: Evento }) {
   const { servizi } = evento;
-  const imgSrc = evento.immagine || placeholderImg(evento.id, evento.categoria);
+  const imgSrc = evento.immagine || fotoEvento(evento.id, evento.categoria, 600, 300);
   const IcoCategoria = IconeCategoria[evento.categoria];
 
   const hasBadge =
