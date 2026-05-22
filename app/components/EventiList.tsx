@@ -3,7 +3,32 @@
 import { useEffect, useMemo, useState } from "react";
 import { Evento, Categoria, CATEGORIE } from "@/lib/events";
 import { EventCard } from "./EventCard";
-import { IcoMapPin, IcoSearch, IcoCalendar, IcoLocate } from "./icons";
+import {
+  IcoMapPin, IcoSearch, IcoCalendar, IcoLocate,
+  IcoSagra, IcoMusica, IcoCultura, IcoSport, IcoReligioso, IcoMercato, IcoNatura,
+} from "./icons";
+
+// ── Gradiente e icone per le categorie ───────────────────────────────────────
+const gradientCategoria: Record<string, string> = {
+  Sagra:     "linear-gradient(135deg, #fb923c, #fbbf24)",
+  Musica:    "linear-gradient(135deg, #a855f7, #818cf8)",
+  Cultura:   "linear-gradient(135deg, #3b82f6, #22d3ee)",
+  Sport:     "linear-gradient(135deg, #22c55e, #10b981)",
+  Religioso: "linear-gradient(135deg, #facc15, #f59e0b)",
+  Mercato:   "linear-gradient(135deg, #f472b6, #fb7185)",
+  Natura:    "linear-gradient(135deg, #059669, #14b8a6)",
+};
+
+const descCategoria: Record<string, string> = {
+  Sagra: "Gusto locale", Musica: "Concerti", Cultura: "Arte e mostre",
+  Sport: "Competizioni", Religioso: "Fede e storia", Mercato: "Artigianato", Natura: "Trekking",
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const IconeCategoria: Record<string, React.ComponentType<any>> = {
+  Sagra: IcoSagra, Musica: IcoMusica, Cultura: IcoCultura, Sport: IcoSport,
+  Religioso: IcoReligioso, Mercato: IcoMercato, Natura: IcoNatura,
+};
 
 // ── Definizioni aree geografiche ──────────────────────────────────────────────
 const COMUNI_VALLO = new Set([
@@ -183,33 +208,80 @@ export function EventiList({
           ))}
         </div>
 
-        {/* Categoria pills */}
-        <div className="flex gap-2 mb-4 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+        {/* ── Categorie — card colorati con icona ── */}
+        <div className="flex gap-2.5 mb-4 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+          {/* Tutte */}
           <button
             onClick={() => setCategoria(null)}
-            className="shrink-0 text-xs font-bold px-3 py-1.5 rounded-full border-0 cursor-pointer transition-all whitespace-nowrap"
-            style={
-              !categoria
-                ? { background: "#1a3529", color: "#a3e635" }
-                : { background: "#f5f3ef", color: "#78716c" }
-            }
+            className="shrink-0 flex flex-col rounded-2xl border-0 cursor-pointer transition-all duration-200 overflow-hidden"
+            style={{
+              width: 90,
+              background: !categoria ? "#a3e635" : "white",
+              boxShadow: !categoria
+                ? "0 0 0 2.5px #65a30d, 0 4px 12px rgba(101,163,13,0.25)"
+                : "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06)",
+              transform: !categoria ? "translateY(-2px)" : "translateY(0)",
+            }}
           >
-            Tutte
-          </button>
-          {CATEGORIE.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCategoria(categoria === cat ? null : cat)}
-              className="shrink-0 text-xs font-bold px-3 py-1.5 rounded-full border-0 cursor-pointer transition-all whitespace-nowrap"
-              style={
-                categoria === cat
-                  ? { background: "#16a34a", color: "white" }
-                  : { background: "#f5f3ef", color: "#78716c" }
-              }
+            <div
+              className="w-full flex items-center justify-center"
+              style={{
+                height: 56,
+                background: !categoria
+                  ? "rgba(20,83,45,0.12)"
+                  : "linear-gradient(135deg, #1a3529, #0f2318)",
+              }}
             >
-              {cat}
-            </button>
-          ))}
+              <span className="text-xl">🌿</span>
+            </div>
+            <div className="py-2 flex flex-col items-center gap-0.5">
+              <span className="text-[11px] font-bold" style={{ color: !categoria ? "#14532d" : "#1c1c1e" }}>
+                Tutte
+              </span>
+              <span className="text-[9px]" style={{ color: !categoria ? "#166534" : "#8e8e93" }}>
+                {eventi.length} eventi
+              </span>
+            </div>
+          </button>
+
+          {/* Categoria con icona + gradiente */}
+          {CATEGORIE.map((cat) => {
+            const Ico = IconeCategoria[cat];
+            const attivo = categoria === cat;
+            return (
+              <button
+                key={cat}
+                onClick={() => setCategoria(attivo ? null : cat)}
+                className="shrink-0 flex flex-col rounded-2xl border-0 cursor-pointer transition-all duration-200 overflow-hidden"
+                style={{
+                  width: 90,
+                  background: attivo ? "#a3e635" : "white",
+                  boxShadow: attivo
+                    ? "0 0 0 2.5px #65a30d, 0 4px 12px rgba(101,163,13,0.25)"
+                    : "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06)",
+                  transform: attivo ? "translateY(-2px)" : "translateY(0)",
+                }}
+              >
+                <div
+                  className="w-full flex items-center justify-center"
+                  style={{
+                    height: 56,
+                    background: attivo ? "rgba(20,83,45,0.12)" : gradientCategoria[cat],
+                  }}
+                >
+                  <Ico size={26} strokeWidth={1.4} className={attivo ? "text-green-800" : "text-white"} />
+                </div>
+                <div className="py-2 flex flex-col items-center gap-0.5">
+                  <span className="text-[11px] font-bold" style={{ color: attivo ? "#14532d" : "#1c1c1e" }}>
+                    {cat}
+                  </span>
+                  <span className="text-[9px]" style={{ color: attivo ? "#166534" : "#8e8e93" }}>
+                    {descCategoria[cat]}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
         </div>
 
         {/* Data + Posizione */}
