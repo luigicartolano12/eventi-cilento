@@ -1,14 +1,17 @@
 /**
  * lib/photos.ts
- * Foto contestuali via LoremFlickr API — gratuito, nessuna API key, immagini CC.
  *
- * L'URL include un "lock" calcolato dall'ID stringa, così:
- *   • stesso evento/esperienza → sempre stessa foto (lock stabile → cache HTTP)
- *   • eventi diversi → foto diverse (hash diverso → lock diverso → immagine diversa)
- *   • le keyword garantiscono pertinenza visiva (es. "food,festival,italy")
+ * Strategia immagini:
+ *   1. Se l'evento/esperienza ha un campo `immagine` → mostra quello (foto ufficiale)
+ *   2. Altrimenti → restituisce "" → il componente mostra il gradiente di categoria
+ *
+ * Nessun servizio esterno casuale (Unsplash, LoremFlickr, ecc.) perché
+ * danno sempre foto non pertinenti. Il gradiente di categoria è sempre corretto.
+ *
+ * La funzione hashSig è mantenuta per uso futuro (es. gallery con più foto per evento).
  */
 
-/** Hash numerico stabile dall'ID stringa */
+/** Hash numerico stabile dall'ID stringa — utile per scegliere immagini da array */
 export function hashSig(s: string): number {
   let h = 0;
   for (let i = 0; i < s.length; i++) {
@@ -17,66 +20,38 @@ export function hashSig(s: string): number {
   return Math.abs(h) % 8000 + 1;
 }
 
-// ─── Keyword per categoria EVENTO ─────────────────────────────────────────────
-const KW_EVENTO: Record<string, string> = {
-  Sagra:     "food,festival,italy,cuisine,traditional",
-  Musica:    "concert,music,festival,outdoor,stage",
-  Cultura:   "ruins,ancient,history,italy,medieval",
-  Sport:     "sport,trail,outdoor,cycling,italy",
-  Religioso: "church,procession,italy,religion,tradition",
-  Mercato:   "market,craft,artisan,italy,stalls",
-  Natura:    "nature,trail,mountain,cilento,park",
-  Salute:    "wellness,yoga,spa,relax,nature",
-};
-
-// ─── Keyword per categoria ESPERIENZA ─────────────────────────────────────────
-const KW_ESPERIENZA: Record<string, string> = {
-  Avventura:   "adventure,hiking,trekking,canyon,outdoor",
-  Mare:        "sea,coast,mediterranean,beach,italy",
-  Gastronomia: "food,cooking,cuisine,italy,gastronomy",
-  Cultura:     "museum,history,ruins,italy,ancient",
-  Benessere:   "wellness,spa,relax,thermal,nature",
-  Sport:       "sport,cycling,outdoor,italy,activity",
-  Natura:      "nature,forest,trail,italy,park",
-};
-
-/** URL foto evento — w×h pixel, pertinente alla categoria (LoremFlickr) */
+/**
+ * Restituisce "" — il componente che chiama questa funzione
+ * mostrerà il gradiente di categoria come fallback visivo.
+ * Solo gli eventi con campo `immagine` esplicito mostreranno una foto.
+ */
 export function fotoEvento(
-  id: string,
-  categoria: string,
-  w = 800,
-  h = 450
+  _id: string,
+  _categoria: string,
+  _w = 800,
+  _h = 450
 ): string {
-  const kw = KW_EVENTO[categoria] ?? "italy,landscape,festival";
-  const lock = hashSig(id);
-  return `https://loremflickr.com/${w}/${h}/${kw}?lock=${lock}`;
+  return "";
 }
 
-/** URL foto esperienza — w×h pixel, pertinente alla categoria (LoremFlickr) */
+/** Stesso comportamento per le esperienze */
 export function fotoEsperienza(
-  id: string,
-  categoria: string,
-  w = 800,
-  h = 450
+  _id: string,
+  _categoria: string,
+  _w = 800,
+  _h = 450
 ): string {
-  const kw = KW_ESPERIENZA[categoria] ?? "italy,landscape,nature";
-  const lock = hashSig(id);
-  return `https://loremflickr.com/${w}/${h}/${kw}?lock=${lock}`;
+  return "";
 }
 
-/** Variante con offset: per gallery (stesso ID, foto diversa) */
+/** Restituisce "" — le gallery mostrano il gradiente se non c'è una foto esplicita */
 export function fotoGallery(
-  id: string,
-  categoria: string,
-  indice: number,
-  w = 700,
-  h = 500,
-  tipo: "evento" | "esperienza" = "evento"
+  _id: string,
+  _categoria: string,
+  _indice: number,
+  _w = 700,
+  _h = 500,
+  _tipo: "evento" | "esperienza" = "evento"
 ): string {
-  const kw =
-    tipo === "esperienza"
-      ? (KW_ESPERIENZA[categoria] ?? "italy,landscape,nature")
-      : (KW_EVENTO[categoria] ?? "italy,landscape,festival");
-  const lock = hashSig(id) + indice * 17; // offset deterministico per ogni foto gallery
-  return `https://loremflickr.com/${w}/${h}/${kw}?lock=${lock}`;
+  return "";
 }

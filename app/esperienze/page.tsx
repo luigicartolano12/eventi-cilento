@@ -26,24 +26,25 @@ function EsperienzaCard({ esp }: { esp: Esperienza }) {
           "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06), 0 16px 40px rgba(0,0,0,0.06)",
       }}
     >
-      {/* Immagine */}
+      {/* Immagine / Gradiente categoria */}
       <div
-        className="relative overflow-hidden"
+        className="relative overflow-hidden flex items-center justify-center"
         style={{ height: 200, background: stile.gradient }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={fotoEsperienza(esp.id, esp.categoria, 600, 300)}
-          alt={esp.titolo}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).style.display = "none";
-          }}
-        />
+        {/* Icona centrata come placeholder visivo */}
+        <span className="text-5xl opacity-25 group-hover:opacity-35 transition-opacity select-none">
+          {esp.categoria === "Mare" ? "🌊" :
+           esp.categoria === "Gastronomia" ? "🍽️" :
+           esp.categoria === "Natura" ? "🌿" :
+           esp.categoria === "Cultura" ? "🏛️" :
+           esp.categoria === "Benessere" ? "🧘" :
+           esp.categoria === "Sport" ? "🚴" :
+           esp.categoria === "Artigianato" ? "🎨" : "⭐"}
+        </span>
         <div
           className="absolute inset-0"
           style={{
-            background: "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.40) 100%)",
+            background: "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.35) 100%)",
           }}
         />
         {/* Categoria badge */}

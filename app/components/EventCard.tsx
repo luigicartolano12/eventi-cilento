@@ -38,7 +38,8 @@ const IconeCategoria: Record<string, React.ComponentType<any>> = {
 
 export function EventCard({ evento }: { evento: Evento }) {
   const { servizi } = evento;
-  const imgSrc = evento.immagine || fotoEvento(evento.id, evento.categoria, 600, 300);
+  // Solo foto esplicite (campo immagine) — nessun servizio casuale
+  const imgSrc = evento.immagine || "";
   const IcoCategoria = IconeCategoria[evento.categoria];
 
   const hasBadge =
@@ -57,57 +58,55 @@ export function EventCard({ evento }: { evento: Evento }) {
           "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06), 0 16px 40px rgba(0,0,0,0.06)",
       }}
     >
-      {/* ── Immagine — cliccabile verso la scheda ── */}
+      {/* ── Immagine / Gradiente categoria ── */}
       <Link
         href={`/events/${evento.id}`}
-        className="block relative overflow-hidden"
+        className="block relative overflow-hidden flex items-center justify-center"
         style={{ height: 200, background: gradientCategoria[evento.categoria] }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imgSrc}
-          alt={evento.titolo}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={(e) => {
-            // fallback: mostra icona categoria se l'immagine non carica
-            (e.currentTarget as HTMLImageElement).style.display = "none";
-          }}
-        />
+        {/* Foto ufficiale (solo se presente nel campo immagine) */}
+        {imgSrc && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={imgSrc}
+            alt={evento.titolo}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
+          />
+        )}
+
+        {/* Icona categoria centrata (visibile quando non c'è foto) */}
+        {!imgSrc && IcoCategoria && (
+          <IcoCategoria
+            size={64}
+            strokeWidth={1.0}
+            className="text-white opacity-30 group-hover:opacity-40 transition-opacity"
+          />
+        )}
 
         {/* Overlay sfumato in basso */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.35) 100%)",
+              "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.30) 100%)",
           }}
         />
 
         {/* Tag categoria — in alto a sinistra */}
         <span
           className="absolute top-3 left-3 text-[10px] font-black px-2.5 py-1 rounded-full text-white z-10"
-          style={{ background: gradientCategoria[evento.categoria] ?? "#1a3529" }}
+          style={{ background: "rgba(0,0,0,0.32)", backdropFilter: "blur(8px)" }}
         >
           {evento.categoria}
         </span>
 
-        {/* Icona rotonda — in basso a destra */}
-        {IcoCategoria && (
-          <div
-            className="absolute bottom-3 right-3 w-8 h-8 rounded-full flex items-center justify-center z-10"
-            style={{
-              background: gradientCategoria[evento.categoria] ?? "#1a3529",
-              boxShadow: "0 1px 6px rgba(0,0,0,0.3)",
-            }}
-          >
-            <IcoCategoria size={15} strokeWidth={1.8} className="text-white" />
-          </div>
-        )}
-
         {/* Badge video */}
         {evento.video && (
           <span
-            className="absolute top-3.5 right-3.5 inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full text-white"
+            className="absolute top-3.5 right-3.5 inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full text-white z-10"
             style={{
               background: "rgba(0,0,0,0.38)",
               backdropFilter: "blur(8px)",

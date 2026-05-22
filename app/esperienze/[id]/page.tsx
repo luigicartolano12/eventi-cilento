@@ -29,14 +29,9 @@ export default async function PaginaEsperienza({
 
   const stile = STILE_CATEGORIA[esp.categoria];
 
-  /* 5 immagini Unsplash contestuali: 1 hero + 4 gallery */
-  const galleryImgs = [
-    fotoEsperienza(esp.id, esp.categoria, 1400, 700),
-    fotoGallery(esp.id, esp.categoria, 1, 700, 500, "esperienza"),
-    fotoGallery(esp.id, esp.categoria, 2, 700, 500, "esperienza"),
-    fotoGallery(esp.id, esp.categoria, 3, 700, 500, "esperienza"),
-    fotoGallery(esp.id, esp.categoria, 4, 700, 500, "esperienza"),
-  ];
+  // Nessuna foto casuale — solo foto esplicite dall'esperienza stessa
+  // Le variabili fotoEsperienza/fotoGallery restituiscono "" → gradiente visibile
+  void fotoEsperienza; void fotoGallery; // suppress unused import warnings
 
   return (
     <main style={{ background: "#f5f3ef" }} className="min-h-screen pb-20">
@@ -52,22 +47,26 @@ export default async function PaginaEsperienza({
         </Link>
       </div>
 
-      {/* ── Hero immagine ── */}
+      {/* ── Hero gradiente categoria ── */}
       <div
-        className="relative overflow-hidden"
+        className="relative overflow-hidden flex items-center justify-center"
         style={{ height: "clamp(220px, 52vw, 460px)", background: stile.gradient }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={galleryImgs[0]}
-          alt={esp.titolo}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+        {/* Icona grande centrata */}
+        <span className="text-[100px] opacity-20 select-none">
+          {esp.categoria === "Mare" ? "🌊" :
+           esp.categoria === "Gastronomia" ? "🍽️" :
+           esp.categoria === "Natura" ? "🌿" :
+           esp.categoria === "Cultura" ? "🏛️" :
+           esp.categoria === "Benessere" ? "🧘" :
+           esp.categoria === "Sport" ? "🚴" :
+           esp.categoria === "Artigianato" ? "🎨" : "⭐"}
+        </span>
         <div
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, transparent 40%, rgba(0,0,0,0.55) 100%)",
+              "linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, transparent 40%, rgba(0,0,0,0.50) 100%)",
           }}
         />
 
@@ -96,26 +95,7 @@ export default async function PaginaEsperienza({
         </div>
       </div>
 
-      {/* ── Mini Gallery (4 foto) ── */}
-      <div className="max-w-4xl mx-auto px-5 mt-2.5">
-        <div className="grid grid-cols-4 gap-2" style={{ height: "clamp(64px, 14vw, 112px)" }}>
-          {galleryImgs.slice(1).map((src, i) => (
-            <div
-              key={i}
-              className="rounded-2xl overflow-hidden relative"
-              style={{ background: stile.gradient }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={src}
-                alt={`${esp.titolo} — immagine ${i + 2}`}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Mini gallery rimossa — nessuna foto casuale */}
 
       {/* ── Layout contenuto ── */}
       <div className="max-w-4xl mx-auto px-5 mt-8">
