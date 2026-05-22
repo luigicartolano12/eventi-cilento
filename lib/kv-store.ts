@@ -57,3 +57,28 @@ export async function aggiungiEventiKV(
 export async function svuotaEventiKV(): Promise<void> {
   await kv.del(CHIAVE);
 }
+
+/**
+ * Sostituisce TUTTI gli eventi con una nuova lista (reset atomico).
+ * Usato da "Reset + Ricarica": prima estrai, poi sostituisci — così
+ * se l'AI fallisce il database precedente rimane intatto.
+ */
+export async function sostituisciEventiKV(
+  nuovi: Omit<EventoDinamico, "id" | "dataCreazione" | "approvato">[]
+): Promise<number> {
+  const ieri = new Date();
+  ieri.setDate(ieri.getDate() - 1);
+  const ieriISO = ieri.toISOString().split("T")[0];
+
+  const mapped: EventoDinamico[] = nuovi
+    .filter((e) => (e.dataFine ?? e.data) >= ieriISO)
+    .map((e) => ({
+      ...e,
+      id: `kv-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      approvato: true,
+      dataCreazione: new Date().toISOString(),
+    }));
+
+  await kv.set(CHIAVE, mapped);
+  return mapped.length;
+}
