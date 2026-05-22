@@ -174,13 +174,15 @@ function PaginaEventoKV({ evento }: { evento: EventoDinamico }) {
                   </span>
                   {evento.orario && (<><IcoClock size={14} className="text-stone-400 shrink-0 ml-1" /><span>ore {evento.orario}</span></>)}
                 </span>
+                {/* Maps — sempre cliccabile */}
                 <a
                   href={`https://maps.google.com/?q=${encodeURIComponent(`${evento.luogo ?? evento.comune}, ${evento.comune}, Salerno, Campania, Italia`)}`}
                   target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm text-stone-500 hover:text-stone-700 transition-colors"
+                  className="inline-flex items-center gap-2 text-sm font-semibold transition-colors hover:opacity-80"
+                  style={{ color: "#16a34a" }}
                 >
-                  <IcoMapPin size={14} className="text-stone-400 shrink-0" />
-                  {evento.luogo ? `${evento.luogo}, ` : ""}{evento.comune}
+                  <IcoMapPin size={14} className="shrink-0" />
+                  {evento.luogo ? `${evento.luogo}, ` : ""}{evento.comune} — Apri in Maps
                 </a>
               </div>
             </div>
@@ -236,31 +238,35 @@ function PaginaEventoKV({ evento }: { evento: EventoDinamico }) {
               </div>
             )}
 
-            {/* Contatti (se presenti) */}
-            {(evento.organizzatore || evento.telefono || evento.email) && (
-              <div>
-                <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3">Organizzatore</p>
+            {/* Contatti — sempre mostrati (con fallback) */}
+            <div>
+              <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3">Contatti</p>
+              {(evento.organizzatore || evento.telefono || evento.email) ? (
                 <div className="flex flex-col gap-1.5">
                   {evento.organizzatore && (
                     <p className="text-sm font-bold text-stone-700">{evento.organizzatore}</p>
                   )}
-                  {evento.telefono && (
+                  {evento.telefono ? (
                     <a href={`tel:${evento.telefono}`}
-                      className="inline-flex items-center gap-2 text-sm text-stone-500 hover:text-stone-800 transition-colors">
-                      <IcoPhone size={14} className="text-stone-400" />
+                      className="inline-flex items-center gap-2 text-sm font-semibold transition-colors hover:opacity-80"
+                      style={{ color: "#16a34a" }}>
+                      <IcoPhone size={14} />
                       {evento.telefono}
                     </a>
-                  )}
-                  {evento.email && (
+                  ) : null}
+                  {evento.email ? (
                     <a href={`mailto:${evento.email}`}
-                      className="inline-flex items-center gap-2 text-sm text-stone-500 hover:text-stone-800 transition-colors">
-                      <IcoMail size={14} className="text-stone-400" />
+                      className="inline-flex items-center gap-2 text-sm font-semibold transition-colors hover:opacity-80"
+                      style={{ color: "#2563eb" }}>
+                      <IcoMail size={14} />
                       {evento.email}
                     </a>
-                  )}
+                  ) : null}
                 </div>
-              </div>
-            )}
+              ) : (
+                <p className="text-sm text-stone-400 italic">Contatto non disponibile</p>
+              )}
+            </div>
           </div>
         </article>
       </div>

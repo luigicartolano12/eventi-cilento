@@ -77,7 +77,8 @@ export function EventiList({
   const [categoria, setCategoria] = useState<Categoria | null>(categoriaEsterna ?? null);
   const [area, setArea] = useState<Area>("tutti");
   const [cerca, setCerca] = useState("");
-  const [dataFiltro, setDataFiltro] = useState("");
+  const [dataInizio, setDataInizio] = useState("");
+  const [dataFine, setDataFine] = useState("");
   const [locationLabel, setLocationLabel] = useState("");
   const [locationLoading, setLocationLoading] = useState(false);
   const [soloGratuiti, setSoloGratuiti] = useState(false);
@@ -108,13 +109,13 @@ export function EventiList({
 
   const eventiFiltrati = useMemo(() => {
     return eventi.filter((e) => {
-      // Filtro area (prima degli altri)
       if (area === "vallo" && !COMUNI_VALLO.has(e.comune)) return false;
       if (area === "golfo" && !COMUNI_GOLFO.has(e.comune)) return false;
       if (area === "cilento" && (COMUNI_VALLO.has(e.comune) || COMUNI_GOLFO.has(e.comune))) return false;
-
       if (categoria && e.categoria !== categoria) return false;
-      if (dataFiltro && e.data < dataFiltro) return false;
+      // Range date: da → a (entrambi opzionali)
+      if (dataInizio && (e.dataFine ?? e.data) < dataInizio) return false;
+      if (dataFine && e.data > dataFine) return false;
       if (soloGratuiti && !e.servizi.ingressoGratuito) return false;
       if (soloAccessibili && !e.servizi.accessibileDisabili) return false;
       if (locationLabel) {
@@ -125,21 +126,21 @@ export function EventiList({
       if (cerca) {
         const q = cerca.toLowerCase();
         const haystack = [e.titolo, e.comune, e.categoria, e.descrizioneBreve, e.luogo]
-          .join(" ")
-          .toLowerCase();
+          .join(" ").toLowerCase();
         if (!haystack.includes(q)) return false;
       }
       return true;
     });
-  }, [eventi, area, categoria, dataFiltro, locationLabel, cerca, soloGratuiti, soloAccessibili]);
+  }, [eventi, area, categoria, dataInizio, dataFine, locationLabel, cerca, soloGratuiti, soloAccessibili]);
 
-  const filtriAttivi = categoria || cerca || soloGratuiti || soloAccessibili || dataFiltro || locationLabel || area !== "tutti";
+  const filtriAttivi = categoria || cerca || soloGratuiti || soloAccessibili || dataInizio || dataFine || locationLabel || area !== "tutti";
 
   function resetFiltri() {
     setCategoria(null);
     setArea("tutti");
     setCerca("");
-    setDataFiltro("");
+    setDataInizio("");
+    setDataFine("");
     setLocationLabel("");
     setSoloGratuiti(false);
     setSoloAccessibili(false);
@@ -209,34 +210,50 @@ export function EventiList({
           ))}
         </div>
 
-        {/* Data + Posizione */}
-        <div className="flex gap-3 mb-4">
-          <div
-            className="flex-1 flex items-center gap-2.5 rounded-2xl px-4 py-3"
-            style={{ background: "#f5f3ef" }}
-          >
+        {/* Calendario range + Posizione */}
+        <div className="flex flex-col gap-2 mb-4">
+          {/* Range date */}
+          <div className="flex gap-2 items-center">
             <IcoCalendar size={14} className="text-stone-400 shrink-0" />
-            <input
-              type="date"
-              value={dataFiltro}
-              onChange={(e) => setDataFiltro(e.target.value)}
-              className="flex-1 bg-transparent font-medium text-stone-700 focus:outline-none"
-              style={{ colorScheme: "light", fontSize: 16 }}
-            />
-            {dataFiltro && (
+            <div
+              className="flex-1 flex items-center gap-1.5 rounded-2xl px-3 py-2.5"
+              style={{ background: "#f5f3ef" }}
+            >
+              <span className="text-[11px] font-bold text-stone-400 shrink-0">Dal</span>
+              <input
+                type="date"
+                value={dataInizio}
+                onChange={(e) => setDataInizio(e.target.value)}
+                className="flex-1 bg-transparent font-medium text-stone-700 focus:outline-none min-w-0"
+                style={{ colorScheme: "light", fontSize: 15 }}
+              />
+            </div>
+            <span className="text-stone-300 text-sm shrink-0">→</span>
+            <div
+              className="flex-1 flex items-center gap-1.5 rounded-2xl px-3 py-2.5"
+              style={{ background: "#f5f3ef" }}
+            >
+              <span className="text-[11px] font-bold text-stone-400 shrink-0">Al</span>
+              <input
+                type="date"
+                value={dataFine}
+                onChange={(e) => setDataFine(e.target.value)}
+                className="flex-1 bg-transparent font-medium text-stone-700 focus:outline-none min-w-0"
+                style={{ colorScheme: "light", fontSize: 15 }}
+              />
+            </div>
+            {(dataInizio || dataFine) && (
               <button
-                onClick={() => setDataFiltro("")}
-                className="text-stone-400 border-0 bg-transparent cursor-pointer text-xl leading-none hover:text-stone-600 transition-colors"
-              >
-                ×
-              </button>
+                onClick={() => { setDataInizio(""); setDataFine(""); }}
+                className="text-stone-400 border-0 bg-transparent cursor-pointer text-xl leading-none hover:text-stone-600 transition-colors shrink-0"
+              >×</button>
             )}
           </div>
-
+          {/* Posizione */}
           <button
             onClick={locationLabel ? () => setLocationLabel("") : rilevaPosizione}
             disabled={locationLoading}
-            className="flex items-center gap-2 px-4 py-3 rounded-2xl border-0 cursor-pointer transition-all font-semibold text-sm shrink-0 disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border-0 cursor-pointer transition-all font-semibold text-sm disabled:opacity-50 w-full justify-center"
             style={
               locationLabel
                 ? { background: "#dcfce7", color: "#166534" }
@@ -244,7 +261,7 @@ export function EventiList({
             }
           >
             <IcoLocate size={14} />
-            <span className="hidden sm:inline max-w-[120px] truncate">
+            <span className="truncate max-w-[200px]">
               {locationLoading ? "Rilevamento…" : locationLabel || "Vicino a me"}
             </span>
           </button>
@@ -267,47 +284,28 @@ export function EventiList({
         </div>
       </div>
 
-      {/* ── Categorie — sezione separata ── */}
-      <div className="mb-8">
-        <p className="text-[11px] font-black uppercase tracking-[0.18em] mb-3" style={{ color: "#78716c" }}>
+      {/* ── Categorie — pills compatti ── */}
+      <div className="mb-6">
+        <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-2.5" style={{ color: "#78716c" }}>
           Filtra per categoria
         </p>
-        <div className="flex gap-2.5 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
+        <div className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
           {/* Tutte */}
           <button
             onClick={() => setCategoria(null)}
-            className="shrink-0 flex flex-col rounded-2xl border-0 cursor-pointer transition-all duration-200 overflow-hidden"
+            className="shrink-0 flex items-center gap-2 rounded-2xl border-0 cursor-pointer transition-all duration-200 px-3.5 py-2"
             style={{
-              width: 90,
               background: !categoria ? "#a3e635" : "white",
               boxShadow: !categoria
-                ? "0 0 0 2.5px #65a30d, 0 4px 12px rgba(101,163,13,0.25)"
-                : "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06)",
-              transform: !categoria ? "translateY(-2px)" : "translateY(0)",
+                ? "0 0 0 2px #65a30d"
+                : "0 1px 2px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.06)",
+              color: !categoria ? "#14532d" : "#44403c",
             }}
           >
-            <div
-              className="w-full flex items-center justify-center"
-              style={{
-                height: 56,
-                background: !categoria
-                  ? "rgba(20,83,45,0.12)"
-                  : "linear-gradient(135deg, #1a3529, #0f2318)",
-              }}
-            >
-              <span className="text-xl">🌿</span>
-            </div>
-            <div className="py-2 flex flex-col items-center gap-0.5">
-              <span className="text-[11px] font-bold" style={{ color: !categoria ? "#14532d" : "#1c1c1e" }}>
-                Tutte
-              </span>
-              <span className="text-[9px]" style={{ color: !categoria ? "#166534" : "#8e8e93" }}>
-                {eventi.length} eventi
-              </span>
-            </div>
+            <span style={{ fontSize: 15 }}>🌿</span>
+            <span className="text-[12px] font-black whitespace-nowrap">Tutte</span>
           </button>
 
-          {/* Categoria con icona + gradiente */}
           {CATEGORIE.map((cat) => {
             const Ico = IconeCategoria[cat];
             const attivo = categoria === cat;
@@ -315,33 +313,27 @@ export function EventiList({
               <button
                 key={cat}
                 onClick={() => setCategoria(attivo ? null : cat)}
-                className="shrink-0 flex flex-col rounded-2xl border-0 cursor-pointer transition-all duration-200 overflow-hidden"
+                className="shrink-0 flex items-center gap-2 rounded-2xl border-0 cursor-pointer transition-all duration-200 px-3.5 py-2"
                 style={{
-                  width: 90,
                   background: attivo ? "#a3e635" : "white",
                   boxShadow: attivo
-                    ? "0 0 0 2.5px #65a30d, 0 4px 12px rgba(101,163,13,0.25)"
-                    : "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06)",
-                  transform: attivo ? "translateY(-2px)" : "translateY(0)",
+                    ? "0 0 0 2px #65a30d"
+                    : "0 1px 2px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.06)",
                 }}
               >
+                {/* Cerchio icona colorata */}
                 <div
-                  className="w-full flex items-center justify-center"
-                  style={{
-                    height: 56,
-                    background: attivo ? "rgba(20,83,45,0.12)" : gradientCategoria[cat],
-                  }}
+                  className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
+                  style={{ background: attivo ? "rgba(20,83,45,0.15)" : gradientCategoria[cat] }}
                 >
-                  <Ico size={26} strokeWidth={1.4} className={attivo ? "text-green-800" : "text-white"} />
+                  <Ico size={12} strokeWidth={2} className={attivo ? "text-green-800" : "text-white"} />
                 </div>
-                <div className="py-2 flex flex-col items-center gap-0.5">
-                  <span className="text-[11px] font-bold" style={{ color: attivo ? "#14532d" : "#1c1c1e" }}>
-                    {cat}
-                  </span>
-                  <span className="text-[9px]" style={{ color: attivo ? "#166534" : "#8e8e93" }}>
-                    {descCategoria[cat]}
-                  </span>
-                </div>
+                <span
+                  className="text-[12px] font-black whitespace-nowrap"
+                  style={{ color: attivo ? "#14532d" : "#44403c" }}
+                >
+                  {cat}
+                </span>
               </button>
             );
           })}

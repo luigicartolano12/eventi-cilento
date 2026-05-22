@@ -3,6 +3,7 @@ import { Evento, formattaData } from "@/lib/events";
 import {
   IcoMapPin, IcoCalendar, IcoClock, IcoPlay,
   IcoCheck, IcoWheelchair, IcoParking, IcoPaw, IcoBooking,
+  IcoSagra, IcoMusica, IcoCultura, IcoSport, IcoReligioso, IcoMercato, IcoNatura, IcoSalute,
 } from "./icons";
 
 const testoCategoriaColore: Record<string, string> = {
@@ -13,6 +14,7 @@ const testoCategoriaColore: Record<string, string> = {
   Religioso:"#d97706",
   Mercato:  "#db2777",
   Natura:   "#059669",
+  Salute:   "#be185d",
 };
 
 const gradientCategoria: Record<string, string> = {
@@ -23,6 +25,13 @@ const gradientCategoria: Record<string, string> = {
   Religioso:"linear-gradient(160deg, #facc15 0%, #f59e0b 100%)",
   Mercato:  "linear-gradient(160deg, #f472b6 0%, #fb7185 100%)",
   Natura:   "linear-gradient(160deg, #059669 0%, #14b8a6 100%)",
+  Salute:   "linear-gradient(160deg, #ec4899 0%, #f43f5e 100%)",
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const IconeCategoria: Record<string, React.ComponentType<any>> = {
+  Sagra: IcoSagra, Musica: IcoMusica, Cultura: IcoCultura, Sport: IcoSport,
+  Religioso: IcoReligioso, Mercato: IcoMercato, Natura: IcoNatura, Salute: IcoSalute,
 };
 
 /**
@@ -58,6 +67,7 @@ function placeholderImg(id: string, categoria: string) {
 export function EventCard({ evento }: { evento: Evento }) {
   const { servizi } = evento;
   const imgSrc = evento.immagine || placeholderImg(evento.id, evento.categoria);
+  const IcoCategoria = IconeCategoria[evento.categoria];
 
   const hasBadge =
     servizi.ingressoGratuito ||
@@ -100,6 +110,27 @@ export function EventCard({ evento }: { evento: Evento }) {
               "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.35) 100%)",
           }}
         />
+
+        {/* Tag categoria — in alto a sinistra */}
+        <span
+          className="absolute top-3 left-3 text-[10px] font-black px-2.5 py-1 rounded-full text-white z-10"
+          style={{ background: gradientCategoria[evento.categoria] ?? "#1a3529" }}
+        >
+          {evento.categoria}
+        </span>
+
+        {/* Icona rotonda — in basso a destra */}
+        {IcoCategoria && (
+          <div
+            className="absolute bottom-3 right-3 w-8 h-8 rounded-full flex items-center justify-center z-10"
+            style={{
+              background: gradientCategoria[evento.categoria] ?? "#1a3529",
+              boxShadow: "0 1px 6px rgba(0,0,0,0.3)",
+            }}
+          >
+            <IcoCategoria size={15} strokeWidth={1.8} className="text-white" />
+          </div>
+        )}
 
         {/* Badge video */}
         {evento.video && (

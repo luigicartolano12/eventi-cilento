@@ -61,10 +61,15 @@ export function BottomNav() {
     <nav
       className="sm:hidden fixed bottom-0 left-0 right-0 z-50 flex items-stretch"
       style={{
-        background: "rgba(245,243,239,0.96)",
-        backdropFilter: "blur(16px)",
+        background: "rgba(245,243,239,0.97)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
         borderTop: "1px solid rgba(0,0,0,0.07)",
-        paddingBottom: "env(safe-area-inset-bottom)",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        /* Forza layer GPU separato → evita salti durante lo scroll */
+        transform: "translateZ(0)",
+        willChange: "transform",
+        backfaceVisibility: "hidden",
       }}
     >
       {/* Home */}

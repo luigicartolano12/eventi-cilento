@@ -132,22 +132,30 @@ export function ChatWidget() {
     }
   }
 
-  if (!aperto) return null;
-
   return (
     <div
       className="fixed z-50 flex flex-col overflow-hidden"
       style={{
-        bottom: "calc(3.5rem + env(safe-area-inset-bottom, 0px))",
+        bottom: "calc(3.75rem + env(safe-area-inset-bottom, 0px))",
         right: "1rem",
         left: "1rem",
-        maxWidth: 360,
+        maxWidth: 400,
         marginLeft: "auto",
-        height: 480,
+        /* Usa dvh per gestire la tastiera mobile correttamente */
+        height: aperto ? "min(480px, calc(100dvh - 5rem))" : 0,
         borderRadius: 24,
         background: "#fff",
-        boxShadow:
-          "0 4px 24px rgba(0,0,0,0.12), 0 24px 64px rgba(0,0,0,0.14)",
+        boxShadow: aperto
+          ? "0 4px 24px rgba(0,0,0,0.14), 0 24px 64px rgba(0,0,0,0.16)"
+          : "none",
+        opacity: aperto ? 1 : 0,
+        pointerEvents: aperto ? "auto" : "none",
+        /* Transizione fluida apertura/chiusura */
+        transition: "height 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease",
+        /* Stessa tecnica del BottomNav per evitare jump */
+        transform: "translateZ(0)",
+        willChange: "height, opacity",
+        overflow: aperto ? "hidden" : "hidden",
       }}
     >
       {/* Header */}

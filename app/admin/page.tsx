@@ -680,23 +680,50 @@ function TabCron() {
         </div>
       )}
 
-      {/* Import testo */}
+      {/* Import da testo / Facebook / Instagram */}
       <div className="flex flex-col gap-3 pt-4 border-t border-stone-100">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-1">Importa da testo libero</p>
-          <p className="text-xs text-stone-400 mb-3">Incolla un post Facebook, newsletter Pro Loco, email, pagina web — l'AI estrae gli eventi.</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-1">
+            📋 Importa da testo / Facebook / Instagram
+          </p>
+          <p className="text-xs text-stone-400 mb-3">
+            Incolla il testo di un post Facebook, un evento Instagram, una newsletter Pro Loco, una pagina web, un programma estivo — l&apos;AI estrae tutti gli eventi e li salva.
+          </p>
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {["Post Facebook Pro Loco Teggiano estate 2026", "Programma eventi Sala Consilina luglio", "Newsletter Comune Padula"].map(ex => (
+              <button key={ex} onClick={() => setTesto(ex)}
+                className="text-[10px] font-bold px-2.5 py-1 rounded-full border-0 cursor-pointer"
+                style={{background:"#f5f3ef",color:"#78716c"}}>
+                {ex}
+              </button>
+            ))}
+          </div>
         </div>
         <textarea value={testo} onChange={e => setTesto(e.target.value)}
-          placeholder="Incolla qui il testo con gli eventi…"
-          rows={6} className={CL} style={{...IS, resize:"vertical"}}/>
+          placeholder="Incolla qui: testo di un post Facebook, testo di un evento Instagram, programma estivo del comune, newsletter Pro Loco, articolo di giornale locale…"
+          rows={7} className={CL} style={{...IS, resize:"vertical"}}/>
         <button onClick={importaDaTesto} disabled={importando||!testo.trim()}
           className="w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-0 cursor-pointer disabled:opacity-50"
           style={{background:"#f3e8ff",color:"#7c3aed"}}>
           {importando
-            ? <><span className="w-4 h-4 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin"/>Estrazione…</>
-            : <><IcoDownload size={15}/>Estrai eventi dal testo</>}
+            ? <><span className="w-4 h-4 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin"/>Estrazione in corso…</>
+            : <><IcoDownload size={15}/>Estrai eventi da questo testo</>}
         </button>
         {importMsg && <p className="text-xs px-3 py-2 rounded-xl" style={{background:"#f0fdf4",color:"#166534"}}>{importMsg}</p>}
+
+        {/* Istruzioni Facebook */}
+        <div className="rounded-2xl p-4" style={{background:"#e7f3ff",border:"1px solid #bfdbfe"}}>
+          <p className="text-[11px] font-black mb-2" style={{color:"#1e40af"}}>Come importare da Facebook</p>
+          <ol className="text-xs space-y-1" style={{color:"#1e3a8a"}}>
+            <li>1. Vai sulla pagina Facebook della Pro Loco / Comune</li>
+            <li>2. Apri un post di evento → copia tutto il testo</li>
+            <li>3. Incolla qui sopra → clicca &quot;Estrai eventi&quot;</li>
+            <li>4. L&apos;AI estrae titolo, data, luogo e salva l&apos;evento</li>
+          </ol>
+          <p className="text-[10px] mt-2" style={{color:"#3b82f6"}}>
+            💡 Pro Loco da seguire: Pro Loco Teggiano, Pro Loco Sala Consilina, Pro Loco Padula, Pro Loco Sassano, Pro Loco Atena Lucana, Comune di Polla
+          </p>
+        </div>
       </div>
     </div>
   );
