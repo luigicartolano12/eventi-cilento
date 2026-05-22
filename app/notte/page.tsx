@@ -31,6 +31,7 @@ function LocaleCard({ locale }: { locale: Locale }) {
   const stile = STILE_LOCALE[locale.categoria];
   const kw = kwLocale[locale.categoria] ?? "restaurant,food";
   const lock = hashId(locale.id);
+
   return (
     <Link
       href={`/locali/${locale.id}`}
@@ -142,7 +143,7 @@ function LocaleCard({ locale }: { locale: Locale }) {
   );
 }
 
-export default function PaginaLocali() {
+export default function PaginaNotte() {
   const [categoriaAttiva, setCategoriaAttiva] = useState<CategoriaLocale | null>(null);
 
   const localiFiltrati = categoriaAttiva
@@ -152,10 +153,7 @@ export default function PaginaLocali() {
   return (
     <main className="flex-1" style={{ background: "#f5f3ef" }}>
       {/* Hero */}
-      <div
-        style={{ background: "#f5f3ef" }}
-        className="px-5 pt-12 pb-14"
-      >
+      <div style={{ background: "#f5f3ef" }} className="px-5 pt-12 pb-14">
         <div className="max-w-6xl mx-auto">
           <Link
             href="/"
@@ -176,8 +174,8 @@ export default function PaginaLocali() {
             className="font-black leading-[0.9] tracking-tight text-stone-900 mb-5"
             style={{ fontSize: "clamp(40px, 7vw, 76px)" }}
           >
-            Locali &amp;<br />
-            <span style={{ color: "#65a30d" }}>Serate</span>.
+            Vivi la<br />
+            <span style={{ color: "#65a30d" }}>Notte</span>.
           </h1>
           <p className="text-base max-w-md leading-relaxed" style={{ color: "#44403c" }}>
             {locali.length} locali selezionati: bar, ristoranti, discoteche, agriturismi e

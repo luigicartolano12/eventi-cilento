@@ -1,9 +1,30 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Evento, Categoria } from "@/lib/events";
+import { Evento, Categoria, CATEGORIE } from "@/lib/events";
 import { EventCard } from "./EventCard";
 import { IcoMapPin, IcoSearch, IcoCalendar, IcoLocate } from "./icons";
+
+// ── Definizioni aree geografiche ──────────────────────────────────────────────
+const COMUNI_VALLO = new Set([
+  "Atena Lucana", "Buonabitacolo", "Casalbuono", "Monte San Giacomo",
+  "Montesano sulla Marcellana", "Padula", "Pertosa", "Polla",
+  "Sala Consilina", "San Pietro al Tanagro", "San Rufo", "Sant'Arsenio",
+  "Sassano", "Sanza", "Teggiano",
+]);
+const COMUNI_GOLFO = new Set([
+  "Ispani", "Sapri", "Vibonati", "Scario", "Santa Marina",
+  "Santa Marina di Camerota", "San Giovanni a Piro", "Torre Orsaia", "Torraca",
+]);
+
+type Area = "tutti" | "cilento" | "vallo" | "golfo";
+
+const AREE: { id: Area; label: string }[] = [
+  { id: "tutti",   label: "Tutti" },
+  { id: "cilento", label: "Cilento" },
+  { id: "vallo",   label: "Vallo di Diano" },
+  { id: "golfo",   label: "Golfo di Policastro" },
+];
 
 async function reverseGeocode(lat: number, lon: number): Promise<string> {
   const res = await fetch(
@@ -28,6 +49,7 @@ export function EventiList({
   categoriaEsterna?: Categoria | null;
 }) {
   const [categoria, setCategoria] = useState<Categoria | null>(categoriaEsterna ?? null);
+  const [area, setArea] = useState<Area>("tutti");
   const [cerca, setCerca] = useState("");
   const [dataFiltro, setDataFiltro] = useState("");
   const [locationLabel, setLocationLabel] = useState("");
@@ -60,6 +82,11 @@ export function EventiList({
 
   const eventiFiltrati = useMemo(() => {
     return eventi.filter((e) => {
+      // Filtro area (prima degli altri)
+      if (area === "vallo" && !COMUNI_VALLO.has(e.comune)) return false;
+      if (area === "golfo" && !COMUNI_GOLFO.has(e.comune)) return false;
+      if (area === "cilento" && (COMUNI_VALLO.has(e.comune) || COMUNI_GOLFO.has(e.comune))) return false;
+
       if (categoria && e.categoria !== categoria) return false;
       if (dataFiltro && e.data < dataFiltro) return false;
       if (soloGratuiti && !e.servizi.ingressoGratuito) return false;
@@ -78,12 +105,13 @@ export function EventiList({
       }
       return true;
     });
-  }, [eventi, categoria, dataFiltro, locationLabel, cerca, soloGratuiti, soloAccessibili]);
+  }, [eventi, area, categoria, dataFiltro, locationLabel, cerca, soloGratuiti, soloAccessibili]);
 
-  const filtriAttivi = categoria || cerca || soloGratuiti || soloAccessibili || dataFiltro || locationLabel;
+  const filtriAttivi = categoria || cerca || soloGratuiti || soloAccessibili || dataFiltro || locationLabel || area !== "tutti";
 
   function resetFiltri() {
     setCategoria(null);
+    setArea("tutti");
     setCerca("");
     setDataFiltro("");
     setLocationLabel("");
@@ -135,6 +163,53 @@ export function EventiList({
               ×
             </button>
           )}
+        </div>
+
+        {/* Pills area geografica */}
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+          {AREE.map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => setArea(id)}
+              className="shrink-0 text-xs font-bold px-4 py-2 rounded-full border-0 cursor-pointer transition-all whitespace-nowrap"
+              style={
+                area === id
+                  ? { background: "#16a34a", color: "white" }
+                  : { background: "#f5f3ef", color: "#78716c" }
+              }
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Categoria pills */}
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+          <button
+            onClick={() => setCategoria(null)}
+            className="shrink-0 text-xs font-bold px-3 py-1.5 rounded-full border-0 cursor-pointer transition-all whitespace-nowrap"
+            style={
+              !categoria
+                ? { background: "#1a3529", color: "#a3e635" }
+                : { background: "#f5f3ef", color: "#78716c" }
+            }
+          >
+            Tutte
+          </button>
+          {CATEGORIE.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setCategoria(categoria === cat ? null : cat)}
+              className="shrink-0 text-xs font-bold px-3 py-1.5 rounded-full border-0 cursor-pointer transition-all whitespace-nowrap"
+              style={
+                categoria === cat
+                  ? { background: "#16a34a", color: "white" }
+                  : { background: "#f5f3ef", color: "#78716c" }
+              }
+            >
+              {cat}
+            </button>
+          ))}
         </div>
 
         {/* Data + Posizione */}

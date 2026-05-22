@@ -32,6 +32,13 @@ function imgUrl(keywords: string, lockNum: number, w = 800, h = 500): string {
   return `https://loremflickr.com/${w}/${h}/${primary}/all?lock=${lockNum}`;
 }
 
+function etaConsigliata(difficolta?: string): string {
+  if (difficolta === "Facile") return "Adatto a tutti · famiglie e bambini";
+  if (difficolta === "Media") return "Da 12 anni in su";
+  if (difficolta === "Difficile") return "Da 16 anni · buona forma fisica";
+  return "Adatto a tutti";
+}
+
 export default async function PaginaEsperienza({
   params,
 }: {
@@ -184,7 +191,19 @@ export default async function PaginaEsperienza({
               </p>
             </div>
 
-            {/* Tags */}
+            {/* Mobile: torna su */}
+            <div className="lg:hidden">
+              <Link
+                href="/esperienze"
+                className="inline-flex items-center gap-1.5 text-sm font-bold"
+                style={{ color: "#78716c" }}
+              >
+                <IcoArrowLeft size={13} />
+                Tutte le esperienze
+              </Link>
+            </div>
+
+            {/* Tags — in fondo alla colonna sinistra */}
             {esp.tags && esp.tags.length > 0 && (
               <div>
                 <p
@@ -206,18 +225,6 @@ export default async function PaginaEsperienza({
                 </div>
               </div>
             )}
-
-            {/* Mobile: torna su */}
-            <div className="lg:hidden">
-              <Link
-                href="/esperienze"
-                className="inline-flex items-center gap-1.5 text-sm font-bold"
-                style={{ color: "#78716c" }}
-              >
-                <IcoArrowLeft size={13} />
-                Tutte le esperienze
-              </Link>
-            </div>
           </div>
 
           {/* ── Sidebar destra (1/3) ── */}
@@ -312,6 +319,46 @@ export default async function PaginaEsperienza({
                 >
                   Esperienza libera — nessuna prenotazione richiesta
                 </p>
+              )}
+
+              <div style={{ height: 1, background: "#f5f3ef" }} />
+
+              {/* Età consigliata */}
+              <div>
+                <p
+                  className="text-[10px] font-black uppercase tracking-widest mb-1"
+                  style={{ color: "#78716c" }}
+                >
+                  👥 Età consigliata
+                </p>
+                <p className="text-sm font-semibold text-stone-700">
+                  {etaConsigliata(esp.difficolta)}
+                </p>
+              </div>
+
+              {/* Contatti */}
+              {esp.linkEsterno && (
+                <div>
+                  <p
+                    className="text-[10px] font-black uppercase tracking-widest mb-2"
+                    style={{ color: "#78716c" }}
+                  >
+                    Contatti
+                  </p>
+                  <a
+                    href={esp.linkEsterno}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm font-semibold transition-opacity hover:opacity-70 mb-2 block"
+                    style={{ color: "#16a34a" }}
+                  >
+                    <IcoGlobe size={14} />
+                    Sito ufficiale
+                  </a>
+                  <p className="text-xs leading-relaxed" style={{ color: "#a8a29e" }}>
+                    Per informazioni contatta direttamente il gestore tramite il sito ufficiale.
+                  </p>
+                </div>
               )}
             </div>
           </div>

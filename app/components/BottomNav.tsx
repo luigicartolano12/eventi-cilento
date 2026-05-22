@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { getUtente } from "@/lib/utente";
 
 function IcoHome({ active }: { active: boolean }) {
   return (
@@ -25,41 +24,38 @@ function IcoCompass({ active }: { active: boolean }) {
   );
 }
 
-function IcoUser({ active }: { active: boolean }) {
+function IcoMoon({ active }: { active: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
       stroke={active ? "#16a34a" : "#a8a29e"} strokeWidth={active ? 2.2 : 1.75} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-      <circle cx="12" cy="7" r="4" />
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  );
+}
+
+function IcoChat({ active }: { active: boolean }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+      stroke={active ? "#16a34a" : "#a8a29e"} strokeWidth={active ? 2.2 : 1.75} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
     </svg>
   );
 }
 
 export function BottomNav() {
   const pathname = usePathname();
-  const [loggato, setLoggato] = useState(false);
+  const [chatAperto, setChatAperto] = useState(false);
 
   useEffect(() => {
-    const aggiorna = () => setLoggato(!!getUtente());
-    aggiorna();
-    window.addEventListener("utente-aggiornato", aggiorna);
-    window.addEventListener("storage", aggiorna);
-    return () => {
-      window.removeEventListener("utente-aggiornato", aggiorna);
-      window.removeEventListener("storage", aggiorna);
-    };
+    const handler = () => setChatAperto(false);
+    window.addEventListener("chat-closed", handler);
+    return () => window.removeEventListener("chat-closed", handler);
   }, []);
 
-  const tabs = [
-    { href: "/",            label: "Eventi",      icon: (a: boolean) => <IcoHome active={a} />,    match: (p: string) => p === "/" },
-    { href: "/esperienze",  label: "Esperienze",  icon: (a: boolean) => <IcoCompass active={a} />, match: (p: string) => p.startsWith("/esperienze") },
-    {
-      href: loggato ? "/profilo" : "/registrati",
-      label: loggato ? "Profilo" : "Accedi",
-      icon: (a: boolean) => <IcoUser active={a} />,
-      match: (p: string) => p.startsWith("/profilo") || p.startsWith("/registrati"),
-    },
-  ];
+  function toggleChat() {
+    setChatAperto((prev) => !prev);
+    window.dispatchEvent(new CustomEvent("toggle-chat"));
+  }
 
   return (
     <nav
@@ -71,24 +67,49 @@ export function BottomNav() {
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
-      {tabs.map((tab) => {
-        const active = tab.match(pathname);
-        return (
-          <Link
-            key={tab.href}
-            href={tab.href}
-            className="flex-1 flex flex-col items-center justify-center gap-1 py-3 transition-opacity"
-          >
-            {tab.icon(active)}
-            <span
-              className="text-[10px] font-bold"
-              style={{ color: active ? "#16a34a" : "#a8a29e" }}
-            >
-              {tab.label}
-            </span>
-          </Link>
-        );
-      })}
+      {/* Home */}
+      <Link
+        href="/"
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-3 transition-opacity"
+      >
+        <IcoHome active={pathname === "/"} />
+        <span className="text-[10px] font-bold" style={{ color: pathname === "/" ? "#16a34a" : "#a8a29e" }}>
+          Home
+        </span>
+      </Link>
+
+      {/* Esperienze */}
+      <Link
+        href="/esperienze"
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-3 transition-opacity"
+      >
+        <IcoCompass active={pathname.startsWith("/esperienze")} />
+        <span className="text-[10px] font-bold" style={{ color: pathname.startsWith("/esperienze") ? "#16a34a" : "#a8a29e" }}>
+          Esperienze
+        </span>
+      </Link>
+
+      {/* Notte */}
+      <Link
+        href="/notte"
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-3 transition-opacity"
+      >
+        <IcoMoon active={pathname.startsWith("/notte") || pathname.startsWith("/locali")} />
+        <span className="text-[10px] font-bold" style={{ color: (pathname.startsWith("/notte") || pathname.startsWith("/locali")) ? "#16a34a" : "#a8a29e" }}>
+          Notte
+        </span>
+      </Link>
+
+      {/* Chat */}
+      <button
+        onClick={toggleChat}
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-3 transition-opacity border-0 bg-transparent cursor-pointer"
+      >
+        <IcoChat active={chatAperto} />
+        <span className="text-[10px] font-bold" style={{ color: chatAperto ? "#16a34a" : "#a8a29e" }}>
+          Chat
+        </span>
+      </button>
     </nav>
   );
 }

@@ -80,9 +80,22 @@ export async function GET(request: Request) {
       messages: [{
         role: "user",
         content: `Genera 12 eventi realistici del Cilento, Vallo di Diano e Golfo di Policastro per il periodo: ${periodoLabel}.
-Distribuisci gli eventi tra comuni diversi del territorio (non ripetere sempre gli stessi).
-Includi eventi tipici della stagione: estate=sagre del mare e concerti, autunno=sagre dei funghi e castagne, inverno=presepi e capodanno, primavera=fiori e trekking.
-Varia le categorie: sagre gastronomiche, feste patronali, concerti, mercati artigianali, trekking, mostre, sport, eventi religiosi.
+
+Fonti e organizzatori da includere:
+- Pro Loco locali (ogni comune del Cilento ha la propria Pro Loco)
+- Associazioni culturali, sportive e ricreative del territorio
+- Associazioni religiose, parrocchie e diocesi (feste patronali, processioni, pellegrinaggi)
+- Comuni e assessorati alla cultura e al turismo
+- Sagre e feste tradizionali storiche (es. Sagra del Pesce, Sagra della Mozzarella, Sagra del Fico Bianco)
+- Circoli ricreativi e associazioni di volontariato
+- ASD e società sportive locali (tornei, gare podistiche, ciclismo, canottaggio)
+- Fondazioni culturali, musei e parchi naturali
+
+Distribuzione geografica: distribuisci gli eventi tra comuni diversi del territorio (Cilento costiero, entroterra, Vallo di Diano, Golfo di Policastro). Non ripetere sempre gli stessi comuni.
+
+Stagionalità: ${periodoLabel} — includi eventi tipici del periodo (estate=sagre del mare e concerti sulla spiaggia; autunno=sagre dei funghi, castagne e vino; inverno=presepi viventi, capodanno, feste di Sant'Antonio; primavera=fiori, Pasqua, trekking, feste patronali di maggio).
+
+Varietà categorie: sagre gastronomiche, feste patronali, concerti, mercati artigianali, trekking/escursioni, mostre d'arte, eventi sportivi, eventi religiosi, rievocazioni storiche.
 
 Array JSON — rispondi SOLO con questo array, nessun testo prima o dopo:
 [{"titolo":"...","data":"YYYY-MM-DD","dataFine":"YYYY-MM-DD","comune":"...","categoria":"Sagra|Musica|Cultura|Sport|Religioso|Mercato|Natura","descrizione":"frase di 2-3 righe sull evento","orario":"HH:MM","gratuito":true}]`,
