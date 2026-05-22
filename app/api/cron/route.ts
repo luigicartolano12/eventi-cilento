@@ -38,13 +38,19 @@ Restituisci SOLO un array JSON valido, senza testo prima o dopo:
 Ometti i campi facoltativi se non disponibili. Se non trovi eventi, rispondi con [].`;
 
 export async function GET(request: Request) {
-  // Verifica il token segreto inviato da Vercel (CRON_SECRET)
+  // Verifica token Vercel oppure chiave manuale per trigger dal browser
   const authHeader = request.headers.get("authorization");
+  const url = new URL(request.url);
+  const chiaveManuale = url.searchParams.get("chiave");
   const cronSecret = process.env.CRON_SECRET;
+  const triggerKey = process.env.TRIGGER_KEY ?? "cilento2025";
 
-  // In produzione, accetta solo richieste di Vercel. In sviluppo, passa sempre.
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ errore: "Non autorizzato" }, { status: 401 });
+  const autorizzato =
+    (cronSecret && authHeader === `Bearer ${cronSecret}`) || // chiamata automatica Vercel
+    chiaveManuale === triggerKey;                             // trigger manuale dal browser
+
+  if (!autorizzato) {
+    return NextResponse.json({ errore: "Non autorizzato — aggiungi ?chiave=cilento2025" }, { status: 401 });
   }
 
   const oggi = new Date().toISOString().split("T")[0];
