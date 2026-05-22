@@ -66,35 +66,28 @@ Cerca su siti locali, comuni, pro loco, pagine eventi campani.`;
   let testo = "";
 
   try {
-    // Prova prima con la ricerca web
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const risposta = await (client.messages.create as any)({
-      model: "claude-sonnet-4-6",
-      max_tokens: 4096,
-      system: PROMPT_SISTEMA,
-      tools: [{ type: "web_search_20250305", name: "web_search" }],
-      messages: [{ role: "user", content: query + "\n\n" + FORMATO_JSON }],
-    });
-
-    for (const block of risposta.content) {
-      if (block.type === "text") testo += block.text;
-    }
-  } catch {
-    // Fallback senza ricerca web
+    // Usa Haiku — più veloce, sufficiente per estrarre eventi strutturati
     const risposta = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 4096,
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 2048,
       system: PROMPT_SISTEMA,
       messages: [{
         role: "user",
-        content: `Basandoti sulla tua conoscenza del Cilento, genera eventi realistici e tipici
-per ${mese} ${anno} e i 2 mesi successivi. Data oggi: ${oggi}.
+        content: `Basandoti sulla tua conoscenza aggiornata del territorio cilentano,
+genera una lista di 8-12 eventi realistici e tipici della zona per il periodo
+${mese} ${anno} e i 2 mesi successivi. Data oggi: ${oggi}.
+Includi sagre tipiche stagionali, feste patronali, eventi gastronomici, concerti estivi.
 ${FORMATO_JSON}`,
       }],
     });
     for (const block of risposta.content) {
       if (block.type === "text") testo += block.text;
     }
+  } catch (err) {
+    return NextResponse.json({
+      ok: false,
+      messaggio: err instanceof Error ? err.message : "Errore AI",
+    });
   }
 
   // Estrai array JSON
