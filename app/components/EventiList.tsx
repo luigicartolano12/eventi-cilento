@@ -160,7 +160,7 @@ export function EventiList({
 
       {/* ── Barra filtri ── */}
       <div
-        className="bg-white rounded-3xl p-5 mb-8"
+        className="bg-white rounded-3xl p-5 mb-5"
         style={{
           boxShadow:
             "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06), 0 16px 40px rgba(0,0,0,0.04)",
@@ -209,8 +209,70 @@ export function EventiList({
           ))}
         </div>
 
-        {/* ── Categorie — card colorati con icona ── */}
-        <div className="flex gap-2.5 mb-4 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+        {/* Data + Posizione */}
+        <div className="flex gap-3 mb-4">
+          <div
+            className="flex-1 flex items-center gap-2.5 rounded-2xl px-4 py-3"
+            style={{ background: "#f5f3ef" }}
+          >
+            <IcoCalendar size={14} className="text-stone-400 shrink-0" />
+            <input
+              type="date"
+              value={dataFiltro}
+              onChange={(e) => setDataFiltro(e.target.value)}
+              className="flex-1 bg-transparent font-medium text-stone-700 focus:outline-none"
+              style={{ colorScheme: "light", fontSize: 16 }}
+            />
+            {dataFiltro && (
+              <button
+                onClick={() => setDataFiltro("")}
+                className="text-stone-400 border-0 bg-transparent cursor-pointer text-xl leading-none hover:text-stone-600 transition-colors"
+              >
+                ×
+              </button>
+            )}
+          </div>
+
+          <button
+            onClick={locationLabel ? () => setLocationLabel("") : rilevaPosizione}
+            disabled={locationLoading}
+            className="flex items-center gap-2 px-4 py-3 rounded-2xl border-0 cursor-pointer transition-all font-semibold text-sm shrink-0 disabled:opacity-50"
+            style={
+              locationLabel
+                ? { background: "#dcfce7", color: "#166534" }
+                : { background: "#f5f3ef", color: "#78716c" }
+            }
+          >
+            <IcoLocate size={14} />
+            <span className="hidden sm:inline max-w-[120px] truncate">
+              {locationLoading ? "Rilevamento…" : locationLabel || "Vicino a me"}
+            </span>
+          </button>
+        </div>
+
+        {/* Toggles + azzera */}
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+          <Toggle label="Solo gratuiti" value={soloGratuiti} onChange={setSoloGratuiti} />
+          <Toggle label="Solo accessibili" value={soloAccessibili} onChange={setSoloAccessibili} />
+
+          {filtriAttivi && (
+            <button
+              onClick={resetFiltri}
+              className="ml-auto text-xs font-bold px-3 py-1.5 rounded-full cursor-pointer border-0 transition-colors"
+              style={{ background: "#fef2f2", color: "#dc2626" }}
+            >
+              × Azzera filtri
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── Categorie — sezione separata ── */}
+      <div className="mb-8">
+        <p className="text-[11px] font-black uppercase tracking-[0.18em] mb-3" style={{ color: "#78716c" }}>
+          Filtra per categoria
+        </p>
+        <div className="flex gap-2.5 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
           {/* Tutte */}
           <button
             onClick={() => setCategoria(null)}
@@ -283,63 +345,6 @@ export function EventiList({
               </button>
             );
           })}
-        </div>
-
-        {/* Data + Posizione */}
-        <div className="flex gap-3 mb-4">
-          <div
-            className="flex-1 flex items-center gap-2.5 rounded-2xl px-4 py-3"
-            style={{ background: "#f5f3ef" }}
-          >
-            <IcoCalendar size={14} className="text-stone-400 shrink-0" />
-            <input
-              type="date"
-              value={dataFiltro}
-              onChange={(e) => setDataFiltro(e.target.value)}
-              className="flex-1 bg-transparent font-medium text-stone-700 focus:outline-none"
-              style={{ colorScheme: "light", fontSize: 16 }}
-            />
-            {dataFiltro && (
-              <button
-                onClick={() => setDataFiltro("")}
-                className="text-stone-400 border-0 bg-transparent cursor-pointer text-xl leading-none hover:text-stone-600 transition-colors"
-              >
-                ×
-              </button>
-            )}
-          </div>
-
-          <button
-            onClick={locationLabel ? () => setLocationLabel("") : rilevaPosizione}
-            disabled={locationLoading}
-            className="flex items-center gap-2 px-4 py-3 rounded-2xl border-0 cursor-pointer transition-all font-semibold text-sm shrink-0 disabled:opacity-50"
-            style={
-              locationLabel
-                ? { background: "#dcfce7", color: "#166534" }
-                : { background: "#f5f3ef", color: "#78716c" }
-            }
-          >
-            <IcoLocate size={14} />
-            <span className="hidden sm:inline max-w-[120px] truncate">
-              {locationLoading ? "Rilevamento…" : locationLabel || "Vicino a me"}
-            </span>
-          </button>
-        </div>
-
-        {/* Toggles + azzera */}
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-          <Toggle label="Solo gratuiti" value={soloGratuiti} onChange={setSoloGratuiti} />
-          <Toggle label="Solo accessibili" value={soloAccessibili} onChange={setSoloAccessibili} />
-
-          {filtriAttivi && (
-            <button
-              onClick={resetFiltri}
-              className="ml-auto text-xs font-bold px-3 py-1.5 rounded-full cursor-pointer border-0 transition-colors"
-              style={{ background: "#fef2f2", color: "#dc2626" }}
-            >
-              × Azzera filtri
-            </button>
-          )}
         </div>
       </div>
 
