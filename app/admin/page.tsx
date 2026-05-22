@@ -517,6 +517,33 @@ function TabCron() {
   const [importMsg, setImportMsg] = useState("");
   const [resettando, setResettando] = useState(false);
 
+  // ── Seed diretto: eventi reali verificati (senza AI) ──────────────────────
+  async function seedEventiReali(conReset = true) {
+    if (conReset && !confirm("Sostituire tutti gli eventi con quelli reali verificati (maggio–settembre 2026)?")) return;
+    setRunning("light");
+    setLog(["⬇️ Caricamento eventi reali verificati (senza AI)…"]);
+    try {
+      const p = new URLSearchParams({ chiave: "cilento2025" });
+      if (conReset) p.set("reset", "1");
+      const r = await fetch(`/api/seed-eventi?${p}`);
+      const d = await r.json();
+      if (d.ok) {
+        setLog([
+          `✓ ${d.salvati} eventi reali caricati nel database`,
+          `  Totale disponibili: ${d.totaleDisponibili}`,
+          `  Fonti: ${d.fonti?.join(", ")}`,
+          d.messaggio,
+        ]);
+      } else {
+        setLog([`✕ ${d.errore ?? "Errore"}`]);
+      }
+    } catch (err) {
+      setLog([`✕ ${err instanceof Error ? err.message : "Errore"}`]);
+    } finally {
+      setRunning(null);
+    }
+  }
+
   // ── Reset KV senza ricaricare ─────────────────────────────────────────────
   async function soloReset() {
     if (!confirm("Svuotare TUTTI gli eventi dal database? L'operazione è irreversibile.")) return;
@@ -623,6 +650,25 @@ function TabCron() {
   return (
     <div className="flex flex-col gap-6">
 
+      {/* ── Seed eventi reali verificati ─────────────────────────────────── */}
+      <div className="rounded-3xl p-5 flex flex-col gap-3" style={{background:"#f0fdf4",border:"1px solid #86efac"}}>
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{color:"#15803d"}}>
+            ✅ Carica eventi reali verificati (consigliato)
+          </p>
+          <p className="text-xs" style={{color:"#166534"}}>
+            42 eventi reali da fonti verificate: sagre, concerti, festival. Maggio–Settembre 2026. Nessuna AI necessaria.
+          </p>
+        </div>
+        <button onClick={() => seedEventiReali(true)} disabled={isBusy}
+          className="w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
+          style={{background:"linear-gradient(135deg,#16a34a,#15803d)",color:"white"}}>
+          {running === "light"
+            ? <><span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"/>Caricamento…</>
+            : <>📥 Carica subito 42 eventi reali (senza AI)</>}
+        </button>
+      </div>
+
       {/* ── Sezione Reset + Ricarica ───────────────────────────────────────── */}
       <div className="rounded-3xl p-5 flex flex-col gap-3" style={{background:"#fff7ed",border:"1px solid #fed7aa"}}>
         <div>
@@ -630,7 +676,7 @@ function TabCron() {
             🔄 Reset database eventi
           </p>
           <p className="text-xs" style={{color:"#9a3412"}}>
-            Svuota tutti gli eventi inventati dall&apos;AI e ricarica solo dati reali dai siti web.
+            Svuota tutti gli eventi e ricarica con scraping AI dai siti web (richiede crediti Anthropic).
           </p>
         </div>
         {/* Bottone principale: Reset + Ricarica in un click */}
