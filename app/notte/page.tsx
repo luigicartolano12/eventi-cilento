@@ -9,7 +9,7 @@ import {
   type CategoriaLocale,
   type Locale,
 } from "@/lib/locali";
-import { IcoArrowLeft, IcoMapPin, IcoClock, IcoMail } from "@/app/components/icons";
+import { IcoArrowLeft, IcoMapPin, IcoClock, IcoInstagram, IcoPhone, IcoMail } from "@/app/components/icons";
 
 function hashId(s: string): number {
   let h = 0;
@@ -129,14 +129,27 @@ function LocaleCard({ locale }: { locale: Locale }) {
           </div>
         )}
 
-        {/* Instagram */}
-        <div className="mt-auto pt-3 flex items-center justify-between">
-          {locale.instagram ? (
-            <span className="text-[12px] font-semibold text-stone-400">{locale.instagram}</span>
-          ) : (
-            <span />
+        {/* Badge contatti */}
+        <div className="flex items-center gap-2 mt-auto pt-3">
+          {locale.instagram && (
+            <span
+              className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full"
+              style={{ background: "#fdf2f8", color: "#9d174d" }}
+            >
+              <IcoInstagram size={10} />
+              Instagram
+            </span>
           )}
-          <span className="text-[18px] text-stone-300 font-light leading-none">›</span>
+          {locale.telefono && (
+            <span
+              className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full"
+              style={{ background: "#f0fdf4", color: "#166534" }}
+            >
+              <IcoPhone size={10} />
+              Chiama
+            </span>
+          )}
+          <span className="ml-auto text-[18px] text-stone-300 font-light leading-none">›</span>
         </div>
       </div>
     </Link>

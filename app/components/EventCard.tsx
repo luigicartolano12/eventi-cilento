@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Evento, formattaData } from "@/lib/events";
 import {
   IcoMapPin, IcoCalendar, IcoClock, IcoPlay,
-  IcoCheck, IcoWheelchair, IcoParking, IcoPaw,
+  IcoCheck, IcoWheelchair, IcoParking, IcoPaw, IcoBooking,
 } from "./icons";
 
 const testoCategoriaColore: Record<string, string> = {
@@ -63,7 +63,8 @@ export function EventCard({ evento }: { evento: Evento }) {
     servizi.ingressoGratuito ||
     servizi.accessibileDisabili ||
     servizi.parcheggio ||
-    servizi.petFriendly;
+    servizi.petFriendly ||
+    servizi.prenotazioneRichiesta;
 
   return (
     <div
@@ -210,6 +211,16 @@ export function EventCard({ evento }: { evento: Evento }) {
                 }}
               >
                 <IcoPaw size={12} />
+              </span>
+            )}
+            {servizi.prenotazioneRichiesta && (
+              <span
+                className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                title="Prenotazione richiesta"
+                style={{ background: "#dbeafe", color: "#1e40af" }}
+              >
+                <IcoBooking size={9} />
+                Prenota
               </span>
             )}
           </div>

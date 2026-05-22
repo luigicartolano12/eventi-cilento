@@ -10,7 +10,7 @@ import {
   type CategoriaEsperienza,
   type Esperienza,
 } from "@/lib/esperienze";
-import { IcoArrowLeft, IcoMapPin, IcoClock, IcoSearch } from "@/app/components/icons";
+import { IcoArrowLeft, IcoMapPin, IcoClock, IcoSearch, IcoCheck, IcoGlobe, IcoBooking } from "@/app/components/icons";
 
 /** Numero stabile per lock loremflickr */
 function hashId(s: string): number {
@@ -136,6 +136,45 @@ function EsperienzaCard({ esp }: { esp: Esperienza }) {
             ))}
           </div>
         )}
+
+        {/* Badge servizi */}
+        <div className="flex flex-wrap items-center gap-1.5 mt-1">
+          {esp.prezzo === "Gratuito" || esp.prezzo === "Ingresso libero" ? (
+            <span
+              className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full"
+              style={{ background: "#dcfce7", color: "#166534" }}
+            >
+              <IcoCheck size={9} />
+              Gratuito
+            </span>
+          ) : (
+            <span
+              className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full"
+              style={{ background: "#fef3c7", color: "#92400e" }}
+            >
+              {esp.prezzo}
+            </span>
+          )}
+          {esp.linkEsterno && (
+            <span
+              className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full"
+              title="Prenotazione disponibile online"
+              style={{ background: "#dbeafe", color: "#1e40af" }}
+            >
+              <IcoBooking size={9} />
+              Prenota
+            </span>
+          )}
+          {esp.linkEsterno && (
+            <span
+              className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full"
+              title="Sito ufficiale disponibile"
+              style={{ background: "#f0fdf4", color: "#16a34a" }}
+            >
+              <IcoGlobe size={11} />
+            </span>
+          )}
+        </div>
 
         {/* CTA */}
         <div className="mt-auto pt-3 flex items-center justify-between">

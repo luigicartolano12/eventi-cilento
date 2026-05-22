@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { IcoArrowLeft, IcoSend, IcoCalendar, IcoMapPin, IcoMail } from "@/app/components/icons";
+import { IcoArrowLeft, IcoSend, IcoCalendar, IcoMapPin, IcoMail, IcoCamera } from "@/app/components/icons";
 import { ProponiPunti } from "@/app/components/ProponiPunti";
 
 export const metadata = {
@@ -77,6 +77,26 @@ export default function ProponiEvento() {
                 ))}
               </div>
             </div>
+
+            {/* Scansiona locandina */}
+            <Link
+              href="/scan"
+              className="flex items-center gap-4 p-4 rounded-2xl transition-all hover:opacity-90"
+              style={{ background: "linear-gradient(135deg, #f3e8ff, #ede9fe)" }}
+            >
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: "linear-gradient(135deg, #a855f7, #6366f1)" }}
+              >
+                <IcoCamera size={20} className="text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-black" style={{ color: "#6b21a8" }}>Hai già una locandina?</p>
+                <p className="text-xs mt-0.5" style={{ color: "#7c3aed" }}>
+                  Carica la foto e l&apos;AI compila tutto automaticamente →
+                </p>
+              </div>
+            </Link>
 
             {/* CTA */}
             <div
