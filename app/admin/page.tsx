@@ -644,25 +644,25 @@ function TabCron() {
 
   async function importaDaTesto() {
     if (!testo.trim()) return;
-    setImportando(true); setImportMsg("");
+    setImportando(true); setImportMsg("⏳ AI in lettura del testo…");
     try {
-      const res = await fetch("/api/ai-eventi", {
+      const res = await fetch("/api/import-diretto", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: `Estrai TUTTI gli eventi da questo testo e strutturali come eventi del Cilento:\n\n${testo.slice(0, 4000)}` }),
+        body: JSON.stringify({ testo, chiave: "cilento2025" }),
       });
-      if (!res.ok || !res.body) throw new Error("API non disponibile");
-      const reader = res.body.getReader();
-      const dec = new TextDecoder();
-      let buf = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += dec.decode(value, { stream: true });
+      const d = await res.json();
+      if (d.ok) {
+        if (d.salvati > 0) {
+          setImportMsg(`✓ ${d.salvati} event${d.salvati === 1 ? "o" : "i"} pubblicat${d.salvati === 1 ? "o" : "i"} nel database (trovati ${d.estratti}, validi ${d.validi})`);
+          setTesto(""); // pulisce il campo dopo il successo
+        } else {
+          setImportMsg(`ℹ️ ${d.messaggio} — trovati ${d.estratti ?? 0} eventi nel testo, ma erano già presenti o con dati incompleti`);
+        }
+      } else {
+        setImportMsg(`✕ ${d.errore ?? "Errore"}`);
       }
-      const matches = buf.match(/"tipo":"eventi"/g);
-      setImportMsg(matches ? `✓ Eventi estratti e salvati per approvazione` : "Elaborazione completata");
     } catch (err) {
-      setImportMsg(`✕ ${err instanceof Error ? err.message : "Errore"}`);
+      setImportMsg(`✕ ${err instanceof Error ? err.message : "Errore di rete"}`);
     } finally {
       setImportando(false);
     }
@@ -709,31 +709,26 @@ function TabCron() {
             Oppure incolla un testo (Facebook, Pro Loco, Comune…)
           </p>
           <textarea value={testo} onChange={e => setTesto(e.target.value)}
-            placeholder="Copia e incolla il testo di un post Facebook, programma estivo, newsletter Pro Loco, articolo giornale locale…"
-            rows={4} className={CL} style={{...IS, resize:"none", fontSize:14}}/>
-          <div className="flex flex-wrap gap-1.5">
-            {["Pro Loco Teggiano estate 2026", "Programma Sala Consilina luglio", "Comune Padula agosto"].map(ex => (
-              <button key={ex} onClick={() => setTesto(ex)}
-                className="text-[10px] font-bold px-2.5 py-1 rounded-full border-0 cursor-pointer"
-                style={{background:"#f5f3ef",color:"#78716c"}}>
-                {ex}
-              </button>
-            ))}
-          </div>
+            placeholder="Incolla qui il testo di un post Facebook, programma estivo, newsletter Pro Loco, articolo di giornale locale… L'AI estrae gli eventi e li pubblica subito nel database."
+            rows={5} className={CL} style={{...IS, resize:"none", fontSize:14}}/>
           <button onClick={importaDaTesto} disabled={importando||!testo.trim()}
-            className="w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-0 cursor-pointer disabled:opacity-40"
-            style={{background:"#f3e8ff",color:"#7c3aed"}}>
+            className="w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-0 cursor-pointer disabled:opacity-40 transition-opacity hover:opacity-90"
+            style={{background: testo.trim() ? "linear-gradient(135deg,#7c3aed,#6d28d9)" : "#e5e7eb", color: testo.trim() ? "white" : "#9ca3af"}}>
             {importando
-              ? <><span className="w-4 h-4 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin"/>Estrazione in corso…</>
-              : <><IcoDownload size={15}/>Estrai eventi dal testo</>}
+              ? <><span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"/>AI in lettura…</>
+              : <><IcoSend size={15}/>Pubblica eventi nel database (~$0.001)</>}
           </button>
           {importMsg && (
-            <p className="text-xs text-center px-3 py-2 rounded-xl" style={{background:"#f0fdf4",color:"#166534"}}>
+            <p className="text-xs px-3 py-2.5 rounded-xl leading-relaxed"
+              style={{
+                background: importMsg.startsWith("✓") ? "#f0fdf4" : importMsg.startsWith("✕") ? "#fef2f2" : "#f0f9ff",
+                color: importMsg.startsWith("✓") ? "#166534" : importMsg.startsWith("✕") ? "#dc2626" : "#0369a1",
+              }}>
               {importMsg}
             </p>
           )}
-          <p className="text-[10px] text-center" style={{color:"#9ca3af"}}>
-            💡 Segui su Facebook: Pro Loco Teggiano · Sala Consilina · Padula · Sassano · Atena Lucana · Comune di Polla
+          <p className="text-[10px]" style={{color:"#9ca3af"}}>
+            💡 Prendi il testo da Facebook · Pro Loco Teggiano · Sala Consilina · Padula · Sassano · Atena Lucana · Polla
           </p>
         </div>
       </div>
