@@ -21,8 +21,12 @@ export type Esperienza = {
   prezzo: string;
   inEvidenza?: boolean;
   linkEsterno?: string;
+  facebook?: string;     // URL pagina / profilo Facebook
+  instagram?: string;    // URL profilo Instagram
+  telefono?: string;
+  email?: string;
   tags?: string[];
-  imgKeywords?: string; // keywords per Unsplash (es. "kayak,sea,italy")
+  imgKeywords?: string;
 };
 
 export const CATEGORIE_ESPERIENZA: CategoriaEsperienza[] = [

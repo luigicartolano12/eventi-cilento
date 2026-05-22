@@ -5,7 +5,7 @@ import {
   STILE_CATEGORIA,
   IMG_KEYWORDS_CATEGORIA,
 } from "@/lib/esperienze";
-import { IcoArrowLeft, IcoMapPin, IcoClock, IcoGlobe } from "@/app/components/icons";
+import { IcoArrowLeft, IcoMapPin, IcoClock, IcoGlobe, IcoFacebook, IcoInstagram, IcoPhone, IcoMail, IcoExternalLink } from "@/app/components/icons";
 
 export async function generateStaticParams() {
   return esperienze.map((e) => ({ id: e.id }));
@@ -336,30 +336,65 @@ export default async function PaginaEsperienza({
                 </p>
               </div>
 
-              {/* Contatti */}
-              {esp.linkEsterno && (
-                <div>
-                  <p
-                    className="text-[10px] font-black uppercase tracking-widest mb-2"
-                    style={{ color: "#78716c" }}
-                  >
-                    Contatti
-                  </p>
-                  <a
-                    href={esp.linkEsterno}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm font-semibold transition-opacity hover:opacity-70 mb-2 block"
-                    style={{ color: "#16a34a" }}
-                  >
-                    <IcoGlobe size={14} />
-                    Sito ufficiale
-                  </a>
-                  <p className="text-xs leading-relaxed" style={{ color: "#a8a29e" }}>
+              {/* Social & Contatti */}
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest mb-2.5" style={{ color: "#78716c" }}>
+                  Contatti & Social
+                </p>
+                <div className="flex flex-col gap-2">
+                  {esp.facebook && (
+                    <a href={esp.facebook} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-sm font-bold transition-opacity hover:opacity-80"
+                      style={{ background: "#e7f3ff", color: "#1877f2" }}>
+                      <IcoFacebook size={15} />
+                      <span className="flex-1">Facebook</span>
+                      <IcoExternalLink size={11} style={{ opacity: 0.5 }} />
+                    </a>
+                  )}
+                  {esp.instagram && (
+                    <a href={esp.instagram} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-sm font-bold transition-opacity hover:opacity-80"
+                      style={{ background: "#fdf2f8", color: "#c2185b" }}>
+                      <IcoInstagram size={15} />
+                      <span className="flex-1">Instagram</span>
+                      <IcoExternalLink size={11} style={{ opacity: 0.5 }} />
+                    </a>
+                  )}
+                  {esp.linkEsterno && (
+                    <a href={esp.linkEsterno} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-sm font-bold transition-opacity hover:opacity-80"
+                      style={{ background: "#f0fdf4", color: "#16a34a" }}>
+                      <IcoGlobe size={15} />
+                      <span className="flex-1">Sito ufficiale</span>
+                      <IcoExternalLink size={11} style={{ opacity: 0.5 }} />
+                    </a>
+                  )}
+                  {esp.telefono && (
+                    <a href={`tel:${esp.telefono}`}
+                      className="inline-flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-sm font-bold transition-opacity hover:opacity-80"
+                      style={{ background: "#f5f3ef", color: "#44403c" }}>
+                      <IcoPhone size={15} />
+                      <span className="flex-1">{esp.telefono}</span>
+                    </a>
+                  )}
+                  {esp.email && (
+                    <a href={`mailto:${esp.email}`}
+                      className="inline-flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-sm font-bold transition-opacity hover:opacity-80"
+                      style={{ background: "#f5f3ef", color: "#44403c" }}>
+                      <IcoMail size={15} />
+                      <span className="flex-1">{esp.email}</span>
+                    </a>
+                  )}
+                  {!esp.facebook && !esp.instagram && !esp.linkEsterno && !esp.telefono && !esp.email && (
+                    <p className="text-xs" style={{ color: "#a8a29e" }}>Contatto non disponibile</p>
+                  )}
+                </div>
+                {esp.linkEsterno && (
+                  <p className="text-xs leading-relaxed mt-2" style={{ color: "#a8a29e" }}>
                     Per informazioni contatta direttamente il gestore tramite il sito ufficiale.
                   </p>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
 
