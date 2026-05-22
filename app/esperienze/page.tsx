@@ -10,8 +10,9 @@ import {
   type CategoriaEsperienza,
   type Esperienza,
 } from "@/lib/esperienze";
+import { IcoArrowLeft, IcoMapPin, IcoClock, IcoSearch } from "@/app/components/icons";
 
-/** Converte un ID stringa in un numero per il lock di loremflickr (immagine coerente) */
+/** Numero stabile per lock loremflickr */
 function hashId(s: string): number {
   let h = 0;
   for (let i = 0; i < s.length; i++) {
@@ -19,12 +20,20 @@ function hashId(s: string): number {
   }
   return Math.abs(h) % 9999 + 1;
 }
-import { IcoArrowLeft, IcoMapPin, IcoClock } from "@/app/components/icons";
+
+/** loremflickr /all: richiede ENTRAMBE le keyword → immagini più pertinenti */
+function espImgUrl(keywords: string, lockNum: number, w = 600, h = 300): string {
+  const parts = keywords.split(",").map((k) => k.trim()).filter(Boolean);
+  const primary = parts.slice(0, 2).join(",");
+  return `https://loremflickr.com/${w}/${h}/${primary}/all?lock=${lockNum}`;
+}
 
 function EsperienzaCard({ esp }: { esp: Esperienza }) {
   const stile = STILE_CATEGORIA[esp.categoria];
+  const kw = esp.imgKeywords ?? IMG_KEYWORDS_CATEGORIA[esp.categoria];
   return (
-    <div
+    <Link
+      href={`/esperienze/${esp.id}`}
       className="group flex flex-col rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
       style={{
         background: "#fff",
@@ -39,9 +48,12 @@ function EsperienzaCard({ esp }: { esp: Esperienza }) {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={`https://loremflickr.com/600/300/${esp.imgKeywords ?? IMG_KEYWORDS_CATEGORIA[esp.categoria]}?lock=${hashId(esp.id)}`}
+          src={espImgUrl(kw, hashId(esp.id))}
           alt={esp.titolo}
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).style.display = "none";
+          }}
         />
         <div
           className="absolute inset-0"
@@ -133,24 +145,32 @@ function EsperienzaCard({ esp }: { esp: Esperienza }) {
           <span className="text-[18px] text-stone-300 font-light leading-none">›</span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
 export default function PaginaEsperienze() {
   const [categoriaAttiva, setCategoriaAttiva] = useState<CategoriaEsperienza | null>(null);
+  const [cerca, setCerca] = useState("");
 
-  const esperienzeFiltrate = categoriaAttiva
-    ? esperienze.filter((e) => e.categoria === categoriaAttiva)
-    : esperienze;
+  const esperienzeFiltrate = esperienze.filter((e) => {
+    if (categoriaAttiva && e.categoria !== categoriaAttiva) return false;
+    if (cerca) {
+      const q = cerca.toLowerCase();
+      if (
+        !e.titolo.toLowerCase().includes(q) &&
+        !e.comune.toLowerCase().includes(q) &&
+        !(e.tags ?? []).some((t) => t.toLowerCase().includes(q))
+      )
+        return false;
+    }
+    return true;
+  });
 
   return (
     <main className="flex-1" style={{ background: "#f5f3ef" }}>
       {/* ── Hero ── */}
-      <div
-        style={{ background: "#f5f3ef" }}
-        className="px-5 pt-12 pb-14"
-      >
+      <div style={{ background: "#f5f3ef" }} className="px-5 pt-12 pb-10">
         <div className="max-w-6xl mx-auto">
           <Link
             href="/"
@@ -181,9 +201,36 @@ export default function PaginaEsperienze() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 pb-16">
+        {/* ── Barra di ricerca ── */}
+        <div
+          className="flex items-center gap-3 rounded-2xl px-4 py-3.5 mb-6"
+          style={{
+            background: "white",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.06)",
+          }}
+        >
+          <IcoSearch size={16} className="text-stone-400 shrink-0" />
+          <input
+            type="search"
+            value={cerca}
+            onChange={(e) => setCerca(e.target.value)}
+            placeholder="Cerca esperienze, comuni, tag…"
+            className="flex-1 bg-transparent text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none font-medium"
+            style={{ fontSize: 16 }}
+          />
+          {cerca && (
+            <button
+              onClick={() => setCerca("")}
+              className="text-stone-400 hover:text-stone-600 border-0 bg-transparent cursor-pointer text-xl leading-none"
+            >
+              ×
+            </button>
+          )}
+        </div>
+
         {/* ── Filtri categoria ── */}
-        <div className="mb-8">
+        <div className="mb-6">
           <p className="text-[11px] font-black uppercase tracking-[0.18em] mb-4" style={{ color: "#78716c" }}>
             Filtra per tipo
           </p>
@@ -227,14 +274,31 @@ export default function PaginaEsperienze() {
           {esperienzeFiltrate.length}{" "}
           {esperienzeFiltrate.length === 1 ? "esperienza" : "esperienze"}
           {categoriaAttiva ? ` · ${categoriaAttiva}` : ""}
+          {cerca ? ` · "${cerca}"` : ""}
         </p>
 
         {/* ── Griglia ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pb-16">
-          {esperienzeFiltrate.map((esp) => (
-            <EsperienzaCard key={esp.id} esp={esp} />
-          ))}
-        </div>
+        {esperienzeFiltrate.length === 0 ? (
+          <div
+            className="text-center py-20 rounded-3xl"
+            style={{ background: "white" }}
+          >
+            <p className="text-stone-500 font-semibold">Nessuna esperienza trovata</p>
+            <button
+              onClick={() => { setCerca(""); setCategoriaAttiva(null); }}
+              className="mt-3 text-sm font-bold border-0 bg-transparent cursor-pointer"
+              style={{ color: "#16a34a" }}
+            >
+              Azzera filtri
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {esperienzeFiltrate.map((esp) => (
+              <EsperienzaCard key={esp.id} esp={esp} />
+            ))}
+          </div>
+        )}
       </div>
     </main>
   );

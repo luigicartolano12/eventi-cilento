@@ -123,7 +123,9 @@ export function EventiList({
             value={cerca}
             onChange={(e) => setCerca(e.target.value)}
             placeholder="Cerca eventi, luoghi, categorie…"
-            className="flex-1 bg-transparent text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none font-medium"
+            className="flex-1 bg-transparent text-stone-800 placeholder:text-stone-400 focus:outline-none font-medium"
+            /* fontSize >= 16 previene lo zoom automatico su iOS */
+            style={{ fontSize: 16 }}
           />
           {cerca && (
             <button
@@ -146,8 +148,8 @@ export function EventiList({
               type="date"
               value={dataFiltro}
               onChange={(e) => setDataFiltro(e.target.value)}
-              className="flex-1 bg-transparent text-sm font-medium text-stone-700 focus:outline-none"
-              style={{ colorScheme: "light" }}
+              className="flex-1 bg-transparent font-medium text-stone-700 focus:outline-none"
+              style={{ colorScheme: "light", fontSize: 16 }}
             />
             {dataFiltro && (
               <button

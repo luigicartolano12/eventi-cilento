@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { Header } from "./components/Header";
@@ -10,6 +10,15 @@ const geist = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
+
+/** Viewport separato da metadata (required by Next.js 14+) */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // interactiveWidget: "resizes-content" evita che la pagina scorra
+  // sotto alla tastiera iOS (sperimentale ma supportato da Safari 16+)
+  interactiveWidget: "resizes-content",
+};
 
 export const metadata: Metadata = {
   title: "Eventi Cilento — Cilento e Vallo di Diano",

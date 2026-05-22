@@ -25,18 +25,21 @@ const gradientCategoria: Record<string, string> = {
   Natura:   "linear-gradient(160deg, #059669 0%, #14b8a6 100%)",
 };
 
-/** Keyword Unsplash/Flickr per categoria evento */
-const keywordsCategoria: Record<string, string> = {
-  Sagra:    "food,festival,italy,traditional,local",
-  Musica:   "concert,music,festival,summer,outdoor",
-  Cultura:  "ruins,museum,italy,history,archaeological",
-  Sport:    "sport,outdoor,nature,activity,italy",
-  Religioso:"church,procession,italy,religious,faith",
-  Mercato:  "market,crafts,artisan,italy,local",
-  Natura:   "nature,forest,landscape,italy,park",
+/**
+ * Keyword primarie (2 parole) per categoria evento.
+ * Usate con loremflickr /all → la foto deve contenere ENTRAMBE le keyword.
+ */
+const kwCategoria: Record<string, string> = {
+  Sagra:    "food,festival",
+  Musica:   "concert,music",
+  Cultura:  "ruins,columns",
+  Sport:    "sport,outdoor",
+  Religioso:"church,procession",
+  Mercato:  "market,stalls",
+  Natura:   "nature,trail",
 };
 
-/** Numero coerente da ID stringa (per immagine stabile con loremflickr) */
+/** Numero coerente da ID stringa (lock loremflickr) */
 function hashId(s: string): number {
   let h = 0;
   for (let i = 0; i < s.length; i++) {
@@ -45,9 +48,10 @@ function hashId(s: string): number {
   return Math.abs(h) % 9999 + 1;
 }
 
+/** loremflickr /all: richiede ENTRAMBE le keyword → molto più coerente */
 function placeholderImg(id: string, categoria: string) {
-  const keywords = keywordsCategoria[categoria] ?? "italy,landscape,nature";
-  return `https://loremflickr.com/600/300/${keywords}?lock=${hashId(id)}`;
+  const kw = kwCategoria[categoria] ?? "italy,landscape";
+  return `https://loremflickr.com/600/300/${kw}/all?lock=${hashId(id)}`;
 }
 
 export function EventCard({ evento }: { evento: Evento }) {
