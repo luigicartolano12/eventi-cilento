@@ -2,9 +2,9 @@
  * /api/cron — Pipeline di ricerca eventi multi-sorgente
  *
  * ARCHITETTURA:
- *   Fase 0 – Scraping diretto di siti eventi italiani reali (parallelo)
- *   Fase 1 – 8 ricerche web via Claude web_search (1 chiamata, tool multi-uso)
- *   Fase 2 – Claude estrae JSON strutturato da tutto il contesto raccolto
+ *   Fase 0 – Scraping parallelo di ~50 sorgenti (timeout 7s ciascuna)
+ *   Fase 1 – 20 ricerche web specifiche via Claude web_search
+ *   Fase 2 – Claude Opus estrae JSON strutturato da tutto il contesto
  *   Fase 3 – Salvataggio in KV con deduplicazione
  *
  * Triggered: automaticamente 2×/giorno + manualmente con ?chiave=...
@@ -20,32 +20,80 @@ export const maxDuration = 120;
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Siti italiani da scrapare direttamente (testo estratto → Claude)
+// SORGENTI — ~50 siti, tutti in parallelo con timeout 7s
+// Categorie: aggregatori · notizie locali · turismo · cultura · associazioni · comuni
 // ─────────────────────────────────────────────────────────────────────────────
 const SORGENTI_DIRETTE = [
-  // ── Aggregatori generali Cilento / Salerno ────────────────────────────────
-  { url: "https://www.sagre.net/campania/salerno/",        label: "sagre.net Salerno" },
-  { url: "https://www.eventiesagre.it/campania/sa/",       label: "eventiesagre.it SA" },
-  { url: "https://www.paesionline.it/italia/eventi-campania-salerno.asp", label: "paesionline.it SA" },
+
+  // ══ AGGREGATORI NAZIONALI / REGIONALI ═════════════════════════════════════
+  { url: "https://www.sagre.net/campania/salerno/",                        label: "sagre.net Salerno" },
+  { url: "https://www.eventiesagre.it/campania/sa/",                       label: "eventiesagre.it SA" },
+  { url: "https://www.paesionline.it/italia/eventi-campania-salerno.asp",  label: "paesionline.it SA" },
   { url: "https://www.turismoincampania.it/cosa-fare/eventi/?provincia=salerno", label: "Turismo Campania SA" },
-  // ── Notizie locali Cilento (coprono tutta la programmazione comunale) ─────
-  { url: "https://www.infocilento.it/category/eventi/",    label: "infoCilento eventi" },
-  { url: "https://www.ondanews.it/",                       label: "OndaNews Vallo Diano" },
-  { url: "https://www.cilentolive.it/",                    label: "CilentoLive" },
-  { url: "https://www.salernotoday.it/eventi/",            label: "SalernoToday eventi" },
-  // ── Siti dedicati al Cilento ──────────────────────────────────────────────
-  { url: "https://www.cilentoweb.it/eventi/",              label: "cilentoweb.it" },
-  { url: "https://parcoregionalecilento.it/it/eventi/",    label: "Parco Nazionale Cilento" },
-  // ── Comuni Cilento costiero ───────────────────────────────────────────────
-  { url: "https://www.comune.agropoli.sa.it/eventi",       label: "Comune Agropoli" },
-  { url: "https://www.comune.vallo-della-lucania.sa.it",   label: "Comune Vallo Lucania" },
-  // ── Comuni Vallo di Diano (spesso ignorati dagli aggregatori) ────────────
-  { url: "https://www.comune.sala-consilina.sa.it",        label: "Comune Sala Consilina" },
-  { url: "https://www.comune.teggiano.sa.it",              label: "Comune Teggiano" },
-  { url: "https://www.comune.padula.sa.it",                label: "Comune Padula" },
-  { url: "https://www.comune.polla.sa.it",                 label: "Comune Polla" },
-  { url: "https://www.comune.atena-lucana.sa.it",          label: "Comune Atena Lucana" },
-  { url: "https://www.comune.sassano.sa.it",               label: "Comune Sassano" },
+  { url: "https://www.regione.campania.it/campania/export/sites/default/RCSTART/index.html#!cultura_sport_e_turismo", label: "Regione Campania" },
+  { url: "https://www.2night.it/campania/salerno/",                        label: "2night Salerno" },
+  { url: "https://www.ilovesagre.com/sagre-in-campania/",                  label: "ilovesagre Campania" },
+  { url: "https://www.vivicampania.com/eventi/",                           label: "ViviCampania eventi" },
+  { url: "https://www.mangiaebevi.it/sagre/campania/",                     label: "mangiaebevi Campania" },
+
+  // ══ NOTIZIE LOCALI CILENTO E VALLO DI DIANO ═══════════════════════════════
+  { url: "https://www.infocilento.it/category/eventi/",                    label: "infoCilento" },
+  { url: "https://www.ondanews.it/",                                       label: "OndaNews (Vallo Diano)" },
+  { url: "https://www.cilentolive.it/",                                    label: "CilentoLive" },
+  { url: "https://www.salernotoday.it/eventi/",                            label: "SalernoToday" },
+  { url: "https://www.ottopagine.it/sa/eventi/",                           label: "OttoPagine Salerno" },
+  { url: "https://www.zerottonove.it/salerno/eventi/",                     label: "ZeroTtoNove SA" },
+  { url: "https://www.cronachesalerno.it/categoria/eventi/",               label: "Cronache Salerno" },
+  { url: "https://www.agropolichannel.it/category/eventi/",                label: "AgropoliChannel" },
+  { url: "https://www.cilentano.it/",                                      label: "Cilentano.it" },
+  { url: "https://www.cilentoweb.it/eventi/",                              label: "CilentoWeb" },
+  { url: "https://www.lacittadisalerno.it/",                               label: "La Città di Salerno" },
+
+  // ══ TURISMO, CULTURA E SITI TEMATICI ══════════════════════════════════════
+  { url: "https://parcoregionalecilento.it/it/eventi/",                    label: "Parco Nazionale Cilento" },
+  { url: "https://www.certosadipadula.it/eventi/",                         label: "Certosa di Padula" },
+  { url: "https://www.museopaestum.beniculturali.it/",                     label: "Museo Paestum" },
+  { url: "https://www.grottedipertosa-auletta.it/",                        label: "Grotte Pertosa-Auletta" },
+  { url: "https://www.grottadicastelcivita.com/",                          label: "Grotta Castelcivita" },
+  { url: "https://www.cilentodiet.com/it/eventi/",                         label: "CilentoDiet (UNESCO)" },
+  { url: "https://www.visitcilento.it/eventi/",                            label: "VisitCilento" },
+  { url: "https://www.campaniatourism.it/it/eventi/",                      label: "CampaniaTourism" },
+
+  // ══ COMUNI CILENTO COSTIERO ════════════════════════════════════════════════
+  { url: "https://www.comune.agropoli.sa.it/eventi",                       label: "Comune Agropoli" },
+  { url: "https://www.comune.castellabate.sa.it",                          label: "Comune Castellabate" },
+  { url: "https://www.comune.pollica.sa.it",                               label: "Comune Pollica (Acciaroli/Pioppi)" },
+  { url: "https://www.comune.pisciotta.sa.it",                             label: "Comune Pisciotta" },
+  { url: "https://www.comune.camerota.sa.it",                              label: "Comune Camerota" },
+  { url: "https://www.comune.centola.sa.it",                               label: "Comune Centola (Palinuro)" },
+  { url: "https://www.comune.ascea.sa.it",                                 label: "Comune Ascea" },
+  { url: "https://www.comune.vallo-della-lucania.sa.it",                   label: "Comune Vallo della Lucania" },
+  { url: "https://www.comune.capaccio-paestum.sa.it",                      label: "Comune Capaccio-Paestum" },
+  { url: "https://www.comune.casal-velino.sa.it",                          label: "Comune Casal Velino" },
+  { url: "https://www.comune.montecorice.sa.it",                           label: "Comune Montecorice" },
+
+  // ══ COMUNI VALLO DI DIANO ══════════════════════════════════════════════════
+  { url: "https://www.comune.sala-consilina.sa.it",                        label: "Comune Sala Consilina" },
+  { url: "https://www.comune.teggiano.sa.it",                              label: "Comune Teggiano" },
+  { url: "https://www.comune.padula.sa.it",                                label: "Comune Padula" },
+  { url: "https://www.comune.polla.sa.it",                                 label: "Comune Polla" },
+  { url: "https://www.comune.atena-lucana.sa.it",                          label: "Comune Atena Lucana" },
+  { url: "https://www.comune.sassano.sa.it",                               label: "Comune Sassano" },
+  { url: "https://www.comune.montesano-sulla-marcellana.sa.it",            label: "Comune Montesano s/M" },
+  { url: "https://www.comune.buonabitacolo.sa.it",                         label: "Comune Buonabitacolo" },
+  { url: "https://www.comune.sanza.sa.it",                                 label: "Comune Sanza" },
+  { url: "https://www.comune.san-rufo.sa.it",                              label: "Comune San Rufo" },
+  { url: "https://www.comune.santarsenio.sa.it",                           label: "Comune Sant'Arsenio" },
+  { url: "https://www.comune.pertosa.sa.it",                               label: "Comune Pertosa" },
+  { url: "https://www.comune.san-pietro-al-tanagro.sa.it",                 label: "Comune San Pietro al Tanagro" },
+
+  // ══ COMUNI GOLFO DI POLICASTRO ════════════════════════════════════════════
+  { url: "https://www.comune.sapri.sa.it",                                 label: "Comune Sapri" },
+  { url: "https://www.comune.santa-marina.sa.it",                          label: "Comune Santa Marina" },
+  { url: "https://www.comune.vibonati.sa.it",                              label: "Comune Vibonati" },
+  { url: "https://www.comune.san-giovanni-a-piro.sa.it",                   label: "Comune San Giovanni a Piro" },
+  { url: "https://www.comune.torre-orsaia.sa.it",                          label: "Comune Torre Orsaia" },
+
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,14 +106,14 @@ function stagionalita(mese: string): string {
   if (["marzo","aprile","maggio"].some(x => m.includes(x)))
     return "feste patronali di primavera, Pasqua, processioni, sagra del carciofo e del tartufo, trekking tra le fioriture, mercati artigianali, ciclismo";
   if (["giugno","luglio","agosto"].some(x => m.includes(x)))
-    return "sagre del pesce, concerti estivi sulla spiaggia, festival musicali, feste patronali costiere, gare di nuoto, tornei beach volley, cinema all'aperto";
+    return "sagre del pesce, concerti estivi sulla spiaggia, festival musicali, feste patronali costiere, cinema all'aperto, estate nei borghi, eventi in piazza, rassegne teatrali";
   return "sagre dei funghi porcini e castagne, vendemmia, feste patronali autunnali, trekking foliage, mercatini dell'artigianato, fiere agricole";
 }
 
-/** Scarica un sito, rimuove HTML, restituisce testo pulito max 5000 car */
+/** Scarica un sito, rimuove HTML, restituisce testo pulito max 4500 car */
 async function scrapeUrl(url: string, label: string): Promise<string> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 9000);
+  const timer = setTimeout(() => controller.abort(), 7000);
   try {
     const res = await fetch(url, {
       signal: controller.signal,
@@ -86,7 +134,7 @@ async function scrapeUrl(url: string, label: string): Promise<string> {
       .replace(/&lt;/g, "<").replace(/&gt;/g, ">")
       .replace(/&quot;/g, '"').replace(/&#[0-9]+;/g, " ")
       .replace(/\s{2,}/g, " ").trim()
-      .slice(0, 5000);
+      .slice(0, 4500);
     return text ? `\n\n=== SORGENTE: ${label} (${url}) ===\n${text}` : "";
   } catch {
     return "";
@@ -95,14 +143,9 @@ async function scrapeUrl(url: string, label: string): Promise<string> {
   }
 }
 
-/** Estrae testo dai blocchi di risposta Claude (text + tool_result) */
+/** Estrae testo dai blocchi di risposta Claude */
 function estraiTesto(content: Anthropic.ContentBlock[]): string {
-  return content
-    .map((b) => {
-      if (b.type === "text") return b.text;
-      return "";
-    })
-    .join("\n");
+  return content.map((b) => (b.type === "text" ? b.text : "")).join("\n");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -132,13 +175,12 @@ export async function GET(request: Request) {
   const anno = periodoParam ? "" : String(new Date().getFullYear());
   const periodoLabel = periodoParam ?? `${mese} ${anno}`;
   const stagione = stagionalita(mese);
-
   const log: string[] = [];
 
   // ══════════════════════════════════════════════════════════════════════════
-  // FASE 0 — Scraping parallelo siti eventi italiani
+  // FASE 0 — Scraping parallelo di tutte le sorgenti
   // ══════════════════════════════════════════════════════════════════════════
-  log.push("Fase 0: scraping siti diretti...");
+  log.push(`Fase 0: scraping ${SORGENTI_DIRETTE.length} sorgenti in parallelo...`);
   const scrapeRisultati = await Promise.allSettled(
     SORGENTI_DIRETTE.map((s) => scrapeUrl(s.url, s.label))
   );
@@ -146,129 +188,130 @@ export async function GET(request: Request) {
     .map((r) => (r.status === "fulfilled" ? r.value : ""))
     .join("");
   const sitiFunzionanti = scrapeRisultati.filter(
-    (r) => r.status === "fulfilled" && r.value.length > 100
+    (r) => r.status === "fulfilled" && (r as PromiseFulfilledResult<string>).value.length > 100
   ).length;
   log.push(`  → ${sitiFunzionanti}/${SORGENTI_DIRETTE.length} siti raggiunti`);
 
   // ══════════════════════════════════════════════════════════════════════════
-  // FASE 1 — Web search multi-query via Claude
+  // FASE 1 — Web search con 20 query specifiche per area e tipo di evento
   // ══════════════════════════════════════════════════════════════════════════
-  log.push("Fase 1: ricerche web AI...");
+  log.push("Fase 1: 20 ricerche web AI...");
   let contestoWebSearch = "";
   try {
     const ricercaRisposta = await client.messages.create({
       model: "claude-opus-4-5",
-      max_tokens: 4096,
+      max_tokens: 6000,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       tools: [{ type: "web_search_20250305" as any, name: "web_search" }],
-      system: `Sei un esperto di turismo del Cilento (Campania, Italia).
-Usa lo strumento web_search PER OGNI PUNTO richiesto e cerca eventi REALI nel territorio.
-Riporta solo ciò che trovi effettivamente online.`,
+      system: `Sei un esperto di eventi locali in Campania (Italia), specializzato nel Cilento e Vallo di Diano.
+Esegui OGNI ricerca richiesta. Riporta solo dati reali trovati online: titolo evento, data, comune, organizzatore, tipo.`,
       messages: [{
         role: "user",
-        content: `Esegui TUTTE queste 16 ricerche web per trovare eventi REALI per ${periodoLabel}.
-PRIORITÀ ASSOLUTA: Vallo di Diano (Sala Consilina, Teggiano, Padula, Polla, Atena Lucana, Sassano, Montesano, Buonabitacolo).
+        content: `Esegui TUTTE queste 20 ricerche per trovare eventi REALI per ${periodoLabel}:
 
-— VALLO DI DIANO (ricerche dedicate) —
-1. Cerca: "estate ${anno} vallo di diano programma eventi"
-2. Cerca: "sagre vallo di diano ${anno} ${mese}"
-3. Cerca: "sala consilina teggiano padula polla eventi estate ${anno}"
-4. Cerca: "pro loco vallo di diano estate ${anno} programma"
-5. Cerca: site:facebook.com "vallo di diano" eventi estate ${anno}
-6. Cerca: "ondanews.it vallo diano estate ${anno} eventi"
+— VALLO DI DIANO (priorità assoluta) —
+1. "estate ${anno} vallo di diano programma eventi sagre"
+2. "sala consilina eventi ${mese} ${anno} pro loco comune"
+3. "teggiano estate ${anno} eventi sagre feste"
+4. "padula certosa eventi ${anno} programma estate"
+5. "polla atena lucana sassano eventi estate ${anno}"
+6. "montesano buonabitacolo sanza eventi ${anno}"
+7. site:ondanews.it eventi vallo diano ${anno}
+8. site:facebook.com "pro loco" "vallo di diano" eventi ${anno}
 
 — CILENTO COSTIERO —
-7. Cerca: "agropoli castellabate acciaroli palinuro camerota eventi ${mese} ${anno}"
-8. Cerca: "sagre cilento costiero estate ${anno}"
-9. Cerca: site:facebook.com "pro loco cilento" eventi ${anno}
+9. "agropoli castellabate acciaroli eventi ${mese} ${anno}"
+10. "palinuro camerota pisciotta sagre estate ${anno}"
+11. "paestum capaccio eventi sagre ${anno}"
+12. site:facebook.com "pro loco cilento" eventi estate ${anno}
+13. site:infocilento.it eventi cilento ${mese} ${anno}
 
 — GOLFO DI POLICASTRO —
-10. Cerca: "golfo policastro sapri camerota marina eventi estate ${anno}"
+14. "sapri vibonati santa marina eventi estate ${anno}"
+15. "golfo di policastro sagre festival ${anno}"
 
-— SOCIAL MEDIA & INSTAGRAM —
-11. Cerca: site:instagram.com "cilento" eventi estate ${anno}
-12. Cerca: "facebook eventi cilento ${mese} ${anno}"
-13. Cerca: "instagram cilento sagre estate ${anno}"
+— ASSOCIAZIONI E CULTURA —
+16. "legambiente cilento eventi ${anno}"
+17. "proloco cilento campania eventi ${anno}"
+18. "certosa padula grotte pertosa castelcivita eventi ${anno}"
+19. "festival cilento musica cultura ${anno}"
+20. "sagre cilento campania ${mese} ${anno} lista"
 
-— FONTI LOCALI —
-14. Cerca: "infocilento.it eventi ${mese} ${anno}"
-15. Cerca: "certosa di padula grotte pertosa eventi estate ${anno}"
-16. Cerca: "parco nazionale cilento vallo diano eventi ${mese} ${anno}"
-
-Per ogni evento trovato riporta: titolo, data, comune, tipo, URL fonte (includi URL Facebook/Instagram se disponibile).`,
+Per ogni evento trovato riporta: titolo, data, comune, organizzatore, URL fonte (includi URL Facebook/Instagram se trovato).`,
       }],
     });
     contestoWebSearch = estraiTesto(ricercaRisposta.content);
     log.push("  → ricerche web completate");
   } catch (err) {
-    log.push(`  → web search non disponibile: ${err instanceof Error ? err.message : "errore"}`);
+    log.push(`  → web search non disponibile: ${err instanceof Error ? err.message.slice(0, 80) : "errore"}`);
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // FASE 2 — Estrazione JSON strutturata da tutto il contesto
+  // FASE 2 — Estrazione JSON strutturata
   // ══════════════════════════════════════════════════════════════════════════
   log.push("Fase 2: estrazione JSON...");
 
   const contestoTotale = [
-    contestoScraping.slice(0, 12000),
+    contestoScraping.slice(0, 14000),
     contestoWebSearch.slice(0, 8000),
   ].filter(Boolean).join("\n\n");
 
   const haContesto = contestoTotale.length > 200;
 
   const schemaJSON = `[{
-  "titolo":"nome evento",
-  "data":"YYYY-MM-DD",
-  "dataFine":"YYYY-MM-DD",
-  "comune":"nome comune",
-  "luogo":"nome luogo specifico",
-  "categoria":"Sagra|Musica|Cultura|Sport|Religioso|Mercato|Natura|Salute",
-  "descrizione":"2-3 frasi descrittive",
-  "orario":"HH:MM",
-  "gratuito":true,
-  "organizzatore":"Pro Loco / Comune / Associazione",
-  "telefono":"+39...",
-  "sorgente":"https://url-fonte",
-  "facebook":"https://facebook.com/... (se trovato)",
-  "instagram":"https://instagram.com/... (se trovato)"
+  "titolo": "nome evento",
+  "data": "YYYY-MM-DD",
+  "dataFine": "YYYY-MM-DD",
+  "comune": "nome comune",
+  "luogo": "luogo specifico",
+  "categoria": "Sagra|Musica|Cultura|Sport|Religioso|Mercato|Natura|Salute",
+  "descrizione": "2-3 frasi descrittive",
+  "orario": "HH:MM",
+  "gratuito": true,
+  "organizzatore": "Pro Loco / Comune / Associazione",
+  "telefono": "+39...",
+  "sorgente": "https://url-fonte",
+  "facebook": "https://facebook.com/... (se trovato)",
+  "instagram": "https://instagram.com/... (se trovato)"
 }]`;
 
   const promptEstrazione = haContesto
-    ? `Hai raccolto informazioni da scraping web e ricerche Google su eventi del Cilento e Vallo di Diano per ${periodoLabel}:
+    ? `Hai raccolto dati da ${sitiFunzionanti} siti web e ricerche Google su eventi del Cilento e Vallo di Diano per ${periodoLabel}.
 
+DATI RACCOLTI:
 ${contestoTotale}
 
----
-ISTRUZIONI:
-1. Estrai TUTTI gli eventi reali identificabili dal testo — anche quelli menzionati brevemente
-2. PRIORITÀ ASSOLUTA: Vallo di Diano — Sala Consilina, Teggiano, Padula, Polla, Atena Lucana, Sassano, Montesano, Buonabitacolo, Sanza, San Rufo, Sant'Arsenio, Pertosa, Monte San Giacomo
-3. Quando trovi URL di Facebook (facebook.com/...) o Instagram (instagram.com/...) vicini a un evento, inseriscili nei campi "facebook" o "instagram"
-4. Aggiungi eventi VEROSIMILI per raggiungere 35 totali
-5. Distribuzione: min 12 Vallo di Diano + 10 Cilento costiero + 5 entroterra + 5 Golfo Policastro + 3 liberi
+━━━ ISTRUZIONI ━━━
+1. Estrai TUTTI gli eventi reali identificabili (anche se menzionati brevemente o con data approssimativa)
+2. PRIORITÀ ASSOLUTA Vallo di Diano: Sala Consilina, Teggiano, Padula, Polla, Atena Lucana, Sassano, Montesano, Buonabitacolo, Sanza, Sant'Arsenio, Pertosa, Monte San Giacomo, San Rufo, San Pietro al Tanagro
+3. Se trovi URL Facebook/Instagram associati all'evento, includili
+4. Completa con eventi VEROSIMILI (basati su tradizioni locali documentate) fino a 40 totali
+5. Distribuzione: min 15 Vallo di Diano · min 12 Cilento costiero · min 5 Golfo Policastro · min 5 entroterra · 3 liberi
 6. Stagionalità ${periodoLabel}: ${stagione}
+7. Usa dati reali come organizzatori (Pro Loco, Comuni, Legambiente, ARCI, bande musicali, associazioni sportive locali)
 
-Rispondi SOLO con l'array JSON, nessun testo prima o dopo:
+Rispondi SOLO con l'array JSON — nessun testo prima o dopo:
 ${schemaJSON}`
-    : `Genera 35 eventi del Cilento, Vallo di Diano e Golfo di Policastro per ${periodoLabel}.
+    : `Genera 40 eventi reali e verosimili del Cilento, Vallo di Diano e Golfo di Policastro per ${periodoLabel}.
 
-VALLO DI DIANO — FOCUS PRINCIPALE (min 12 eventi):
-• Comuni: Sala Consilina, Teggiano, Padula, Polla, Atena Lucana, Sassano, Montesano sulla Marcellana, Buonabitacolo, Sanza, San Rufo, Sant'Arsenio, Pertosa, Monte San Giacomo, Casalbuono
-• Sagre storiche: Sagra della Soppressata (Sassano), Sagra del Fagiolo (Montesano), Sagra del Caciocavallo (Teggiano), Estate Teggianese (Teggiano/lug-ago), Fiera di San Cono (Teggiano/giu), Sagra della Castagna (Sanza/ott)
-• Feste patronali: San Cono (Teggiano/lug), Sant'Arsenio (Sant'Arsenio/ago), San Rocco (Sala Consilina/ago), San Pietro (Sala Consilina/giu)
-• Siti: Certosa di Padula (UNESCO), Grotte di Pertosa-Auletta, Museo della Rocca di Teggiano
-• Estate nei borghi: concerti in piazza, cinema all'aperto, rassegne teatrali, mercatini notturni
-• Per le Pro Loco e Comuni noti, includi il link Facebook ufficiale nel campo "facebook"
+━━━ VALLO DI DIANO — PRIORITÀ (min 15 eventi) ━━━
+Comuni: Sala Consilina, Teggiano, Padula, Polla, Atena Lucana, Sassano, Montesano s/M, Buonabitacolo, Sanza, San Rufo, Sant'Arsenio, Pertosa, Monte San Giacomo, Casalbuono, San Pietro al Tanagro
+Sagre storiche: Soppressata (Sassano), Fagiolo (Montesano), Caciocavallo (Teggiano), Castagna (Sanza)
+Feste: San Cono (Teggiano/lug), San Rocco (Sala Consilina/ago), Sant'Arsenio (ago)
+Siti: Certosa Padula UNESCO, Grotte Pertosa, Grotta Castelcivita, Rocca Teggiano, Castello Sala Consilina
+Associazioni: Pro Loco di ogni comune, ARCI, Legambiente, bande musicali locali
+Estate: concerti in piazza, cinema all'aperto, rassegne teatrali, mercatini artigianali notturni
 
-CILENTO COSTIERO (min 10 eventi):
-• Agropoli, Acciaroli, Castellabate, Pioppi, Ascea, Pisciotta, Palinuro, Camerota, Marina di Camerota
-• Sagre: del Tonno (Agropoli/lug), del Fico Bianco (Pisciotta/ago), delle Alici (Pisciotta/ago)
-• Feste: Sant'Erasmo (Agropoli/giu), Madonna della Neve (Pollica/ago)
+━━━ CILENTO COSTIERO (min 12 eventi) ━━━
+Agropoli, Acciaroli, Castellabate, Pioppi, Ascea, Pisciotta, Palinuro, Camerota, Marina di Camerota, Capaccio-Paestum
+Sagre: Tonno (Agropoli), Fico Bianco (Pisciotta), Alici (Pisciotta), Mozzarella (Paestum)
+Feste: Sant'Erasmo (Agropoli/giu), Madonna della Neve (Pollica/ago)
 
-ENTROTERRA + GOLFO POLICASTRO (min 8 eventi):
-• Vallo della Lucania, Capaccio-Paestum, Rofrano, Morigerati, Sapri, Santa Marina, San Giovanni a Piro, Torre Orsaia
+━━━ GOLFO POLICASTRO + ENTROTERRA (min 8 eventi) ━━━
+Sapri, Santa Marina, Vibonati, San Giovanni a Piro, Torre Orsaia, Vallo della Lucania, Rofrano, Morigerati
 
 Stagionalità ${periodoLabel}: ${stagione}
-Varietà: min 4 Sagra, 2 Religioso, 2 Musica, 2 Sport, 2 Natura, 1 Mercato, 1 Salute
+Varietà categorie: min 6 Sagra · 3 Religioso · 4 Musica · 3 Sport · 3 Natura · 2 Mercato · 2 Cultura · 2 Salute
 
 Rispondi SOLO con l'array JSON:
 ${schemaJSON}`;
@@ -277,7 +320,7 @@ ${schemaJSON}`;
   try {
     const risposta = await client.messages.create({
       model: "claude-opus-4-5",
-      max_tokens: 6000,
+      max_tokens: 8000,
       system: "Rispondi SOLO con un array JSON valido. Nessun markdown, nessun testo prima o dopo. Solo [ ... ].",
       messages: [{ role: "user", content: promptEstrazione }],
     });
@@ -293,7 +336,7 @@ ${schemaJSON}`;
       return NextResponse.json({
         ok: false,
         messaggio: "Formato AI non valido",
-        testo: pulito.slice(0, 200),
+        testo: pulito.slice(0, 300),
         log,
       });
     }
