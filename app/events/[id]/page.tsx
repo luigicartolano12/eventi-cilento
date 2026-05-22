@@ -7,7 +7,7 @@ import {
   IcoSagra, IcoMusica, IcoCultura, IcoSport, IcoReligioso, IcoMercato, IcoNatura,
   IcoMapPin, IcoCalendar, IcoClock, IcoUsers,
   IcoWheelchair, IcoParking, IcoCheck, IcoTicket, IcoCalendarCheck, IcoPaw, IcoXCircle,
-  IcoPhone, IcoMail, IcoGlobe,
+  IcoPhone, IcoMail, IcoGlobe, IcoFacebook, IcoInstagram, IcoExternalLink,
   IcoArrowLeft, IcoPlay,
 } from "@/app/components/icons";
 import { ShareButton } from "@/app/components/ShareButton";
@@ -200,16 +200,65 @@ function PaginaEventoKV({ evento }: { evento: EventoDinamico }) {
               </div>
             </div>
 
-            {/* Fonte */}
-            {evento.sorgente && (
+            {/* Link social + fonte */}
+            {(evento.facebook || evento.instagram || evento.sorgente) && (
               <div>
-                <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">Fonte</p>
-                <a href={evento.sorgente} target="_blank" rel="noopener noreferrer"
-                  className="text-sm font-semibold underline transition-opacity hover:opacity-70"
-                  style={{ color: "#16a34a" }}
-                >
-                  {evento.sorgente}
-                </a>
+                <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3">Dove seguire l&apos;evento</p>
+                <div className="flex flex-col gap-2">
+                  {evento.facebook && (
+                    <a href={evento.facebook} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm transition-opacity hover:opacity-80"
+                      style={{ background: "#e7f3ff", color: "#1877f2" }}>
+                      <IcoFacebook size={18} />
+                      <span>Pagina / Evento Facebook</span>
+                      <IcoExternalLink size={13} style={{ marginLeft: "auto", opacity: 0.5 }} />
+                    </a>
+                  )}
+                  {evento.instagram && (
+                    <a href={evento.instagram} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm transition-opacity hover:opacity-80"
+                      style={{ background: "#fdf2f8", color: "#c2185b" }}>
+                      <IcoInstagram size={18} />
+                      <span>Profilo Instagram</span>
+                      <IcoExternalLink size={13} style={{ marginLeft: "auto", opacity: 0.5 }} />
+                    </a>
+                  )}
+                  {evento.sorgente && (
+                    <a href={evento.sorgente} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm transition-opacity hover:opacity-80"
+                      style={{ background: "#f0fdf4", color: "#16a34a" }}>
+                      <IcoGlobe size={18} />
+                      <span>Sito ufficiale / Fonte</span>
+                      <IcoExternalLink size={13} style={{ marginLeft: "auto", opacity: 0.5 }} />
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Contatti (se presenti) */}
+            {(evento.organizzatore || evento.telefono || evento.email) && (
+              <div>
+                <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3">Organizzatore</p>
+                <div className="flex flex-col gap-1.5">
+                  {evento.organizzatore && (
+                    <p className="text-sm font-bold text-stone-700">{evento.organizzatore}</p>
+                  )}
+                  {evento.telefono && (
+                    <a href={`tel:${evento.telefono}`}
+                      className="inline-flex items-center gap-2 text-sm text-stone-500 hover:text-stone-800 transition-colors">
+                      <IcoPhone size={14} className="text-stone-400" />
+                      {evento.telefono}
+                    </a>
+                  )}
+                  {evento.email && (
+                    <a href={`mailto:${evento.email}`}
+                      className="inline-flex items-center gap-2 text-sm text-stone-500 hover:text-stone-800 transition-colors">
+                      <IcoMail size={14} className="text-stone-400" />
+                      {evento.email}
+                    </a>
+                  )}
+                </div>
               </div>
             )}
           </div>

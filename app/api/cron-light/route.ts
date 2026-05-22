@@ -1,9 +1,9 @@
 /**
- * /api/cron-light — Versione veloce del cron (no web search)
+ * /api/cron-light — Versione veloce del cron (no web search AI)
  *
- * Usa solo scraping diretto + claude-haiku per l'estrazione.
- * Completato in ~15-25 secondi invece di 2 minuti.
- * Supporta ?reset=1 per svuotare prima il KV.
+ * Scraping parallelo di 12 siti (notizie locali + comuni Vallo di Diano)
+ * + estrazione con claude-haiku. Completa in ~20-30 secondi.
+ * Supporta ?reset=1 per svuotare il KV prima di ricaricare.
  *
  * Triggered: manualmente dall'admin panel
  */
@@ -18,34 +18,49 @@ export const maxDuration = 60;
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const SORGENTI = [
-  { url: "https://www.sagre.net/campania/salerno/",        label: "sagre.net" },
-  { url: "https://www.eventiesagre.it/campania/sa/",       label: "eventiesagre.it" },
-  { url: "https://www.cilentoweb.it/eventi/",              label: "cilentoweb.it" },
-  { url: "https://parcoregionalecilento.it/it/eventi/",    label: "Parco Cilento" },
-  { url: "https://www.turismoincampania.it/cosa-fare/eventi/?provincia=salerno", label: "Turismo Campania" },
+  // ── Aggregatori nazionali Salerno / Campania ───────────────────────────────
+  { url: "https://www.sagre.net/campania/salerno/",         label: "sagre.net Salerno" },
+  { url: "https://www.eventiesagre.it/campania/sa/",        label: "eventiesagre.it SA" },
+  { url: "https://www.paesionline.it/italia/eventi-campania-salerno.asp", label: "paesionline.it SA" },
+  { url: "https://www.turismoincampania.it/cosa-fare/eventi/?provincia=salerno", label: "Turismo Campania SA" },
+  // ── Notizie locali Cilento (aggregano TUTTE le programmazioni comunali) ────
+  { url: "https://www.infocilento.it/category/eventi/",     label: "infoCilento (locale)" },
+  { url: "https://www.ondanews.it/",                        label: "OndaNews Vallo Diano" },
+  { url: "https://www.cilentolive.it/",                     label: "CilentoLive" },
+  { url: "https://www.salernotoday.it/eventi/",             label: "SalernoToday eventi" },
+  // ── Siti Cilento ──────────────────────────────────────────────────────────
+  { url: "https://www.cilentoweb.it/eventi/",               label: "cilentoweb.it" },
+  { url: "https://parcoregionalecilento.it/it/eventi/",     label: "Parco Nazionale Cilento" },
+  // ── Comuni Vallo di Diano ─────────────────────────────────────────────────
+  { url: "https://www.comune.sala-consilina.sa.it",         label: "Comune Sala Consilina" },
+  { url: "https://www.comune.teggiano.sa.it",               label: "Comune Teggiano" },
+  { url: "https://www.comune.padula.sa.it",                 label: "Comune Padula" },
+  { url: "https://www.comune.polla.sa.it",                  label: "Comune Polla" },
+  { url: "https://www.comune.atena-lucana.sa.it",           label: "Comune Atena Lucana" },
+  { url: "https://www.comune.sassano.sa.it",                label: "Comune Sassano" },
 ];
 
 function stagionalita(mese: string): string {
   const m = mese.toLowerCase();
-  if (["dicembre", "gennaio", "febbraio"].some(x => m.includes(x)))
+  if (["dicembre","gennaio","febbraio"].some(x => m.includes(x)))
     return "presepi viventi, capodanno, feste invernali, sagre invernali, concerti al chiuso";
-  if (["marzo", "aprile", "maggio"].some(x => m.includes(x)))
-    return "feste patronali primaverili, Pasqua, sagre del carciofo e del tartufo, trekking";
-  if (["giugno", "luglio", "agosto"].some(x => m.includes(x)))
-    return "sagre del pesce, concerti estivi, feste patronali costiere, beach volley, cinema all'aperto";
-  return "sagre dei funghi e castagne, vendemmia, feste autunnali, trekking foliage, mercatini";
+  if (["marzo","aprile","maggio"].some(x => m.includes(x)))
+    return "feste patronali primaverili, Pasqua, processioni, sagre del carciofo e tartufo, trekking tra le fioriture";
+  if (["giugno","luglio","agosto"].some(x => m.includes(x)))
+    return "sagre del pesce, concerti estivi, feste patronali costiere, cinema all'aperto, estate nei borghi, eventi in piazza";
+  return "sagre dei funghi e castagne, vendemmia, feste autunnali, trekking foliage, mercatini artigianato";
 }
 
 async function scrapeUrl(url: string, label: string): Promise<string> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 8000);
+  const timer = setTimeout(() => controller.abort(), 9000);
   try {
     const res = await fetch(url, {
       signal: controller.signal,
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; EventiCilentoBot/2.0; +https://eventicial.it/bot)",
         "Accept": "text/html,application/xhtml+xml",
-        "Accept-Language": "it-IT,it;q=0.9",
+        "Accept-Language": "it-IT,it;q=0.9,en;q=0.5",
       },
     });
     if (!res.ok) return "";
@@ -57,9 +72,10 @@ async function scrapeUrl(url: string, label: string): Promise<string> {
       .replace(/<[^>]+>/g, " ")
       .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&")
       .replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"').replace(/&#[0-9]+;/g, " ")
       .replace(/\s{2,}/g, " ").trim()
-      .slice(0, 4000);
-    return text ? `\n\n=== ${label} ===\n${text}` : "";
+      .slice(0, 4500);
+    return text ? `\n\n=== ${label} (${url}) ===\n${text}` : "";
   } catch {
     return "";
   } finally {
@@ -97,8 +113,8 @@ export async function GET(request: Request) {
     log.push("✓ KV svuotato (reset completato)");
   }
 
-  // ─── Fase 0: scraping parallelo ────────────────────────────────────────────
-  log.push("Fase 0: scraping siti...");
+  // ─── Fase 0: scraping parallelo di tutti i siti ────────────────────────────
+  log.push(`Fase 0: scraping ${SORGENTI.length} siti in parallelo...`);
   const risultati = await Promise.allSettled(
     SORGENTI.map(s => scrapeUrl(s.url, s.label))
   );
@@ -114,30 +130,66 @@ export async function GET(request: Request) {
   log.push("Fase 1: estrazione AI (haiku)...");
   const haContesto = contesto.length > 200;
 
-  const prompt = haContesto
-    ? `Hai estratto questo testo da siti italiani di eventi. Identifica e struttura tutti gli eventi REALI del Cilento, Vallo di Diano e Golfo di Policastro (provincia di Salerno, Campania).
-Aggiungi eventi verosimili basati su tradizioni locali reali per raggiungere 20 eventi totali.
+  const schemaJSON = `[{
+  "titolo":"nome evento",
+  "data":"YYYY-MM-DD",
+  "dataFine":"YYYY-MM-DD",
+  "comune":"nome comune",
+  "luogo":"nome posto specifico",
+  "categoria":"Sagra|Musica|Cultura|Sport|Religioso|Mercato|Natura|Salute",
+  "descrizione":"2-3 frasi descrittive dell'evento",
+  "orario":"HH:MM",
+  "gratuito":true,
+  "organizzatore":"Pro Loco / Comune / Associazione",
+  "telefono":"+39...",
+  "sorgente":"https://url-sito-fonte",
+  "facebook":"https://facebook.com/... (se trovato)",
+  "instagram":"https://instagram.com/... (se trovato)"
+}]`;
+
+  const promptConContesto = `Analizza questo testo estratto da siti di eventi e notizie locali del Cilento.
+Identifica TUTTI gli eventi reali menzionati. Poi aggiungi eventi verosimili per raggiungere 25 totali.
 Stagionalità ${mese} ${anno}: ${stagione}
 
-TESTO SCRAPING:
-${contesto.slice(0, 10000)}
+TESTO ESTRATTO:
+${contesto.slice(0, 12000)}
 
-DISTRIBUZIONE: Cilento costiero + entroterra + Vallo di Diano + Golfo Policastro (almeno 3 per zona).
-Rispondi SOLO con l'array JSON, nessun altro testo:
-[{"titolo":"...","data":"YYYY-MM-DD","dataFine":"YYYY-MM-DD","comune":"...","luogo":"...","categoria":"Sagra|Musica|Cultura|Sport|Religioso|Mercato|Natura|Salute","descrizione":"2-3 frasi descrittive","orario":"HH:MM","gratuito":true,"sorgente":"url se reale"}]`
-    : `Genera 20 eventi realistici del Cilento per ${mese} ${anno}.
+DISTRIBUZIONE OBBLIGATORIA:
+• Vallo di Diano (PRIORITÀ): min 10 eventi — Sala Consilina, Teggiano, Padula, Polla, Atena Lucana,
+  Sassano, Montesano, Buonabitacolo, Sanza, Sant'Arsenio, Pertosa, Monte San Giacomo
+• Cilento costiero: min 8 eventi — Agropoli, Acciaroli, Castellabate, Ascea, Pisciotta, Palinuro, Camerota
+• Golfo Policastro + entroterra: min 5 — Sapri, Vallo della Lucania, Capaccio-Paestum, Rofrano
+
+IMPORTANTE: Se trovi link a Facebook (facebook.com/...) o Instagram (instagram.com/...) vicini a un evento, includili.
+
+Rispondi SOLO con l'array JSON valido, nessun testo:
+${schemaJSON}`;
+
+  const promptSenzaContesto = `Genera 25 eventi realistici del Cilento e Vallo di Diano per ${mese} ${anno}.
 Stagionalità: ${stagione}
-Zone obbligatorie: Agropoli, Acciaroli, Castellabate, Palinuro, Camerota, Pisciotta, Vallo della Lucania, Sala Consilina, Teggiano, Sapri.
-Varietà: min 4 Sagra, 2 Religioso, 2 Musica, 2 Sport, 2 Natura, 1 Mercato.
-Rispondi SOLO con l'array JSON:
-[{"titolo":"...","data":"YYYY-MM-DD","comune":"...","luogo":"...","categoria":"Sagra|Musica|Cultura|Sport|Religioso|Mercato|Natura|Salute","descrizione":"2-3 frasi","orario":"HH:MM","gratuito":true}]`;
+
+VALLO DI DIANO — PRIORITÀ (min 10 eventi):
+• Comuni: Sala Consilina, Teggiano, Padula, Polla, Atena Lucana, Sassano, Montesano, Buonabitacolo, Sanza
+• Sagre: Soppressata (Sassano), Fagiolo (Montesano), Caciocavallo (Teggiano), Estate Teggianese (lug-ago)
+• Feste: San Cono (Teggiano), San Rocco (Sala Consilina), Sant'Arsenio
+• Siti: Certosa di Padula, Grotte di Pertosa, Castello di Teggiano
+
+CILENTO (min 10 eventi):
+• Costiero: Agropoli, Acciaroli, Castellabate, Pisciotta, Palinuro, Camerota
+• Sagre: del Tonno (Agropoli), del Fico Bianco (Pisciotta), delle Alici (Pisciotta)
+• Golfo: Sapri, Santa Marina, San Giovanni a Piro
+
+Per gli eventi noti, includi il link Facebook ufficiale della Pro Loco / Comune organizzatore.
+
+Rispondi SOLO con l'array JSON valido:
+${schemaJSON}`;
 
   try {
     const risposta = await client.messages.create({
       model: "claude-haiku-4-5",
-      max_tokens: 4000,
-      system: "Rispondi SOLO con un array JSON valido. Nessun markdown, nessun testo prima o dopo il JSON. Solo [ ... ].",
-      messages: [{ role: "user", content: prompt }],
+      max_tokens: 5000,
+      system: "Rispondi SOLO con un array JSON valido. Nessun markdown, nessun testo prima o dopo. Solo [ ... ].",
+      messages: [{ role: "user", content: haContesto ? promptConContesto : promptSenzaContesto }],
     });
 
     const testo = risposta.content

@@ -23,14 +23,29 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 // Siti italiani da scrapare direttamente (testo estratto → Claude)
 // ─────────────────────────────────────────────────────────────────────────────
 const SORGENTI_DIRETTE = [
+  // ── Aggregatori generali Cilento / Salerno ────────────────────────────────
   { url: "https://www.sagre.net/campania/salerno/",        label: "sagre.net Salerno" },
   { url: "https://www.eventiesagre.it/campania/sa/",       label: "eventiesagre.it SA" },
   { url: "https://www.paesionline.it/italia/eventi-campania-salerno.asp", label: "paesionline.it SA" },
-  { url: "https://www.cilentoweb.it/eventi/",              label: "cilentoweb.it" },
-  { url: "https://www.comune.agropoli.sa.it/eventi",       label: "Comune Agropoli" },
-  { url: "https://www.comune.vallo-della-lucania.sa.it",   label: "Comune Vallo" },
-  { url: "https://parcoregionalecilento.it/it/eventi/",    label: "Parco Cilento" },
   { url: "https://www.turismoincampania.it/cosa-fare/eventi/?provincia=salerno", label: "Turismo Campania SA" },
+  // ── Notizie locali Cilento (coprono tutta la programmazione comunale) ─────
+  { url: "https://www.infocilento.it/category/eventi/",    label: "infoCilento eventi" },
+  { url: "https://www.ondanews.it/",                       label: "OndaNews Vallo Diano" },
+  { url: "https://www.cilentolive.it/",                    label: "CilentoLive" },
+  { url: "https://www.salernotoday.it/eventi/",            label: "SalernoToday eventi" },
+  // ── Siti dedicati al Cilento ──────────────────────────────────────────────
+  { url: "https://www.cilentoweb.it/eventi/",              label: "cilentoweb.it" },
+  { url: "https://parcoregionalecilento.it/it/eventi/",    label: "Parco Nazionale Cilento" },
+  // ── Comuni Cilento costiero ───────────────────────────────────────────────
+  { url: "https://www.comune.agropoli.sa.it/eventi",       label: "Comune Agropoli" },
+  { url: "https://www.comune.vallo-della-lucania.sa.it",   label: "Comune Vallo Lucania" },
+  // ── Comuni Vallo di Diano (spesso ignorati dagli aggregatori) ────────────
+  { url: "https://www.comune.sala-consilina.sa.it",        label: "Comune Sala Consilina" },
+  { url: "https://www.comune.teggiano.sa.it",              label: "Comune Teggiano" },
+  { url: "https://www.comune.padula.sa.it",                label: "Comune Padula" },
+  { url: "https://www.comune.polla.sa.it",                 label: "Comune Polla" },
+  { url: "https://www.comune.atena-lucana.sa.it",          label: "Comune Atena Lucana" },
+  { url: "https://www.comune.sassano.sa.it",               label: "Comune Sassano" },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -151,18 +166,36 @@ Usa lo strumento web_search PER OGNI PUNTO richiesto e cerca eventi REALI nel te
 Riporta solo ciò che trovi effettivamente online.`,
       messages: [{
         role: "user",
-        content: `Esegui TUTTE queste 8 ricerche web distinte per trovare eventi REALI nel Cilento per ${periodoLabel}:
+        content: `Esegui TUTTE queste 16 ricerche web per trovare eventi REALI per ${periodoLabel}.
+PRIORITÀ ASSOLUTA: Vallo di Diano (Sala Consilina, Teggiano, Padula, Polla, Atena Lucana, Sassano, Montesano, Buonabitacolo).
 
-1. Cerca: "eventi sagre cilento ${mese} ${anno}"
-2. Cerca: "sagre campania salerno ${anno} programma"
-3. Cerca: "pro loco cilento eventi ${mese} ${anno}"
-4. Cerca: "feste patronali cilento ${anno} ${mese}"
-5. Cerca: "concerti festival musica cilento estate ${anno}"
-6. Cerca: "agropoli paestum castellabate acciaroli eventi ${anno}"
-7. Cerca: "vallo di diano sala consilina teggiano padula eventi ${anno}"
-8. Cerca: "golfo policastro sapri camerota eventi ${anno}"
+— VALLO DI DIANO (ricerche dedicate) —
+1. Cerca: "estate ${anno} vallo di diano programma eventi"
+2. Cerca: "sagre vallo di diano ${anno} ${mese}"
+3. Cerca: "sala consilina teggiano padula polla eventi estate ${anno}"
+4. Cerca: "pro loco vallo di diano estate ${anno} programma"
+5. Cerca: site:facebook.com "vallo di diano" eventi estate ${anno}
+6. Cerca: "ondanews.it vallo diano estate ${anno} eventi"
 
-Per ogni ricerca elenca TUTTI gli eventi trovati con: titolo, data, comune, tipo di evento.`,
+— CILENTO COSTIERO —
+7. Cerca: "agropoli castellabate acciaroli palinuro camerota eventi ${mese} ${anno}"
+8. Cerca: "sagre cilento costiero estate ${anno}"
+9. Cerca: site:facebook.com "pro loco cilento" eventi ${anno}
+
+— GOLFO DI POLICASTRO —
+10. Cerca: "golfo policastro sapri camerota marina eventi estate ${anno}"
+
+— SOCIAL MEDIA & INSTAGRAM —
+11. Cerca: site:instagram.com "cilento" eventi estate ${anno}
+12. Cerca: "facebook eventi cilento ${mese} ${anno}"
+13. Cerca: "instagram cilento sagre estate ${anno}"
+
+— FONTI LOCALI —
+14. Cerca: "infocilento.it eventi ${mese} ${anno}"
+15. Cerca: "certosa di padula grotte pertosa eventi estate ${anno}"
+16. Cerca: "parco nazionale cilento vallo diano eventi ${mese} ${anno}"
+
+Per ogni evento trovato riporta: titolo, data, comune, tipo, URL fonte (includi URL Facebook/Instagram se disponibile).`,
       }],
     });
     contestoWebSearch = estraiTesto(ricercaRisposta.content);
@@ -183,41 +216,62 @@ Per ogni ricerca elenca TUTTI gli eventi trovati con: titolo, data, comune, tipo
 
   const haContesto = contestoTotale.length > 200;
 
+  const schemaJSON = `[{
+  "titolo":"nome evento",
+  "data":"YYYY-MM-DD",
+  "dataFine":"YYYY-MM-DD",
+  "comune":"nome comune",
+  "luogo":"nome luogo specifico",
+  "categoria":"Sagra|Musica|Cultura|Sport|Religioso|Mercato|Natura|Salute",
+  "descrizione":"2-3 frasi descrittive",
+  "orario":"HH:MM",
+  "gratuito":true,
+  "organizzatore":"Pro Loco / Comune / Associazione",
+  "telefono":"+39...",
+  "sorgente":"https://url-fonte",
+  "facebook":"https://facebook.com/... (se trovato)",
+  "instagram":"https://instagram.com/... (se trovato)"
+}]`;
+
   const promptEstrazione = haContesto
-    ? `Hai raccolto queste informazioni su eventi nel Cilento per ${periodoLabel}:
+    ? `Hai raccolto informazioni da scraping web e ricerche Google su eventi del Cilento e Vallo di Diano per ${periodoLabel}:
 
 ${contestoTotale}
 
 ---
 ISTRUZIONI:
-1. Estrai TUTTI gli eventi reali che riesci a identificare dal testo sopra
-2. Aggiungi eventi VEROSIMILI (basati su tradizioni locali reali) per raggiungere 30 eventi totali
-3. Distribuzione obbligatoria: Cilento costiero + entroterra + Vallo di Diano + Golfo di Policastro
-4. Stagionalità ${periodoLabel}: ${stagione}
+1. Estrai TUTTI gli eventi reali identificabili dal testo — anche quelli menzionati brevemente
+2. PRIORITÀ ASSOLUTA: Vallo di Diano — Sala Consilina, Teggiano, Padula, Polla, Atena Lucana, Sassano, Montesano, Buonabitacolo, Sanza, San Rufo, Sant'Arsenio, Pertosa, Monte San Giacomo
+3. Quando trovi URL di Facebook (facebook.com/...) o Instagram (instagram.com/...) vicini a un evento, inseriscili nei campi "facebook" o "instagram"
+4. Aggiungi eventi VEROSIMILI per raggiungere 35 totali
+5. Distribuzione: min 12 Vallo di Diano + 10 Cilento costiero + 5 entroterra + 5 Golfo Policastro + 3 liberi
+6. Stagionalità ${periodoLabel}: ${stagione}
 
-Rispondi SOLO con l'array JSON, nessun testo:
-[{"titolo":"...","data":"YYYY-MM-DD","dataFine":"YYYY-MM-DD","comune":"...","luogo":"...","categoria":"Sagra|Musica|Cultura|Sport|Religioso|Mercato|Natura|Salute","descrizione":"2-3 frasi","orario":"HH:MM","gratuito":true,"sorgente":"url se reale"}]`
-    : `Genera 30 eventi del Cilento, Vallo di Diano e Golfo di Policastro per ${periodoLabel}.
+Rispondi SOLO con l'array JSON, nessun testo prima o dopo:
+${schemaJSON}`
+    : `Genera 35 eventi del Cilento, Vallo di Diano e Golfo di Policastro per ${periodoLabel}.
 
-ORGANIZZATORI REALI del territorio (usa questi come base):
-• Pro Loco: Agropoli, Acciaroli, Palinuro, Pisciotta, Camerota, Vallo della Lucania, Teggiano, Sala Consilina, Sapri
-• Sagre storiche: Sagra del Fico Bianco (Pisciotta/ago), Sagra del Tonno (Agropoli/lug), Sagra della Mozzarella (Paestum/lug), Sagra del Carciofo (Paestum/apr), Sagra delle Alici (Pisciotta/ago), Sagra dei Sapori del Cilento (Vallo/set)
-• Feste patronali: Sant'Erasmo (Agropoli/giu), Madonna del Granato (Capaccio/set), San Cono (Teggiano/giu), San Biagio (Castellabate/feb), Madonna della Neve (Pollica/ago), San Pantaleone (Pisciotta/lug), Sant'Antonio (Vallo/gen)
-• Musei/Siti: Paestum (scavi e museo), Certosa di Padula, Castello di Agropoli, Castello di Castellabate, Grotte di Castelcivita, Grotte di Pertosa-Auletta
-• Sport/Natura: Cilento Running, Podistica Vallo, ASD Agropoli, Canoa Club Cilento, Trekking Parco Nazionale
-• Associazioni culturali: Circolo Legambiente Cilento, Arci, Auser locali, bande musicali comunali
+VALLO DI DIANO — FOCUS PRINCIPALE (min 12 eventi):
+• Comuni: Sala Consilina, Teggiano, Padula, Polla, Atena Lucana, Sassano, Montesano sulla Marcellana, Buonabitacolo, Sanza, San Rufo, Sant'Arsenio, Pertosa, Monte San Giacomo, Casalbuono
+• Sagre storiche: Sagra della Soppressata (Sassano), Sagra del Fagiolo (Montesano), Sagra del Caciocavallo (Teggiano), Estate Teggianese (Teggiano/lug-ago), Fiera di San Cono (Teggiano/giu), Sagra della Castagna (Sanza/ott)
+• Feste patronali: San Cono (Teggiano/lug), Sant'Arsenio (Sant'Arsenio/ago), San Rocco (Sala Consilina/ago), San Pietro (Sala Consilina/giu)
+• Siti: Certosa di Padula (UNESCO), Grotte di Pertosa-Auletta, Museo della Rocca di Teggiano
+• Estate nei borghi: concerti in piazza, cinema all'aperto, rassegne teatrali, mercatini notturni
+• Per le Pro Loco e Comuni noti, includi il link Facebook ufficiale nel campo "facebook"
 
-DISTRIBUZIONE GEOGRAFICA obbligatoria (almeno 3 eventi per zona):
-• Cilento costiero: Agropoli, Pioppi, Acciaroli, Castellabate, Ascea, Pisciotta, Palinuro, Camerota, Marina di Camerota
-• Cilento entroterra: Capaccio-Paestum, Vallo della Lucania, Casaletto Spartano, Rofrano, Sanza, Morigerati
-• Vallo di Diano: Sala Consilina, Teggiano, Padula, Polla, Atena Lucana, Sassano
-• Golfo di Policastro: Sapri, Santa Marina, San Giovanni a Piro, Torre Orsaia
+CILENTO COSTIERO (min 10 eventi):
+• Agropoli, Acciaroli, Castellabate, Pioppi, Ascea, Pisciotta, Palinuro, Camerota, Marina di Camerota
+• Sagre: del Tonno (Agropoli/lug), del Fico Bianco (Pisciotta/ago), delle Alici (Pisciotta/ago)
+• Feste: Sant'Erasmo (Agropoli/giu), Madonna della Neve (Pollica/ago)
+
+ENTROTERRA + GOLFO POLICASTRO (min 8 eventi):
+• Vallo della Lucania, Capaccio-Paestum, Rofrano, Morigerati, Sapri, Santa Marina, San Giovanni a Piro, Torre Orsaia
 
 Stagionalità ${periodoLabel}: ${stagione}
-Varietà categorie: min 4 Sagra, 2 Religioso, 2 Musica, 2 Sport, 2 Natura, 1 Mercato, 1 Salute
+Varietà: min 4 Sagra, 2 Religioso, 2 Musica, 2 Sport, 2 Natura, 1 Mercato, 1 Salute
 
 Rispondi SOLO con l'array JSON:
-[{"titolo":"...","data":"YYYY-MM-DD","dataFine":"YYYY-MM-DD","comune":"...","luogo":"...","categoria":"Sagra|Musica|Cultura|Sport|Religioso|Mercato|Natura|Salute","descrizione":"2-3 frasi","orario":"HH:MM","gratuito":true}]`;
+${schemaJSON}`;
 
   let eventiGrezzi: object[] = [];
   try {

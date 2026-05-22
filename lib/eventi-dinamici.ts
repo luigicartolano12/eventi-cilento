@@ -11,7 +11,13 @@ export type EventoDinamico = {
   orario?: string;
   luogo?: string;
   gratuito?: boolean;
-  sorgente?: string;
+  prezzo?: string;
+  organizzatore?: string;
+  telefono?: string;
+  email?: string;
+  sorgente?: string;        // URL sito web ufficiale / articolo fonte
+  facebook?: string;        // URL pagina o evento Facebook
+  instagram?: string;       // URL profilo o post Instagram
   approvato: boolean;
   dataCreazione: string;
 };
