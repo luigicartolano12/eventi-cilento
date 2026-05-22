@@ -5,7 +5,7 @@ import { Evento, Categoria, CATEGORIE } from "@/lib/events";
 import { EventCard } from "./EventCard";
 import {
   IcoMapPin, IcoSearch, IcoCalendar, IcoLocate,
-  IcoSagra, IcoMusica, IcoCultura, IcoSport, IcoReligioso, IcoMercato, IcoNatura,
+  IcoSagra, IcoMusica, IcoCultura, IcoSport, IcoReligioso, IcoMercato, IcoNatura, IcoSalute,
 } from "./icons";
 
 // ── Gradiente e icone per le categorie ───────────────────────────────────────
@@ -17,17 +17,18 @@ const gradientCategoria: Record<string, string> = {
   Religioso: "linear-gradient(135deg, #facc15, #f59e0b)",
   Mercato:   "linear-gradient(135deg, #f472b6, #fb7185)",
   Natura:    "linear-gradient(135deg, #059669, #14b8a6)",
+  Salute:    "linear-gradient(135deg, #ec4899, #f43f5e)",
 };
 
 const descCategoria: Record<string, string> = {
   Sagra: "Gusto locale", Musica: "Concerti", Cultura: "Arte e mostre",
-  Sport: "Competizioni", Religioso: "Fede e storia", Mercato: "Artigianato", Natura: "Trekking",
+  Sport: "Competizioni", Religioso: "Fede e storia", Mercato: "Artigianato", Natura: "Trekking", Salute: "Benessere",
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const IconeCategoria: Record<string, React.ComponentType<any>> = {
   Sagra: IcoSagra, Musica: IcoMusica, Cultura: IcoCultura, Sport: IcoSport,
-  Religioso: IcoReligioso, Mercato: IcoMercato, Natura: IcoNatura,
+  Religioso: IcoReligioso, Mercato: IcoMercato, Natura: IcoNatura, Salute: IcoSalute,
 };
 
 // ── Definizioni aree geografiche ──────────────────────────────────────────────

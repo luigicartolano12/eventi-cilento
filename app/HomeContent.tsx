@@ -18,6 +18,7 @@ const kwCategoria: Record<string, string> = {
   Religioso: "church,procession",
   Mercato:   "market,stalls",
   Natura:    "nature,trail",
+  Salute:    "health,wellness",
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

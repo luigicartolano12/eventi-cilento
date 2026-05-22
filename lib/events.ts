@@ -5,7 +5,8 @@ export type Categoria =
   | "Sport"
   | "Religioso"
   | "Mercato"
-  | "Natura";
+  | "Natura"
+  | "Salute";
 
 export type Servizi = {
   accessibileDisabili: boolean;
@@ -80,6 +81,7 @@ export const CATEGORIE: Categoria[] = [
   "Religioso",
   "Mercato",
   "Natura",
+  "Salute",
 ];
 
 export function formattaData(dataStr: string): string {
