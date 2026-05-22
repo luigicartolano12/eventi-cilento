@@ -6,6 +6,7 @@ import { getEventiApprovati, type EventoDinamico } from "@/lib/eventi-dinamici";
 import { EventiList } from "./components/EventiList";
 import {
   IcoMapPin, IcoClock,
+  IcoSagra, IcoMusica, IcoCultura, IcoSport, IcoReligioso, IcoMercato, IcoNatura, IcoSalute,
 } from "./components/icons";
 
 // ── Mappatura keyword immagini per categoria ──────────────────────────────────
@@ -19,6 +20,25 @@ const kwCategoria: Record<string, string> = {
   Mercato:   "market,stalls",
   Natura:    "nature,trail",
   Salute:    "health,wellness",
+};
+
+// ── Colori e icone per categoria ─────────────────────────────────────────────
+
+const gradientCategoria: Record<string, string> = {
+  Sagra:     "linear-gradient(135deg, #fb923c, #fbbf24)",
+  Musica:    "linear-gradient(135deg, #a855f7, #818cf8)",
+  Cultura:   "linear-gradient(135deg, #3b82f6, #22d3ee)",
+  Sport:     "linear-gradient(135deg, #22c55e, #10b981)",
+  Religioso: "linear-gradient(135deg, #facc15, #f59e0b)",
+  Mercato:   "linear-gradient(135deg, #f472b6, #fb7185)",
+  Natura:    "linear-gradient(135deg, #059669, #14b8a6)",
+  Salute:    "linear-gradient(135deg, #ec4899, #f43f5e)",
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const IconeCategoria: Record<string, React.ComponentType<any>> = {
+  Sagra: IcoSagra, Musica: IcoMusica, Cultura: IcoCultura, Sport: IcoSport,
+  Religioso: IcoReligioso, Mercato: IcoMercato, Natura: IcoNatura, Salute: IcoSalute,
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -44,6 +64,9 @@ function eventiDiOggi(eventi: Evento[]): Evento[] {
 function MiniCard({ evento }: { evento: Evento }) {
   const kw = kwCategoria[evento.categoria] ?? "nature,trail";
   const lock = hashId(evento.id);
+  const gradient = gradientCategoria[evento.categoria] ?? "linear-gradient(135deg, #059669, #14b8a6)";
+  const Ico = IconeCategoria[evento.categoria];
+
   return (
     <a
       href={`/events/${evento.id}`}
@@ -55,23 +78,40 @@ function MiniCard({ evento }: { evento: Evento }) {
         boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
       }}
     >
-      <div
-        className="relative flex items-center justify-center"
-        style={{ height: 88 }}
-      >
+      {/* Copertina */}
+      <div className="relative" style={{ height: 88 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={`https://loremflickr.com/160/100/${kw}/all?lock=${lock}`}
           alt=""
-          className="absolute inset-0 w-full h-full object-cover opacity-60"
+          className="absolute inset-0 w-full h-full object-cover"
         />
+        {/* Overlay scuro leggero in basso */}
+        <div
+          className="absolute inset-0"
+          style={{ background: "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.35) 100%)" }}
+        />
+
+        {/* Tag categoria colorato — in alto a sinistra */}
         <span
-          className="relative z-10 text-[9px] font-black px-2 py-0.5 rounded-full"
-          style={{ background: "rgba(0,0,0,0.28)", color: "white", backdropFilter: "blur(8px)" }}
+          className="absolute top-2 left-2 z-10 text-[9px] font-black px-2 py-0.5 rounded-full text-white"
+          style={{ background: gradient }}
         >
           {evento.categoria}
         </span>
+
+        {/* Icona rotonda — in basso a destra */}
+        {Ico && (
+          <div
+            className="absolute bottom-2 right-2 z-10 w-7 h-7 rounded-full flex items-center justify-center"
+            style={{ background: gradient, boxShadow: "0 1px 4px rgba(0,0,0,0.3)" }}
+          >
+            <Ico size={13} strokeWidth={1.8} className="text-white" />
+          </div>
+        )}
       </div>
+
+      {/* Info */}
       <div className="p-3 flex flex-col gap-1.5">
         <p
           className="text-[12px] font-bold leading-snug text-stone-900"
