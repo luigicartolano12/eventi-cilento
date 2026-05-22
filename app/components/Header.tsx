@@ -25,7 +25,7 @@ export function Header() {
           </span>
         </Link>
 
-        {/* Nav centrale */}
+        {/* Nav centrale — solo desktop */}
         <nav className="hidden sm:flex items-center gap-1">
           <Link
             href="/esperienze"
@@ -35,11 +35,11 @@ export function Header() {
             Esperienze
           </Link>
           <Link
-            href="/locali"
+            href="/notte"
             className="text-sm font-semibold px-3 py-1.5 rounded-xl transition-all hover:bg-stone-100"
             style={{ color: "#166534" }}
           >
-            Locali
+            Notte
           </Link>
         </nav>
 

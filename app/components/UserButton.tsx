@@ -33,7 +33,7 @@ export function UserButton() {
       <Link
         href="/registrati"
         className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl transition-opacity hover:opacity-80"
-        style={{ background: "rgba(255,255,255,0.12)", color: "white" }}
+        style={{ background: "rgba(22,163,74,0.10)", color: "#166534" }}
       >
         Accedi
       </Link>
@@ -47,11 +47,11 @@ export function UserButton() {
     >
       <div
         className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shrink-0"
-        style={{ background: "#a3e635", color: "#0f2318" }}
+        style={{ background: "#16a34a", color: "white" }}
       >
         {iniziali}
       </div>
-      <span className="hidden sm:block text-xs font-bold" style={{ color: "#a3e635" }}>
+      <span className="hidden sm:block text-xs font-bold" style={{ color: "#166534" }}>
         {punti} pt
       </span>
     </Link>
