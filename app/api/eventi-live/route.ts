@@ -12,8 +12,8 @@ export async function GET() {
   const eventi = await getEventiKV();
   return NextResponse.json(eventi, {
     headers: {
-      // Cache di 10 minuti — aggiorna abbastanza spesso senza sovraccaricare il DB
-      "Cache-Control": "public, s-maxage=600, stale-while-revalidate=60",
+      // Nessuna cache CDN — i dati cambiano ogni giorno col cron
+      "Cache-Control": "no-store",
     },
   });
 }
