@@ -148,71 +148,87 @@ export function HomeContent({ eventi }: { eventi: Evento[] }) {
 
   const oggi = eventiDiOggi(tuttiGliEventi);
 
-  // ── Comuni coinvolti oggi ─────────────────────────────────────────────────
-  const comuniOggi = [...new Set(oggi.map((e) => e.comune))];
-  const comuniLabel = comuniOggi.slice(0, 2).join(" · ") + (comuniOggi.length > 2 ? ` · +${comuniOggi.length - 2}` : "");
+  // Se oggi non ci sono eventi, mostra i prossimi 8 in programma
+  const oggiISOfixed = oggiISO();
+  const prossimi = oggi.length > 0
+    ? oggi
+    : tuttiGliEventi.filter((e) => e.data >= oggiISOfixed).slice(0, 8);
+  const sezioneLabel = oggi.length > 0 ? "oggi" : "in programma";
+  const sezioneCount = prossimi.length;
+
+  // ── Comuni coinvolti ─────────────────────────────────────────────────────
+  const comuniSet = [...new Set(prossimi.map((e) => e.comune))];
+  const comuniLabel = comuniSet.slice(0, 3).join(" · ") + (comuniSet.length > 3 ? ` +${comuniSet.length - 3}` : "");
 
   // ── RENDER ────────────────────────────────────────────────────────────────
 
   return (
     <>
       {/* ── 01 HEAD ── */}
-      <div style={{ background: "#f5f3ef" }} className="px-5 pt-14 pb-8">
+      <div style={{ background: "#f5f3ef" }} className="px-5 pt-14 pb-6">
         <div className="max-w-6xl mx-auto">
           <p
-            className="text-[11px] font-black uppercase tracking-[0.2em] mb-6"
+            className="text-[11px] font-black uppercase tracking-[0.2em] mb-5"
             style={{ color: "#16a34a" }}
           >
             Cilento &amp; Vallo di Diano
           </p>
-          <h1
-            className="font-black leading-[0.88] tracking-tight text-stone-900 mb-5"
-            style={{ fontSize: "clamp(48px, 8vw, 88px)" }}
-          >
-            Scopri gli eventi<br />
-            <span style={{ color: "#65a30d" }}>del Cilento</span>.
-          </h1>
-
           {/* ── 02 SUBHEAD ── */}
+          <h1
+            className="font-black leading-[0.9] tracking-tight text-stone-900 mb-3"
+            style={{ fontSize: "clamp(42px, 7.5vw, 84px)" }}
+          >
+            Scopri gli<br />
+            <span style={{ color: "#65a30d" }}>eventi</span><br />
+            del Cilento.
+          </h1>
           <p
-            className="text-base sm:text-lg leading-relaxed max-w-sm"
+            className="text-sm leading-relaxed max-w-xs"
             style={{ color: "#78716c" }}
           >
-            Sagre, concerti, mostre, sport e natura nel Parco Nazionale del Cilento.
+            Sagre, concerti, mostre, sport e natura.
           </p>
         </div>
       </div>
 
-      {/* ── 03 OGGI STRIP ── */}
-      {oggi.length > 0 && (
+      {/* ── 03 EVENTI IN PRIMO PIANO (oggi o prossimi) ── */}
+      {sezioneCount > 0 && (
         <div style={{ background: "#f5f3ef" }} className="px-5 pb-8">
           <div className="max-w-6xl mx-auto">
-            {/* Header strip */}
-            <div className="flex items-center gap-3 mb-4">
+            {/* Label + data + comuni */}
+            <div className="flex items-center gap-2.5 mb-4 flex-wrap">
               <span
-                className="w-2 h-2 rounded-full animate-pulse"
-                style={{ background: "#16a34a" }}
+                className="w-2 h-2 rounded-full shrink-0"
+                style={{
+                  background: "#16a34a",
+                  animation: oggi.length > 0 ? "pulse 2s infinite" : "none",
+                }}
               />
-              <span
-                className="text-sm font-black"
-                style={{ color: "#16a34a" }}
-              >
-                {oggi.length} {oggi.length === 1 ? "evento" : "eventi"} oggi
+              <span className="text-sm font-black" style={{ color: "#16a34a" }}>
+                {sezioneCount} {sezioneCount === 1 ? "evento" : "eventi"} {sezioneLabel}
               </span>
               <span
                 className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full capitalize"
                 style={{ background: "#dcfce7", color: "#166534" }}
               >
-                {formattaData(oggiISO())}
+                {formattaData(oggiISOfixed)}
               </span>
-              {comuniOggi.length > 0 && (
-                <span className="text-[11px] font-medium hidden sm:inline" style={{ color: "#78716c" }}>
+              {comuniSet.length > 0 && (
+                <span
+                  className="text-[11px] font-medium hidden sm:inline truncate max-w-xs"
+                  style={{ color: "#78716c" }}
+                >
                   {comuniLabel}
                 </span>
               )}
             </div>
-            <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
-              {oggi.map((e) => <MiniCard key={e.id} evento={e} />)}
+
+            {/* Scroll orizzontale card piccole */}
+            <div
+              className="flex gap-3 overflow-x-auto pb-3"
+              style={{ scrollbarWidth: "none" }}
+            >
+              {prossimi.map((e) => <MiniCard key={e.id} evento={e} />)}
             </div>
           </div>
         </div>
