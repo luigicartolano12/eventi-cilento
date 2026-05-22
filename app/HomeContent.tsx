@@ -155,6 +155,7 @@ export function HomeContent({ eventi }: { eventi: Evento[] }) {
       categoria: d.categoria,
       descrizioneBreve: d.descrizione.slice(0, 120),
       descrizione: d.descrizione,
+      immagine: d.immagine,
       pubblico: "Tutti",
       servizi: {
         accessibileDisabili: false,

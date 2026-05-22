@@ -143,9 +143,20 @@ function PaginaEventoKV({ evento }: { evento: EventoDinamico }) {
         </Link>
 
         <article className="bg-white rounded-2xl shadow-sm border border-stone-200/80 overflow-hidden">
-          {/* Banner categoria */}
+          {/* Banner categoria / immagine */}
           <div className="relative h-48 sm:h-64 flex items-center justify-center" style={{ background: gradientCategoria[evento.categoria] }}>
-            <IcoCategoria size={64} strokeWidth={1.1} className="text-white opacity-60" />
+            {evento.immagine ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={evento.immagine}
+                alt={evento.titolo}
+                className="absolute inset-0 w-full h-full object-cover"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              />
+            ) : (
+              <IcoCategoria size={64} strokeWidth={1.1} className="text-white opacity-60" />
+            )}
+            <div className="absolute inset-0" style={{background:"linear-gradient(to bottom,transparent 40%,rgba(0,0,0,0.45) 100%)"}}/>
             <div className="absolute bottom-4 left-4 flex items-center gap-2">
               <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-sm" style={{ color: testoCategoriaColore[evento.categoria] }}>
                 {evento.categoria}

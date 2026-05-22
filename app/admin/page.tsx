@@ -559,20 +559,43 @@ function TabCron() {
     }
   }
 
-  // ── Cron veloce (solo scraping + haiku, ~20s) ────────────────────────────
-  async function avviaLight(conReset = false) {
-    if (conReset && !confirm("Questo svuoterà tutti gli eventi esistenti e ricaricherà con dati reali. Continuare?")) return;
+  // ── Cron veloce (solo scraping + haiku, ~20s) — aggiunge senza cancellare ──
+  async function avviaLight() {
     setRunning("light");
-    setLog(conReset ? ["Reset + Ricarica in corso…"] : ["Cron veloce avviato…"]);
+    setLog(["Cron veloce avviato — aggiunge nuovi eventi senza cancellare quelli esistenti…"]);
     try {
-      const p = new URLSearchParams({ chiave: "cilento2025" });
-      if (conReset) p.set("reset", "1");
-      const r = await fetch(`/api/cron-light?${p}`);
+      const r = await fetch(`/api/cron-light?chiave=cilento2025`);
       const d = await r.json();
       if (d.log) setLog(d.log);
       setLog(prev => [...prev, d.ok
         ? `✓ ${d.trovati} eventi trovati, ${d.nuovi} nuovi salvati (siti: ${d.funzionanti})`
         : `✕ ${d.messaggio}`]);
+    } catch (err) {
+      setLog(prev => [...prev, `✕ ${err instanceof Error ? err.message : "Errore"}`]);
+    } finally {
+      setRunning(null);
+    }
+  }
+
+  // ── Reset sicuro: prima seed verificati, poi aggiunge AI ─────────────────
+  async function resetESeed() {
+    if (!confirm("Questo sostituirà tutti gli eventi con quelli reali verificati, poi aggiungerà quelli trovati dall'AI. Continuare?")) return;
+    setRunning("light");
+    setLog(["Passo 1/2: caricamento eventi reali verificati (seed)…"]);
+    try {
+      // Passo 1: reset + seed eventi verificati
+      const rs = await fetch("/api/seed-eventi?chiave=cilento2025&reset=1");
+      const ds = await rs.json();
+      if (!ds.ok) { setLog([`✕ Seed fallito: ${ds.errore ?? "errore"}`]); return; }
+      setLog([`✓ ${ds.salvati} eventi reali caricati nel database`, "Passo 2/2: ricerca AI di eventi aggiuntivi…"]);
+
+      // Passo 2: aggiungi eventi dall'AI (senza reset)
+      const rc = await fetch("/api/cron-light?chiave=cilento2025");
+      const dc = await rc.json();
+      if (dc.log) setLog(prev => [...prev, ...dc.log]);
+      setLog(prev => [...prev, dc.ok
+        ? `✓ AI: ${dc.trovati} trovati, ${dc.nuovi} nuovi aggiunti`
+        : `ℹ️ AI: ${dc.messaggio ?? "nessun evento aggiuntivo trovato"}`]);
     } catch (err) {
       setLog(prev => [...prev, `✕ ${err instanceof Error ? err.message : "Errore"}`]);
     } finally {
@@ -645,141 +668,51 @@ function TabCron() {
     }
   }
 
+  const [mostraOpus, setMostraOpus] = useState(false);
   const isBusy = !!running || resettando;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
 
-      {/* ── Seed eventi reali verificati ─────────────────────────────────── */}
-      <div className="rounded-3xl p-5 flex flex-col gap-3" style={{background:"#f0fdf4",border:"1px solid #86efac"}}>
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{color:"#15803d"}}>
-            ✅ Carica eventi reali verificati (consigliato)
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* SEZIONE 1 — GRATUITO                                               */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <div className="rounded-3xl overflow-hidden" style={{border:"2px solid #86efac"}}>
+        {/* Header sezione */}
+        <div className="px-5 py-3 flex items-center justify-between" style={{background:"#f0fdf4"}}>
+          <p className="text-[11px] font-black uppercase tracking-widest" style={{color:"#15803d"}}>
+            Aggiungi eventi
           </p>
-          <p className="text-xs" style={{color:"#166534"}}>
-            42 eventi reali da fonti verificate: sagre, concerti, festival. Maggio–Settembre 2026. Nessuna AI necessaria.
-          </p>
+          <span className="text-[10px] font-black px-2.5 py-1 rounded-full" style={{background:"#dcfce7",color:"#166534"}}>
+            GRATIS — $0.00
+          </span>
         </div>
-        <button onClick={() => seedEventiReali(true)} disabled={isBusy}
-          className="w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
-          style={{background:"linear-gradient(135deg,#16a34a,#15803d)",color:"white"}}>
-          {running === "light"
-            ? <><span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"/>Caricamento…</>
-            : <>📥 Carica subito 42 eventi reali (senza AI)</>}
-        </button>
-      </div>
 
-      {/* ── Sezione Reset + Ricarica ───────────────────────────────────────── */}
-      <div className="rounded-3xl p-5 flex flex-col gap-3" style={{background:"#fff7ed",border:"1px solid #fed7aa"}}>
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{color:"#c2410c"}}>
-            🔄 Reset database eventi
-          </p>
-          <p className="text-xs" style={{color:"#9a3412"}}>
-            Svuota tutti gli eventi e ricarica con scraping AI dai siti web (richiede crediti Anthropic).
-          </p>
-        </div>
-        {/* Bottone principale: Reset + Ricarica in un click */}
-        <button onClick={() => avviaLight(true)} disabled={isBusy}
-          className="w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
-          style={{background:"linear-gradient(135deg,#dc2626,#f97316)",color:"white"}}>
-          {running === "light" && resettando === false
-            ? <><span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"/>Reset + Ricarica in corso…</>
-            : <>🗑️ Reset + Ricarica reale (veloce, ~20s)</>}
-        </button>
-        {/* Bottone secondario: solo reset */}
-        <button onClick={soloReset} disabled={isBusy}
-          className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-80 disabled:opacity-40"
-          style={{background:"#fef2f2",color:"#dc2626"}}>
-          {resettando
-            ? <><span className="w-3.5 h-3.5 rounded-full border-2 border-red-300 border-t-red-600 animate-spin"/>Reset in corso…</>
-            : <>Solo svuota (senza ricaricare)</>}
-        </button>
-      </div>
-
-      {/* ── Cron veloce ───────────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-3">
-        <p className="text-[10px] font-black uppercase tracking-widest text-stone-400">
-          ⚡ Cron veloce — solo scraping
-        </p>
-        <p className="text-xs text-stone-400 -mt-1">
-          Scraping 5 siti + AI haiku. Niente web search. ~20 secondi.
-        </p>
-        <button onClick={() => avviaLight(false)} disabled={isBusy}
-          className="w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
-          style={{background:"linear-gradient(135deg,#0891b2,#06b6d4)",color:"white"}}>
-          {running === "light"
-            ? <><span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"/>Ricerca in corso…</>
-            : <><IcoSparkle size={15}/>Aggiungi nuovi eventi (veloce)</>}
-        </button>
-      </div>
-
-      {/* ── Esperienze ────────────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-3 pt-4 border-t border-stone-100">
-        <p className="text-[10px] font-black uppercase tracking-widest text-stone-400">
-          🧗 Esperienze — ricerca approfondita
-        </p>
-        <p className="text-xs text-stone-400 -mt-1">
-          ~30 siti: booking, associazioni, privati, agriturismi, diving, kayak, trekking... ~30 secondi.
-        </p>
-        <div className="flex gap-2">
-          <button onClick={() => avviaEsperienze(false)} disabled={isBusy}
-            className="flex-1 py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
-            style={{background:"#f0fdf4",color:"#15803d"}}>
-            {running === "light" ? <><span className="w-3.5 h-3.5 rounded-full border-2 border-green-300 border-t-green-600 animate-spin"/>In corso…</> : <>+ Aggiungi esperienze</>}
+        <div className="p-5 flex flex-col gap-3" style={{background:"white"}}>
+          {/* Pulsante principale: seed */}
+          <button onClick={() => seedEventiReali(true)} disabled={isBusy}
+            className="w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
+            style={{background:"linear-gradient(135deg,#16a34a,#15803d)",color:"white"}}>
+            {running === "light"
+              ? <><span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"/>Caricamento…</>
+              : <>📥 Carica 67 eventi verificati (consigliato)</>}
           </button>
-          <button onClick={() => avviaEsperienze(true)} disabled={isBusy}
-            className="flex-1 py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
-            style={{background:"#fef3c7",color:"#92400e"}}>
-            🔄 Reset + Ricarica
-          </button>
-        </div>
-      </div>
-
-      {/* ── Cron completo ─────────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-3 pt-4 border-t border-stone-100">
-        <p className="text-[10px] font-black uppercase tracking-widest text-stone-400">
-          🔍 Cron completo — web search + scraping
-        </p>
-        <p className="text-xs text-stone-400 -mt-1">
-          8 ricerche web + Claude Opus. Più risultati. Può richiedere fino a 2 minuti.
-        </p>
-        <input value={periodo} onChange={e => setPeriodo(e.target.value)}
-          placeholder="Periodo opzionale (es. luglio 2026, estate 2026…)"
-          className={CL} style={IS} />
-        <button onClick={avviaFull} disabled={isBusy}
-          className="w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
-          style={{background:"linear-gradient(135deg,#1a3529,#14532d)",color:"#a3e635"}}>
-          {running === "full"
-            ? <><span className="w-4 h-4 rounded-full border-2 border-lime-400/30 border-t-lime-400 animate-spin"/>Ricerca completa in corso…</>
-            : <><IcoSparkle size={15}/>Avvia ricerca completa (web + scraping)</>}
-        </button>
-      </div>
-
-      {/* Log ───────────────────────────────────────────────────────────────── */}
-      {log.length > 0 && (
-        <div className="rounded-2xl p-4 flex flex-col gap-1" style={{background:"#1a3529"}}>
-          <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{color:"#a3e635"}}>Log</p>
-          {log.map((l, i) => (
-            <p key={i} className="text-[12px] font-mono"
-              style={{color: l.startsWith("✓") ? "#86efac" : l.startsWith("✕") ? "#fca5a5" : "#6ee7b7"}}>
-              {l}
-            </p>
-          ))}
-        </div>
-      )}
-
-      {/* Import da testo / Facebook / Instagram */}
-      <div className="flex flex-col gap-3 pt-4 border-t border-stone-100">
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-1">
-            📋 Importa da testo / Facebook / Instagram
+          <p className="text-[11px] text-center" style={{color:"#6b7280"}}>
+            Sagre · concerti · festival maggio–settembre 2026 · nessun credito AI
           </p>
-          <p className="text-xs text-stone-400 mb-3">
-            Incolla il testo di un post Facebook, un evento Instagram, una newsletter Pro Loco, una pagina web, un programma estivo — l&apos;AI estrae tutti gli eventi e li salva.
+
+          {/* Divider */}
+          <div className="h-px mx-2" style={{background:"#f3f4f6"}}/>
+
+          {/* Import da testo */}
+          <p className="text-[10px] font-black uppercase tracking-widest" style={{color:"#78716c"}}>
+            Oppure incolla un testo (Facebook, Pro Loco, Comune…)
           </p>
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {["Post Facebook Pro Loco Teggiano estate 2026", "Programma eventi Sala Consilina luglio", "Newsletter Comune Padula"].map(ex => (
+          <textarea value={testo} onChange={e => setTesto(e.target.value)}
+            placeholder="Copia e incolla il testo di un post Facebook, programma estivo, newsletter Pro Loco, articolo giornale locale…"
+            rows={4} className={CL} style={{...IS, resize:"none", fontSize:14}}/>
+          <div className="flex flex-wrap gap-1.5">
+            {["Pro Loco Teggiano estate 2026", "Programma Sala Consilina luglio", "Comune Padula agosto"].map(ex => (
               <button key={ex} onClick={() => setTesto(ex)}
                 className="text-[10px] font-bold px-2.5 py-1 rounded-full border-0 cursor-pointer"
                 style={{background:"#f5f3ef",color:"#78716c"}}>
@@ -787,36 +720,152 @@ function TabCron() {
               </button>
             ))}
           </div>
-        </div>
-        <textarea value={testo} onChange={e => setTesto(e.target.value)}
-          placeholder="Incolla qui: testo di un post Facebook, testo di un evento Instagram, programma estivo del comune, newsletter Pro Loco, articolo di giornale locale…"
-          rows={7} className={CL} style={{...IS, resize:"vertical"}}/>
-        <button onClick={importaDaTesto} disabled={importando||!testo.trim()}
-          className="w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-0 cursor-pointer disabled:opacity-50"
-          style={{background:"#f3e8ff",color:"#7c3aed"}}>
-          {importando
-            ? <><span className="w-4 h-4 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin"/>Estrazione in corso…</>
-            : <><IcoDownload size={15}/>Estrai eventi da questo testo</>}
-        </button>
-        {importMsg && <p className="text-xs px-3 py-2 rounded-xl" style={{background:"#f0fdf4",color:"#166534"}}>{importMsg}</p>}
-
-        {/* Istruzioni Facebook */}
-        <div className="rounded-2xl p-4" style={{background:"#e7f3ff",border:"1px solid #bfdbfe"}}>
-          <p className="text-[11px] font-black mb-2" style={{color:"#1e40af"}}>Come importare da Facebook</p>
-          <ol className="text-xs space-y-1" style={{color:"#1e3a8a"}}>
-            <li>1. Vai sulla pagina Facebook della Pro Loco / Comune</li>
-            <li>2. Apri un post di evento → copia tutto il testo</li>
-            <li>3. Incolla qui sopra → clicca &quot;Estrai eventi&quot;</li>
-            <li>4. L&apos;AI estrae titolo, data, luogo e salva l&apos;evento</li>
-          </ol>
-          <p className="text-[10px] mt-2" style={{color:"#3b82f6"}}>
-            💡 Pro Loco da seguire: Pro Loco Teggiano, Pro Loco Sala Consilina, Pro Loco Padula, Pro Loco Sassano, Pro Loco Atena Lucana, Comune di Polla
+          <button onClick={importaDaTesto} disabled={importando||!testo.trim()}
+            className="w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-0 cursor-pointer disabled:opacity-40"
+            style={{background:"#f3e8ff",color:"#7c3aed"}}>
+            {importando
+              ? <><span className="w-4 h-4 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin"/>Estrazione in corso…</>
+              : <><IcoDownload size={15}/>Estrai eventi dal testo</>}
+          </button>
+          {importMsg && (
+            <p className="text-xs text-center px-3 py-2 rounded-xl" style={{background:"#f0fdf4",color:"#166534"}}>
+              {importMsg}
+            </p>
+          )}
+          <p className="text-[10px] text-center" style={{color:"#9ca3af"}}>
+            💡 Segui su Facebook: Pro Loco Teggiano · Sala Consilina · Padula · Sassano · Atena Lucana · Comune di Polla
           </p>
         </div>
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* SEZIONE 2 — AI ECONOMICA (Haiku)                                   */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <div className="rounded-3xl overflow-hidden" style={{border:"2px solid #bae6fd"}}>
+        <div className="px-5 py-3 flex items-center justify-between" style={{background:"#f0f9ff"}}>
+          <p className="text-[11px] font-black uppercase tracking-widest" style={{color:"#0369a1"}}>
+            Cerca nuovi eventi online
+          </p>
+          <span className="text-[10px] font-black px-2.5 py-1 rounded-full" style={{background:"#e0f2fe",color:"#0c4a6e"}}>
+            ~$0.01 per utilizzo
+          </span>
+        </div>
+
+        <div className="p-5 flex flex-col gap-3" style={{background:"white"}}>
+          <p className="text-xs" style={{color:"#64748b"}}>
+            Scarica ~35 siti web locali e usa l&apos;AI veloce (Haiku) per trovare nuovi eventi.
+            <strong> Non cancella</strong> gli eventi esistenti — aggiunge solo i nuovi.
+          </p>
+          <button onClick={() => avviaLight()} disabled={isBusy}
+            className="w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
+            style={{background:"linear-gradient(135deg,#0891b2,#0284c7)",color:"white"}}>
+            {running === "light"
+              ? <><span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"/>Ricerca in corso (~20s)…</>
+              : <><IcoSparkle size={15}/>Cerca nuovi eventi online (~20s)</>}
+          </button>
+
+          {/* Esperienze */}
+          <div className="h-px mx-2 mt-1" style={{background:"#f3f4f6"}}/>
+          <p className="text-[10px] font-black uppercase tracking-widest" style={{color:"#78716c"}}>
+            Esperienze (trekking, mare, gastronomia…)
+          </p>
+          <button onClick={() => avviaEsperienze(false)} disabled={isBusy}
+            className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
+            style={{background:"#f0fdf4",color:"#15803d",border:"1.5px solid #bbf7d0"}}>
+            {running === "light"
+              ? <><span className="w-3.5 h-3.5 rounded-full border-2 border-green-300 border-t-green-600 animate-spin"/>In corso…</>
+              : <>🧗 Cerca nuove esperienze (~30s)</>}
+          </button>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* SEZIONE 3 — DATABASE                                               */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <div className="rounded-3xl overflow-hidden" style={{border:"1.5px solid #e5e7eb"}}>
+        <div className="px-5 py-3" style={{background:"#f9fafb"}}>
+          <p className="text-[11px] font-black uppercase tracking-widest" style={{color:"#6b7280"}}>
+            Gestione database
+          </p>
+        </div>
+        <div className="p-5 flex flex-col gap-2" style={{background:"white"}}>
+          <button onClick={resetESeed} disabled={isBusy}
+            className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
+            style={{background:"#f5f3ef",color:"#44403c"}}>
+            {running === "light" && resettando === false
+              ? <><span className="w-3.5 h-3.5 rounded-full border-2 border-stone-300 border-t-stone-600 animate-spin"/>In corso…</>
+              : <>🔄 Ripristina 67 eventi verificati + cerca altri (seed + AI)</>}
+          </button>
+          <button onClick={soloReset} disabled={isBusy}
+            className="w-full py-2.5 rounded-2xl font-medium text-xs flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-80 disabled:opacity-40"
+            style={{background:"#fef2f2",color:"#dc2626"}}>
+            {resettando
+              ? <><span className="w-3 h-3 rounded-full border-2 border-red-300 border-t-red-600 animate-spin"/>Reset in corso…</>
+              : <>🗑 Svuota tutto il database (senza ricaricare)</>}
+          </button>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* LOG                                                                 */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {log.length > 0 && (
+        <div className="rounded-2xl p-4 flex flex-col gap-1" style={{background:"#1a3529"}}>
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-[10px] font-black uppercase tracking-widest" style={{color:"#a3e635"}}>Log</p>
+            <button onClick={() => setLog([])} className="text-[10px] border-0 bg-transparent cursor-pointer" style={{color:"#6ee7b7"}}>
+              × Chiudi
+            </button>
+          </div>
+          {log.map((l, i) => (
+            <p key={i} className="text-[11px] font-mono leading-relaxed"
+              style={{color: l.startsWith("✓") ? "#86efac" : l.startsWith("✕") ? "#fca5a5" : "#6ee7b7"}}>
+              {l}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* SEZIONE AVANZATA — Opus (nascosta di default, costa ~$1/click)     */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <div className="rounded-2xl overflow-hidden" style={{border:"1.5px solid #fde68a"}}>
+        <button
+          onClick={() => setMostraOpus(v => !v)}
+          className="w-full px-4 py-3 flex items-center justify-between border-0 cursor-pointer text-left"
+          style={{background:"#fffbeb"}}>
+          <span className="text-[11px] font-black" style={{color:"#92400e"}}>
+            ⚠️ Ricerca avanzata con Opus — <span style={{color:"#dc2626"}}>costa ~$1 per utilizzo</span>
+          </span>
+          <span className="text-xs" style={{color:"#b45309"}}>{mostraOpus ? "▲ Nascondi" : "▼ Mostra"}</span>
+        </button>
+        {mostraOpus && (
+          <div className="p-4 flex flex-col gap-3" style={{background:"#fffbeb"}}>
+            <p className="text-xs" style={{color:"#92400e"}}>
+              Usa Claude Opus (il modello più potente e costoso). Usa questa funzione <strong>raramente</strong> — solo se hai caricato crediti e hai bisogno di una ricerca approfondita. Ogni click può costare $0.50–1.50.
+            </p>
+            <input value={periodo} onChange={e => setPeriodo(e.target.value)}
+              placeholder="Periodo (es. luglio 2026, estate 2026…)"
+              className={CL} style={IS} />
+            <button onClick={avviaFull} disabled={isBusy}
+              className="w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
+              style={{background:"linear-gradient(135deg,#1a3529,#14532d)",color:"#a3e635"}}>
+              {running === "full"
+                ? <><span className="w-4 h-4 rounded-full border-2 border-lime-400/30 border-t-lime-400 animate-spin"/>Ricerca completa in corso…</>
+                : <><IcoSparkle size={15}/>Avvia ricerca Opus (~2 min, ~$1)</>}
+            </button>
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PIN admin — cambia questa stringa per modificare la password
+// ─────────────────────────────────────────────────────────────────────────────
+const ADMIN_PIN = "cilento2026";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shell principale
@@ -824,19 +873,82 @@ function TabCron() {
 export default function PaginaAdmin() {
   const router = useRouter();
   const [auth, setAuth] = useState(false);
+  const [pinOk, setPinOk] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [pinErr, setPinErr] = useState(false);
   const [tab, setTab] = useState<Tab>("crea");
   const [rk, setRk] = useState(0);
   const [badge, setBadge] = useState(0);
 
   useEffect(()=>{
     if(!getUtente()){ router.replace("/registrati"); return; }
+    // Controlla se il PIN è già stato validato in questa sessione
+    if(sessionStorage.getItem("admin-access") === "1") setPinOk(true);
     setAuth(true);
     fetch("/api/proposte").then(r=>r.json()).then((l:Proposta[])=>
       setBadge(l.filter(p=>p.stato==="in_attesa").length)
     ).catch(()=>{});
   },[router,rk]);
 
+  function verificaPin(e: React.FormEvent) {
+    e.preventDefault();
+    if (pinInput === ADMIN_PIN) {
+      sessionStorage.setItem("admin-access", "1");
+      setPinOk(true);
+      setPinErr(false);
+    } else {
+      setPinErr(true);
+      setPinInput("");
+    }
+  }
+
   if (!auth) return null;
+
+  // ── Schermata PIN ──────────────────────────────────────────────────────────
+  if (!pinOk) {
+    return (
+      <main className="flex-1 flex items-center justify-center px-4 py-20" style={{background:"#f5f3ef"}}>
+        <div className="w-full max-w-sm">
+          <div className="bg-white rounded-3xl p-8 flex flex-col gap-6"
+            style={{boxShadow:"0 4px 32px rgba(0,0,0,0.10)"}}>
+            <div className="flex flex-col items-center gap-2 text-center">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-1"
+                style={{background:"linear-gradient(135deg,#1a3529,#14532d)"}}>
+                <IcoSend size={24} style={{color:"#a3e635"}}/>
+              </div>
+              <h1 className="text-xl font-black text-stone-900">Accesso admin</h1>
+              <p className="text-sm text-stone-400">Inserisci il codice di accesso</p>
+            </div>
+            <form onSubmit={verificaPin} className="flex flex-col gap-3">
+              <input
+                type="password"
+                value={pinInput}
+                onChange={e=>{setPinInput(e.target.value); setPinErr(false);}}
+                placeholder="Codice accesso"
+                autoFocus
+                className="w-full rounded-2xl px-4 py-3.5 text-base font-bold text-stone-800 focus:outline-none text-center tracking-widest"
+                style={{background:"#f5f3ef",letterSpacing:"0.2em"}}
+              />
+              {pinErr && (
+                <p className="text-sm text-center px-3 py-2 rounded-xl"
+                  style={{background:"#fef2f2",color:"#dc2626"}}>
+                  Codice errato. Riprova.
+                </p>
+              )}
+              <button type="submit"
+                className="w-full py-4 rounded-2xl font-black text-sm border-0 cursor-pointer transition-opacity hover:opacity-90"
+                style={{background:"linear-gradient(135deg,#1a3529,#14532d)",color:"#a3e635"}}>
+                Accedi
+              </button>
+            </form>
+            <p className="text-[11px] text-center text-stone-300">
+              Area riservata all&apos;amministratore
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   const TABS:{id:Tab;label:string;badge?:number}[] = [
     {id:"crea",     label:"✏️ Crea"},

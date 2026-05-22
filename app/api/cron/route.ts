@@ -12,7 +12,7 @@
 
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { aggiungiEventiKV, sostituisciEventiKV } from "@/lib/kv-store";
+import { aggiungiEventiKV } from "@/lib/kv-store";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -169,7 +169,6 @@ export async function GET(request: Request) {
     );
   }
 
-  const reset = url.searchParams.get("reset") === "1";
   const oggi = new Date().toISOString().split("T")[0];
   const periodoParam = url.searchParams.get("periodo");
   const mese = periodoParam ?? new Date().toLocaleString("it-IT", { month: "long" });
@@ -177,11 +176,6 @@ export async function GET(request: Request) {
   const periodoLabel = periodoParam ?? `${mese} ${anno}`;
   const stagione = stagionalita(mese);
   const log: string[] = [];
-
-  // ⚠️ NON resettiamo subito: prima estraiamo i nuovi eventi, poi sostituiamo.
-  if (reset) {
-    log.push("ℹ️ Reset richiesto — verrà eseguito DOPO l'estrazione riuscita");
-  }
 
   // ══════════════════════════════════════════════════════════════════════════
   // FASE 0 — Scraping parallelo di tutte le sorgenti
@@ -341,19 +335,13 @@ Restituisci un array JSON vuoto: []`;
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // FASE 3 — Salvataggio (reset atomico oppure aggiunta con deduplicazione)
+  // FASE 3 — Salvataggio con deduplicazione (mai sostituisce quelli esistenti)
   // ══════════════════════════════════════════════════════════════════════════
-  let salvati: number;
-  if (reset && eventiGrezzi.length > 0) {
-    // Reset atomico: sostituisce tutto il DB ora che l'estrazione è riuscita
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    salvati = await sostituisciEventiKV(eventiGrezzi as any[]);
-    log.push(`  → Reset eseguito: ${salvati} eventi sostituiti nel KV`);
-  } else {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    salvati = await aggiungiEventiKV(eventiGrezzi as any[]);
-    log.push(`  → ${salvati} eventi nuovi aggiunti in KV`);
-  }
+  // Il cron aggiunge sempre e solo nuovi eventi; il reset va fatto prima
+  // tramite seed-eventi?reset=1 in modo sicuro.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const salvati = await aggiungiEventiKV(eventiGrezzi as any[]);
+  log.push(`  → ${salvati} eventi nuovi aggiunti in KV`);
 
   return NextResponse.json({
     ok: true,
@@ -361,7 +349,6 @@ Restituisci un array JSON vuoto: []`;
     nuovi: salvati,
     sitiFunzionanti,
     haContestoReale: haContesto,
-    reset,
     data: oggi,
     log,
   });

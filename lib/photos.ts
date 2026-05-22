@@ -1,11 +1,11 @@
 /**
  * lib/photos.ts
- * Foto contestuali via Unsplash Source API — gratuito, nessuna API key.
+ * Foto contestuali via LoremFlickr API — gratuito, nessuna API key, immagini CC.
  *
- * L'URL include un "sig" calcolato dall'ID stringa, così:
- *   • stesso evento/esperienza → sempre stessa foto (cache HTTP stabile)
- *   • eventi diversi → foto diverse (hash diverso → URL diverso → immagine diversa)
- *   • le keyword garantiscono pertinenza visiva (es. "sagra,food,festival,italy")
+ * L'URL include un "lock" calcolato dall'ID stringa, così:
+ *   • stesso evento/esperienza → sempre stessa foto (lock stabile → cache HTTP)
+ *   • eventi diversi → foto diverse (hash diverso → lock diverso → immagine diversa)
+ *   • le keyword garantiscono pertinenza visiva (es. "food,festival,italy")
  */
 
 /** Hash numerico stabile dall'ID stringa */
@@ -19,13 +19,13 @@ export function hashSig(s: string): number {
 
 // ─── Keyword per categoria EVENTO ─────────────────────────────────────────────
 const KW_EVENTO: Record<string, string> = {
-  Sagra:     "sagra,food,festival,italy,cuisine",
+  Sagra:     "food,festival,italy,cuisine,traditional",
   Musica:    "concert,music,festival,outdoor,stage",
-  Cultura:   "ruins,ancient,history,italy,monument",
+  Cultura:   "ruins,ancient,history,italy,medieval",
   Sport:     "sport,trail,outdoor,cycling,italy",
   Religioso: "church,procession,italy,religion,tradition",
   Mercato:   "market,craft,artisan,italy,stalls",
-  Natura:    "nature,trail,mountain,forest,italy",
+  Natura:    "nature,trail,mountain,cilento,park",
   Salute:    "wellness,yoga,spa,relax,nature",
 };
 
@@ -40,7 +40,7 @@ const KW_ESPERIENZA: Record<string, string> = {
   Natura:      "nature,forest,trail,italy,park",
 };
 
-/** URL foto evento — w×h pixel, pertinente alla categoria */
+/** URL foto evento — w×h pixel, pertinente alla categoria (LoremFlickr) */
 export function fotoEvento(
   id: string,
   categoria: string,
@@ -48,11 +48,11 @@ export function fotoEvento(
   h = 450
 ): string {
   const kw = KW_EVENTO[categoria] ?? "italy,landscape,festival";
-  const sig = hashSig(id);
-  return `https://source.unsplash.com/${w}x${h}/?${kw}&sig=${sig}`;
+  const lock = hashSig(id);
+  return `https://loremflickr.com/${w}/${h}/${kw}?lock=${lock}`;
 }
 
-/** URL foto esperienza — w×h pixel, pertinente alla categoria */
+/** URL foto esperienza — w×h pixel, pertinente alla categoria (LoremFlickr) */
 export function fotoEsperienza(
   id: string,
   categoria: string,
@@ -60,8 +60,8 @@ export function fotoEsperienza(
   h = 450
 ): string {
   const kw = KW_ESPERIENZA[categoria] ?? "italy,landscape,nature";
-  const sig = hashSig(id);
-  return `https://source.unsplash.com/${w}x${h}/?${kw}&sig=${sig}`;
+  const lock = hashSig(id);
+  return `https://loremflickr.com/${w}/${h}/${kw}?lock=${lock}`;
 }
 
 /** Variante con offset: per gallery (stesso ID, foto diversa) */
@@ -77,6 +77,6 @@ export function fotoGallery(
     tipo === "esperienza"
       ? (KW_ESPERIENZA[categoria] ?? "italy,landscape,nature")
       : (KW_EVENTO[categoria] ?? "italy,landscape,festival");
-  const sig = hashSig(id) + indice * 17; // offset deterministico per ogni foto gallery
-  return `https://source.unsplash.com/${w}x${h}/?${kw}&sig=${sig}`;
+  const lock = hashSig(id) + indice * 17; // offset deterministico per ogni foto gallery
+  return `https://loremflickr.com/${w}/${h}/${kw}?lock=${lock}`;
 }

@@ -18,6 +18,7 @@ export type EventoDinamico = {
   sorgente?: string;        // URL sito web ufficiale / articolo fonte
   facebook?: string;        // URL pagina o evento Facebook
   instagram?: string;       // URL profilo o post Instagram
+  immagine?: string;        // URL immagine ufficiale (Wikipedia, sito evento, ecc.)
   approvato: boolean;
   dataCreazione: string;
 };

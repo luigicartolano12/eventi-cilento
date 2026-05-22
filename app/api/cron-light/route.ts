@@ -15,7 +15,7 @@
 
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { aggiungiEventiKV, sostituisciEventiKV } from "@/lib/kv-store";
+import { aggiungiEventiKV } from "@/lib/kv-store";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -133,7 +133,6 @@ async function scrapeUrl(url: string, label: string): Promise<string> {
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const chiave = url.searchParams.get("chiave");
-  const reset = url.searchParams.get("reset") === "1";
   const triggerKey = process.env.TRIGGER_KEY ?? "cilento2025";
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = request.headers.get("authorization");
@@ -153,13 +152,6 @@ export async function GET(request: Request) {
   const anno = String(new Date().getFullYear());
   const stagione = stagionalita(mese);
   const log: string[] = [];
-
-  // ⚠️ NON resettiamo subito: prima estraiamo i nuovi eventi,
-  // poi se tutto va bene sostituiamo il DB. Così se l'AI fallisce
-  // il vecchio contenuto rimane intatto.
-  if (reset) {
-    log.push("ℹ️ Reset richiesto — verrà eseguito DOPO l'estrazione riuscita");
-  }
 
   // ══════════════════════════════════════════════════════════════════════════
   // FASE 0 — Scraping parallelo di tutte le sorgenti
@@ -252,18 +244,11 @@ Restituisci un array JSON vuoto: []`;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const eventi = JSON.parse(match[0]) as any[];
 
-    let salvati: number;
-    if (reset && eventi.length > 0) {
-      // Reset atomico: sostituisce tutto il DB solo ora che l'estrazione è riuscita
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      salvati = await sostituisciEventiKV(eventi as any[]);
-      log.push(`  → Reset eseguito: ${salvati} eventi sostituiti nel KV`);
-    } else {
-      // Modalità normale: aggiunge solo i nuovi (deduplicazione)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      salvati = await aggiungiEventiKV(eventi as any[]);
-      log.push(`  → ${eventi.length} eventi estratti, ${salvati} nuovi aggiunti in KV`);
-    }
+    // Il cron aggiunge sempre nuovi eventi senza mai cancellare quelli esistenti.
+    // Il reset del database va fatto separatamente tramite seed-eventi?reset=1.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const salvati = await aggiungiEventiKV(eventi as any[]);
+    log.push(`  → ${eventi.length} eventi estratti dall'AI, ${salvati} nuovi aggiunti in KV`);
 
     return NextResponse.json({
       ok: true,
@@ -272,7 +257,6 @@ Restituisci un array JSON vuoto: []`;
       funzionanti,
       sorgenti: SORGENTI.length,
       haContestoReale: haContesto,
-      reset,
       log,
     });
   } catch (err) {
