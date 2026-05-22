@@ -510,79 +510,175 @@ function TabArchivio({refreshKey}:{refreshKey:number}) {
 // ─────────────────────────────────────────────────────────────────────────────
 function TabCron() {
   const [log, setLog] = useState<string[]>([]);
-  const [running, setRunning] = useState(false);
+  const [running, setRunning] = useState<null|"light"|"full">(null);
   const [periodo, setPeriodo] = useState("");
   const [testo, setTesto] = useState("");
   const [importando, setImportando] = useState(false);
   const [importMsg, setImportMsg] = useState("");
+  const [resettando, setResettando] = useState(false);
 
-  async function avviaCron() {
-    setRunning(true); setLog(["Avvio pipeline…"]);
+  // ── Reset KV senza ricaricare ─────────────────────────────────────────────
+  async function soloReset() {
+    if (!confirm("Svuotare TUTTI gli eventi dal database? L'operazione è irreversibile.")) return;
+    setResettando(true);
+    setLog(["Reset KV in corso…"]);
     try {
-      const p = new URLSearchParams({chiave:"cilento2025"});
-      if(periodo) p.set("periodo",periodo);
+      await fetch("/api/eventi-admin", { method: "DELETE" });
+      setLog(["✓ Database svuotato. Lancia un cron per ricaricare gli eventi reali."]);
+    } catch (err) {
+      setLog([`✕ ${err instanceof Error ? err.message : "Errore reset"}`]);
+    } finally {
+      setResettando(false);
+    }
+  }
+
+  // ── Cron veloce (solo scraping + haiku, ~20s) ────────────────────────────
+  async function avviaLight(conReset = false) {
+    if (conReset && !confirm("Questo svuoterà tutti gli eventi esistenti e ricaricherà con dati reali. Continuare?")) return;
+    setRunning("light");
+    setLog(conReset ? ["Reset + Ricarica in corso…"] : ["Cron veloce avviato…"]);
+    try {
+      const p = new URLSearchParams({ chiave: "cilento2025" });
+      if (conReset) p.set("reset", "1");
+      const r = await fetch(`/api/cron-light?${p}`);
+      const d = await r.json();
+      if (d.log) setLog(d.log);
+      setLog(prev => [...prev, d.ok
+        ? `✓ ${d.trovati} eventi trovati, ${d.nuovi} nuovi salvati (siti: ${d.funzionanti})`
+        : `✕ ${d.messaggio}`]);
+    } catch (err) {
+      setLog(prev => [...prev, `✕ ${err instanceof Error ? err.message : "Errore"}`]);
+    } finally {
+      setRunning(null);
+    }
+  }
+
+  // ── Cron completo (scraping + web search + opus, ~2min) ──────────────────
+  async function avviaFull() {
+    setRunning("full"); setLog(["Avvio pipeline completa (può richiedere ~2 minuti)…"]);
+    try {
+      const p = new URLSearchParams({ chiave: "cilento2025" });
+      if (periodo) p.set("periodo", periodo);
       const r = await fetch(`/api/cron?${p}`);
       const d = await r.json();
-      if(d.log) setLog(d.log);
-      setLog(prev=>[...prev, d.ok
-        ?`✓ ${d.trovati} trovati, ${d.nuovi} nuovi — siti: ${d.sitiFunzionanti}`
-        :`✕ ${d.messaggio}`]);
-    } catch(err){ setLog(prev=>[...prev,`✕ ${err instanceof Error?err.message:"Errore"}`]); }
-    finally{ setRunning(false); }
+      if (d.log) setLog(d.log);
+      setLog(prev => [...prev, d.ok
+        ? `✓ ${d.trovati} trovati, ${d.nuovi} nuovi — siti: ${d.sitiFunzionanti}`
+        : `✕ ${d.messaggio}`]);
+    } catch (err) {
+      setLog(prev => [...prev, `✕ ${err instanceof Error ? err.message : "Errore"}`]);
+    } finally {
+      setRunning(null); }
   }
 
   async function importaDaTesto() {
-    if(!testo.trim()) return;
+    if (!testo.trim()) return;
     setImportando(true); setImportMsg("");
     try {
-      // Chiama l'API AI con il testo come contesto
-      const res = await fetch("/api/ai-eventi",{
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ query:`Estrai TUTTI gli eventi da questo testo e strutturali come eventi del Cilento:\n\n${testo.slice(0,4000)}` }),
+      const res = await fetch("/api/ai-eventi", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: `Estrai TUTTI gli eventi da questo testo e strutturali come eventi del Cilento:\n\n${testo.slice(0, 4000)}` }),
       });
       if (!res.ok || !res.body) throw new Error("API non disponibile");
       const reader = res.body.getReader();
       const dec = new TextDecoder();
-      let buf="";
-      while(true){
-        const {done,value}=await reader.read();
-        if(done) break;
-        buf+=dec.decode(value,{stream:true});
+      let buf = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
       }
-      // Conta eventi trovati dai messaggi JSON
       const matches = buf.match(/"tipo":"eventi"/g);
       setImportMsg(matches ? `✓ Eventi estratti e salvati per approvazione` : "Elaborazione completata");
-    } catch(err){ setImportMsg(`✕ ${err instanceof Error?err.message:"Errore"}`); }
-    finally{ setImportando(false); }
+    } catch (err) {
+      setImportMsg(`✕ ${err instanceof Error ? err.message : "Errore"}`);
+    } finally {
+      setImportando(false);
+    }
   }
+
+  const isBusy = !!running || resettando;
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Cron */}
-      <div className="flex flex-col gap-3">
-        <p className="text-[10px] font-black uppercase tracking-widest text-stone-400">Ricerca AI automatica</p>
-        <input value={periodo} onChange={e=>setPeriodo(e.target.value)}
-          placeholder="Periodo (es. luglio 2026, estate 2026…)"
-          className={CL} style={IS}/>
-        <button onClick={avviaCron} disabled={running}
+
+      {/* ── Sezione Reset + Ricarica ───────────────────────────────────────── */}
+      <div className="rounded-3xl p-5 flex flex-col gap-3" style={{background:"#fff7ed",border:"1px solid #fed7aa"}}>
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{color:"#c2410c"}}>
+            🔄 Reset database eventi
+          </p>
+          <p className="text-xs" style={{color:"#9a3412"}}>
+            Svuota tutti gli eventi inventati dall&apos;AI e ricarica solo dati reali dai siti web.
+          </p>
+        </div>
+        {/* Bottone principale: Reset + Ricarica in un click */}
+        <button onClick={() => avviaLight(true)} disabled={isBusy}
           className="w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
-          style={{background:"linear-gradient(135deg,#1a3529,#14532d)",color:"#a3e635"}}>
-          {running
-            ? <><span className="w-4 h-4 rounded-full border-2 border-lime-400/30 border-t-lime-400 animate-spin"/>Ricerca in corso…</>
-            : <><IcoSparkle size={15}/>Avvia ricerca (web + scraping)</>}
+          style={{background:"linear-gradient(135deg,#dc2626,#f97316)",color:"white"}}>
+          {running === "light" && resettando === false
+            ? <><span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"/>Reset + Ricarica in corso…</>
+            : <>🗑️ Reset + Ricarica reale (veloce, ~20s)</>}
         </button>
-        {log.length>0 && (
-          <div className="rounded-2xl p-4 flex flex-col gap-1" style={{background:"#1a3529"}}>
-            <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{color:"#a3e635"}}>Log</p>
-            {log.map((l,i)=>(
-              <p key={i} className="text-[12px] font-mono"
-                style={{color:l.startsWith("✓")?"#86efac":l.startsWith("✕")?"#fca5a5":"#6ee7b7"}}>
-                {l}
-              </p>
-            ))}
-          </div>
-        )}
+        {/* Bottone secondario: solo reset */}
+        <button onClick={soloReset} disabled={isBusy}
+          className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-80 disabled:opacity-40"
+          style={{background:"#fef2f2",color:"#dc2626"}}>
+          {resettando
+            ? <><span className="w-3.5 h-3.5 rounded-full border-2 border-red-300 border-t-red-600 animate-spin"/>Reset in corso…</>
+            : <>Solo svuota (senza ricaricare)</>}
+        </button>
       </div>
+
+      {/* ── Cron veloce ───────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-3">
+        <p className="text-[10px] font-black uppercase tracking-widest text-stone-400">
+          ⚡ Cron veloce — solo scraping
+        </p>
+        <p className="text-xs text-stone-400 -mt-1">
+          Scraping 5 siti + AI haiku. Niente web search. ~20 secondi.
+        </p>
+        <button onClick={() => avviaLight(false)} disabled={isBusy}
+          className="w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
+          style={{background:"linear-gradient(135deg,#0891b2,#06b6d4)",color:"white"}}>
+          {running === "light"
+            ? <><span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"/>Ricerca in corso…</>
+            : <><IcoSparkle size={15}/>Aggiungi nuovi eventi (veloce)</>}
+        </button>
+      </div>
+
+      {/* ── Cron completo ─────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-3 pt-4 border-t border-stone-100">
+        <p className="text-[10px] font-black uppercase tracking-widest text-stone-400">
+          🔍 Cron completo — web search + scraping
+        </p>
+        <p className="text-xs text-stone-400 -mt-1">
+          8 ricerche web + Claude Opus. Più risultati. Può richiedere fino a 2 minuti.
+        </p>
+        <input value={periodo} onChange={e => setPeriodo(e.target.value)}
+          placeholder="Periodo opzionale (es. luglio 2026, estate 2026…)"
+          className={CL} style={IS} />
+        <button onClick={avviaFull} disabled={isBusy}
+          className="w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
+          style={{background:"linear-gradient(135deg,#1a3529,#14532d)",color:"#a3e635"}}>
+          {running === "full"
+            ? <><span className="w-4 h-4 rounded-full border-2 border-lime-400/30 border-t-lime-400 animate-spin"/>Ricerca completa in corso…</>
+            : <><IcoSparkle size={15}/>Avvia ricerca completa (web + scraping)</>}
+        </button>
+      </div>
+
+      {/* Log ───────────────────────────────────────────────────────────────── */}
+      {log.length > 0 && (
+        <div className="rounded-2xl p-4 flex flex-col gap-1" style={{background:"#1a3529"}}>
+          <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{color:"#a3e635"}}>Log</p>
+          {log.map((l, i) => (
+            <p key={i} className="text-[12px] font-mono"
+              style={{color: l.startsWith("✓") ? "#86efac" : l.startsWith("✕") ? "#fca5a5" : "#6ee7b7"}}>
+              {l}
+            </p>
+          ))}
+        </div>
+      )}
 
       {/* Import testo */}
       <div className="flex flex-col gap-3 pt-4 border-t border-stone-100">
@@ -590,9 +686,9 @@ function TabCron() {
           <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-1">Importa da testo libero</p>
           <p className="text-xs text-stone-400 mb-3">Incolla un post Facebook, newsletter Pro Loco, email, pagina web — l'AI estrae gli eventi.</p>
         </div>
-        <textarea value={testo} onChange={e=>setTesto(e.target.value)}
+        <textarea value={testo} onChange={e => setTesto(e.target.value)}
           placeholder="Incolla qui il testo con gli eventi…"
-          rows={6} className={CL} style={{...IS,resize:"vertical"}}/>
+          rows={6} className={CL} style={{...IS, resize:"vertical"}}/>
         <button onClick={importaDaTesto} disabled={importando||!testo.trim()}
           className="w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-0 cursor-pointer disabled:opacity-50"
           style={{background:"#f3e8ff",color:"#7c3aed"}}>
@@ -600,7 +696,7 @@ function TabCron() {
             ? <><span className="w-4 h-4 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin"/>Estrazione…</>
             : <><IcoDownload size={15}/>Estrai eventi dal testo</>}
         </button>
-        {importMsg&&<p className="text-xs px-3 py-2 rounded-xl" style={{background:"#f0fdf4",color:"#166534"}}>{importMsg}</p>}
+        {importMsg && <p className="text-xs px-3 py-2 rounded-xl" style={{background:"#f0fdf4",color:"#166534"}}>{importMsg}</p>}
       </div>
     </div>
   );
