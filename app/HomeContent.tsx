@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Evento, Categoria, CATEGORIE, formattaData } from "@/lib/events";
-import { getEventiApprovati } from "@/lib/eventi-dinamici";
+import { getEventiApprovati, type EventoDinamico } from "@/lib/eventi-dinamici";
 import { getInEvidenza, STILE_CATEGORIA, type Esperienza } from "@/lib/esperienze";
 import { getLocaliInEvidenza, STILE_LOCALE, type Locale } from "@/lib/locali";
 import { EventiList } from "./components/EventiList";
@@ -194,8 +194,8 @@ export function HomeContent({ eventi }: { eventi: Evento[] }) {
 
   const [eventiExtra, setEventiExtra] = useState<Evento[]>([]);
 
-  useEffect(() => {
-    const dinamici = getEventiApprovati().map((d): Evento => ({
+  function convertiDinamico(d: EventoDinamico): Evento {
+    return {
       id: d.id,
       titolo: d.titolo,
       data: d.data,
@@ -214,8 +214,28 @@ export function HomeContent({ eventi }: { eventi: Evento[] }) {
         prenotazioneRichiesta: false,
         petFriendly: false,
       },
-    }));
-    setEventiExtra(dinamici);
+    };
+  }
+
+  useEffect(() => {
+    // 1. Legge dal localStorage (admin panel manuale)
+    const locali = getEventiApprovati().map(convertiDinamico);
+    setEventiExtra(locali);
+
+    // 2. Legge dal database KV (cron automatico) — sovrascrive se ci sono
+    fetch("/api/eventi-live")
+      .then((r) => r.json())
+      .then((kvEventi: EventoDinamico[]) => {
+        if (kvEventi.length > 0) {
+          // Unisce KV + localStorage evitando duplicati per ID
+          const idLocali = new Set(locali.map((e) => e.id));
+          const nuovi = kvEventi
+            .filter((e) => !idLocali.has(e.id))
+            .map(convertiDinamico);
+          setEventiExtra((prev) => [...prev, ...nuovi]);
+        }
+      })
+      .catch(() => {/* ignora errori di rete */});
   }, []);
 
   const tuttiGliEventi = [...eventiExtra, ...eventi].sort((a, b) =>
