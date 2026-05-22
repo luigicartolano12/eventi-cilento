@@ -1,22 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getUtente } from "@/lib/utente";
+import { CATEGORIE } from "@/lib/events";
+import type { EventoDinamico } from "@/lib/eventi-dinamici";
+import type { Proposta } from "@/lib/kv-proposte";
 import {
-  getEventiDinamici,
-  aggiungiEventiDinamici,
-  approvaEvento,
-  rifiutaEvento,
-  svuotaPendenti,
-  type EventoDinamico,
-} from "@/lib/eventi-dinamici";
-import { IcoArrowLeft, IcoCheck, IcoCalendar, IcoMapPin } from "@/app/components/icons";
+  IcoArrowLeft, IcoCheck, IcoCalendar, IcoMapPin, IcoClock,
+  IcoCamera, IcoSparkle, IcoDownload, IcoSend,
+} from "@/app/components/icons";
 
-type Messaggio = { tipo: "status" | "avviso" | "errore"; testo: string };
+// ─────────────────────────────────────────────────────────────────────────────
+// Costanti
+// ─────────────────────────────────────────────────────────────────────────────
+type Tab = "crea" | "proposte" | "archivio" | "cron";
 
-const COLORI_CAT: Record<string, { bg: string; color: string }> = {
+const CAT_STILE: Record<string, { bg: string; color: string }> = {
   Sagra:     { bg: "#fff7ed", color: "#c2410c" },
   Musica:    { bg: "#faf5ff", color: "#7c3aed" },
   Cultura:   { bg: "#eff6ff", color: "#1d4ed8" },
@@ -24,428 +25,653 @@ const COLORI_CAT: Record<string, { bg: string; color: string }> = {
   Religioso: { bg: "#fefce8", color: "#a16207" },
   Mercato:   { bg: "#fdf2f8", color: "#be185d" },
   Natura:    { bg: "#ecfdf5", color: "#065f46" },
+  Salute:    { bg: "#fdf2f8", color: "#9d174d" },
+};
+const GRAD: Record<string, string> = {
+  Sagra:"linear-gradient(135deg,#fb923c,#fbbf24)",
+  Musica:"linear-gradient(135deg,#a855f7,#818cf8)",
+  Cultura:"linear-gradient(135deg,#3b82f6,#22d3ee)",
+  Sport:"linear-gradient(135deg,#22c55e,#10b981)",
+  Religioso:"linear-gradient(135deg,#facc15,#f59e0b)",
+  Mercato:"linear-gradient(135deg,#f472b6,#fb7185)",
+  Natura:"linear-gradient(135deg,#059669,#14b8a6)",
+  Salute:"linear-gradient(135deg,#ec4899,#f43f5e)",
+};
+const COMUNI = [
+  "Agropoli","Alfano","Ascea","Camerota","Capaccio-Paestum","Casal Velino",
+  "Castellabate","Centola","Ceraso","Cicerale","Futani","Gioi","Laureana Cilento",
+  "Laurito","Lustra","Moio della Civitella","Montecorice","Morigerati","Novi Velia",
+  "Ogliastro Cilento","Omignano","Orria","Perdifumo","Perito","Pisciotta",
+  "Pollica","Prignano Cilento","Rofrano","Salento","San Giovanni a Piro",
+  "San Mauro la Bruca","Santa Marina","Stella Cilento","Stio","Torchiara",
+  "Torre Orsaia","Torraca","Vallo della Lucania",
+  "Atena Lucana","Buonabitacolo","Casalbuono","Monte San Giacomo",
+  "Montesano sulla Marcellana","Padula","Pertosa","Polla","Sala Consilina",
+  "San Pietro al Tanagro","San Rufo","Sant'Arsenio","Sassano","Sanza","Teggiano",
+  "Ispani","Sapri","Vibonati",
+];
+const IS = { background:"#f5f3ef", fontSize:15 } as React.CSSProperties; // input style
+const CL = "w-full rounded-2xl px-4 py-3 text-sm font-medium text-stone-800 focus:outline-none";
+const LB = "text-[10px] font-black uppercase tracking-widest text-stone-400 mb-1.5 block";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Form evento riutilizzabile
+// ─────────────────────────────────────────────────────────────────────────────
+type F = {
+  titolo:string; data:string; dataFine:string; orario:string;
+  comune:string; luogo:string; categoria:string; descrizione:string;
+  gratuito:boolean; prezzo:string; linkEsterno:string;
+  organizzatore:string; telefono:string; email:string;
+};
+const VUOTO:F = {
+  titolo:"", data:"", dataFine:"", orario:"", comune:"", luogo:"",
+  categoria:"", descrizione:"", gratuito:true, prezzo:"", linkEsterno:"",
+  organizzatore:"", telefono:"", email:"",
 };
 
-function EventoCard({
-  evento,
-  pendente,
-  onApprova,
-  onRifiuta,
-}: {
-  evento: EventoDinamico;
-  pendente: boolean;
-  onApprova?: () => void;
-  onRifiuta?: () => void;
+function FormEvento({ init, onSalva, btnLabel="Pubblica evento", busy }:{
+  init?:Partial<F>; onSalva:(d:F)=>Promise<void>; btnLabel?:string; busy?:boolean;
 }) {
-  const stile = COLORI_CAT[evento.categoria] ?? { bg: "#f5f3ef", color: "#44403c" };
+  const [f, setF] = useState<F>({...VUOTO,...init});
+  const [err, setErr] = useState("");
+  const s = <K extends keyof F>(k:K, v:F[K]) => setF(p=>({...p,[k]:v}));
+
+  async function submit(e:React.FormEvent) {
+    e.preventDefault();
+    if (!f.titolo||!f.data||!f.comune||!f.categoria||!f.descrizione) {
+      setErr("Compila i campi obbligatori (*)"); return;
+    }
+    setErr("");
+    await onSalva(f);
+  }
+
   return (
-    <div
-      className="bg-white rounded-3xl p-5 flex flex-col gap-3"
-      style={{
-        boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06)",
-        opacity: pendente ? 1 : 0.75,
-      }}
-    >
-      {/* Categoria + data */}
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <span
-          className="text-[10px] font-black px-2.5 py-1 rounded-full"
-          style={{ background: stile.bg, color: stile.color }}
-        >
-          {evento.categoria}
-        </span>
-        <span className="text-[11px] font-semibold text-stone-400">
-          {evento.data}{evento.dataFine ? ` → ${evento.dataFine}` : ""}
-          {evento.orario ? ` · ${evento.orario}` : ""}
-        </span>
-      </div>
-
+    <form onSubmit={submit} className="flex flex-col gap-5">
       {/* Titolo */}
-      <h3 className="text-[15px] font-black text-stone-900 leading-snug">{evento.titolo}</h3>
+      <div>
+        <label className={LB}>Titolo *</label>
+        <input value={f.titolo} onChange={e=>s("titolo",e.target.value)}
+          placeholder="Nome evento" className={CL} style={IS} required />
+      </div>
+      {/* Date */}
+      <div className="grid grid-cols-3 gap-2">
+        {(["data","dataFine","orario"] as const).map((c,i)=>(
+          <div key={c}>
+            <label className={LB}>{["Data inizio *","Data fine","Orario"][i]}</label>
+            <input type={i<2?"date":"time"} value={f[c] as string}
+              onChange={e=>s(c,e.target.value)} className={CL}
+              style={{...IS,colorScheme:"light"}} required={c==="data"} />
+          </div>
+        ))}
+      </div>
+      {/* Comune + Luogo */}
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className={LB}>Comune *</label>
+          <input value={f.comune} onChange={e=>s("comune",e.target.value)}
+            placeholder="es. Pisciotta" list="cl-comuni"
+            className={CL} style={IS} required />
+          <datalist id="cl-comuni">{COMUNI.map(c=><option key={c} value={c}/>)}</datalist>
+        </div>
+        <div>
+          <label className={LB}>Luogo</label>
+          <input value={f.luogo} onChange={e=>s("luogo",e.target.value)}
+            placeholder="es. Piazza Municipio" className={CL} style={IS} />
+        </div>
+      </div>
+      {/* Categoria */}
+      <div>
+        <label className={LB}>Categoria *</label>
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIE.map(cat=>(
+            <button key={cat} type="button" onClick={()=>s("categoria",cat)}
+              className="text-xs font-bold px-3 py-1.5 rounded-full border-0 cursor-pointer transition-all"
+              style={f.categoria===cat ? {background:GRAD[cat]??"#16a34a",color:"white"}
+                                       : {background:"#f5f3ef",color:"#78716c"}}>
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
+      {/* Descrizione */}
+      <div>
+        <label className={LB}>Descrizione *</label>
+        <textarea value={f.descrizione} onChange={e=>s("descrizione",e.target.value)}
+          placeholder="Descrizione dell'evento…" rows={3}
+          className={CL} style={{...IS,resize:"vertical"}} required />
+      </div>
+      {/* Gratuito / Prezzo / Link */}
+      <div className="flex flex-col gap-2">
+        <label className="flex items-center gap-3 cursor-pointer">
+          <div className="relative shrink-0 transition-colors duration-200"
+            style={{width:38,height:21,borderRadius:11,background:f.gratuito?"#a3e635":"#e5e7eb"}}>
+            <div className="absolute bg-white rounded-full shadow transition-transform duration-200"
+              style={{width:15,height:15,top:3,transform:f.gratuito?"translateX(20px)":"translateX(3px)"}}/>
+            <input type="checkbox" checked={f.gratuito} onChange={e=>s("gratuito",e.target.checked)}
+              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"/>
+          </div>
+          <span className="text-sm font-bold text-stone-700">Ingresso gratuito</span>
+        </label>
+        {!f.gratuito && <input value={f.prezzo} onChange={e=>s("prezzo",e.target.value)}
+          placeholder="Prezzo (es. €5)" className={CL} style={IS}/>}
+        <input value={f.linkEsterno} onChange={e=>s("linkEsterno",e.target.value)}
+          placeholder="Link sito / prenotazione (opzionale)" type="url" className={CL} style={IS}/>
+      </div>
+      {/* Organizzatore */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="col-span-3">
+          <label className={LB}>Organizzatore</label>
+          <input value={f.organizzatore} onChange={e=>s("organizzatore",e.target.value)}
+            placeholder="Pro Loco, Comune, Associazione…" className={CL} style={IS}/>
+        </div>
+        <input value={f.telefono} onChange={e=>s("telefono",e.target.value)}
+          placeholder="Telefono" type="tel" className={CL} style={IS}/>
+        <div className="col-span-2">
+          <input value={f.email} onChange={e=>s("email",e.target.value)}
+            placeholder="Email" type="email" className={CL} style={IS}/>
+        </div>
+      </div>
+      {err && <p className="text-sm px-4 py-3 rounded-2xl" style={{background:"#fef2f2",color:"#dc2626"}}>⚠️ {err}</p>}
+      <button type="submit" disabled={busy}
+        className="w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
+        style={{background:"#16a34a",color:"white"}}>
+        {busy
+          ? <><span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"/>Salvataggio…</>
+          : <><IcoCheck size={15}/>{btnLabel}</>}
+      </button>
+    </form>
+  );
+}
 
-      {/* Luogo */}
-      <div className="flex items-center gap-1.5 text-[12px] text-stone-400 font-medium">
-        <IcoMapPin size={11} />
-        {evento.luogo ? `${evento.luogo} · ` : ""}{evento.comune}
-        {evento.gratuito && (
-          <span className="ml-1 text-[10px] font-black px-2 py-0.5 rounded-full"
-            style={{ background: "#dcfce7", color: "#166534" }}>
-            Gratuito
-          </span>
-        )}
+// ─────────────────────────────────────────────────────────────────────────────
+// TAB CREA
+// ─────────────────────────────────────────────────────────────────────────────
+function TabCrea({onSuccess}:{onSuccess:()=>void}) {
+  const [modo, setModo] = useState<"manuale"|"scan">("manuale");
+  const [busy, setBusy] = useState(false);
+  const [ok, setOk] = useState(false);
+  const [prefill, setPrefill] = useState<Partial<F>|null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<string|null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [scanErr, setScanErr] = useState("");
+
+  async function salva(dati:F) {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/eventi-admin",{
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(dati),
+      });
+      if (!res.ok) { const d=await res.json(); throw new Error(d.errore); }
+      setOk(true);
+      setTimeout(()=>{setOk(false);setPrefill(null);setPreview(null);onSuccess();},1800);
+    } catch(err){ alert(err instanceof Error?err.message:"Errore"); }
+    finally{ setBusy(false); }
+  }
+
+  async function analizzaFoto(file:File) {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const dataUrl = e.target?.result as string;
+      setPreview(dataUrl);
+      setScanning(true); setScanErr("");
+      try {
+        const [hdr,b64] = dataUrl.split(",");
+        const mt = hdr.match(/data:([^;]+)/)?.[1]??"image/jpeg";
+        const res = await fetch("/api/leggi-locandina",{
+          method:"POST", headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({image:b64,mediaType:mt}),
+        });
+        const d = await res.json();
+        if (!res.ok||!d.ok) throw new Error(d.errore);
+        const ev = d.evento;
+        setPrefill({
+          titolo:ev.titolo??"", data:ev.data??"", dataFine:ev.dataFine??"",
+          orario:ev.orario??"", comune:ev.comune??"", luogo:ev.luogo??"",
+          categoria:ev.categoria??"", descrizione:ev.descrizione??"",
+          gratuito:ev.gratuito??true, prezzo:ev.prezzo??"",
+          linkEsterno:ev.sito??"", organizzatore:ev.organizzatore??"",
+          telefono:ev.telefono??"", email:ev.email??"",
+        });
+        setModo("manuale");
+      } catch(err){ setScanErr(err instanceof Error?err.message:"Errore lettura"); }
+      finally{ setScanning(false); }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Modo toggle */}
+      <div className="flex rounded-2xl p-1 gap-1" style={{background:"#f5f3ef"}}>
+        {(["manuale","scan"] as const).map((m,i)=>(
+          <button key={m} onClick={()=>setModo(m)}
+            className="flex-1 py-2.5 rounded-xl text-sm font-bold border-0 cursor-pointer transition-all"
+            style={modo===m?{background:"white",color:"#1a3529",boxShadow:"0 1px 4px rgba(0,0,0,0.1)"}
+                          :{background:"transparent",color:"#78716c"}}>
+            {["✏️ Form manuale","📷 Scansiona locandina"][i]}
+          </button>
+        ))}
       </div>
 
-      {/* Descrizione */}
-      <p className="text-[13px] text-stone-500 leading-relaxed">{evento.descrizione}</p>
-
-      {/* Fonte */}
-      {evento.sorgente && (
-        <a
-          href={evento.sorgente}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[11px] text-stone-400 underline truncate hover:text-stone-600"
-        >
-          {evento.sorgente}
-        </a>
-      )}
-
-      {/* Azioni */}
-      {pendente && (
-        <div className="flex gap-2 mt-1">
-          <button
-            onClick={onRifiuta}
-            className="flex-1 py-2.5 rounded-2xl text-sm font-bold border-0 cursor-pointer transition-opacity hover:opacity-70"
-            style={{ background: "#fef2f2", color: "#dc2626" }}
-          >
-            Rifiuta
-          </button>
-          <button
-            onClick={onApprova}
-            className="flex-[2] py-2.5 rounded-2xl text-sm font-black border-0 cursor-pointer transition-opacity hover:opacity-90"
-            style={{ background: "#a3e635", color: "#14532d" }}
-          >
-            ✓ Approva
-          </button>
+      {/* Scan */}
+      {modo==="scan" && (
+        <div className="flex flex-col gap-4">
+          {!preview ? (
+            <div onClick={()=>inputRef.current?.click()}
+              onDrop={e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)analizzaFoto(f);}}
+              onDragOver={e=>e.preventDefault()}
+              className="flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed cursor-pointer transition-colors hover:border-purple-400"
+              style={{height:180,borderColor:"rgba(0,0,0,0.12)",background:"white"}}>
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{background:"#f3e8ff"}}>
+                <IcoCamera size={24} style={{color:"#a855f7"}}/>
+              </div>
+              <div className="text-center">
+                <p className="font-bold text-stone-700 text-sm">Trascina o clicca per caricare</p>
+                <p className="text-xs mt-1 text-stone-400">JPG, PNG, WEBP · max 10MB</p>
+              </div>
+              <input ref={inputRef} type="file" accept="image/*" className="hidden"
+                onChange={e=>{const f=e.target.files?.[0];if(f)analizzaFoto(f);}}/>
+            </div>
+          ) : (
+            <div className="relative rounded-3xl overflow-hidden" style={{background:"#e7e5e4"}}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={preview} alt="Locandina" className="w-full object-contain" style={{maxHeight:280}}/>
+              <button onClick={()=>{setPreview(null);setPrefill(null);}}
+                className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center text-sm font-black border-0 cursor-pointer"
+                style={{background:"rgba(0,0,0,0.5)",color:"white"}}>×</button>
+            </div>
+          )}
+          {scanning && (
+            <div className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{background:"#f3e8ff"}}>
+              <span className="w-4 h-4 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin"/>
+              <span className="text-sm font-semibold" style={{color:"#7c3aed"}}>AI legge la locandina…</span>
+            </div>
+          )}
+          {scanErr && <p className="text-sm px-4 py-3 rounded-2xl" style={{background:"#fef2f2",color:"#dc2626"}}>⚠️ {scanErr}</p>}
+          {prefill && <p className="text-sm px-4 py-3 rounded-2xl flex items-center gap-2" style={{background:"#dcfce7",color:"#166534"}}>
+            <IcoSparkle size={14}/> Dati estratti — controlla e modifica se necessario
+          </p>}
         </div>
       )}
 
-      {!pendente && (
-        <div className="flex items-center gap-1.5 text-[12px] font-bold" style={{ color: "#16a34a" }}>
-          <IcoCheck size={12} />
-          Approvato e pubblicato
-        </div>
+      {/* Form */}
+      {(modo==="manuale"||prefill) && (
+        <>
+          {ok && <div className="flex items-center gap-2 px-4 py-3 rounded-2xl" style={{background:"#dcfce7",color:"#166534"}}>
+            <IcoCheck size={15}/> Evento pubblicato!
+          </div>}
+          <FormEvento init={prefill??{}} onSalva={salva} busy={busy}/>
+        </>
       )}
     </div>
   );
 }
 
-export default function PaginaAdmin() {
-  const router = useRouter();
-  const [autorizzato, setAutorizzato] = useState(false);
-  const [query, setQuery] = useState("");
-  const [cercando, setCercando] = useState(false);
-  const [messaggi, setMessaggi] = useState<Messaggio[]>([]);
-  const [eventi, setEventi] = useState<EventoDinamico[]>([]);
-  const [tab, setTab] = useState<"pendenti" | "approvati">("pendenti");
+// ─────────────────────────────────────────────────────────────────────────────
+// TAB PROPOSTE
+// ─────────────────────────────────────────────────────────────────────────────
+function TabProposte({refreshKey}:{refreshKey:number}) {
+  const [proposte, setProposte] = useState<Proposta[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState<string|null>(null);
+  const [filtro, setFiltro] = useState<"in_attesa"|"approvata"|"rifiutata">("in_attesa");
+  const [modifica, setModifica] = useState<Proposta|null>(null);
 
-  useEffect(() => {
-    const u = getUtente();
-    if (!u) { router.replace("/registrati"); return; }
-    setAutorizzato(true);
-    setEventi(getEventiDinamici());
-  }, [router]);
+  const carica = useCallback(async () => {
+    setLoading(true);
+    try { const r = await fetch("/api/proposte"); setProposte(await r.json()); }
+    finally { setLoading(false); }
+  },[]);
 
-  function ricarica() {
-    setEventi(getEventiDinamici());
+  useEffect(()=>{ carica(); },[carica,refreshKey]);
+
+  async function azione(id:string, stato:string) {
+    setBusy(id);
+    await fetch(`/api/proposte/${id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({stato})});
+    await carica(); setBusy(null);
+  }
+  async function elimina(id:string) {
+    if(!confirm("Eliminare?")) return;
+    setBusy(id);
+    await fetch(`/api/proposte/${id}`,{method:"DELETE"});
+    await carica(); setBusy(null);
+  }
+  async function approvaConMod(dati:F) {
+    if(!modifica) return;
+    await fetch(`/api/proposte/${modifica.id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({...dati,stato:"approvata"})});
+    setModifica(null); await carica();
   }
 
-  async function cercaEventi() {
-    setCercando(true);
-    setMessaggi([]);
+  const attesa = proposte.filter(p=>p.stato==="in_attesa").length;
+  const filtrate = proposte.filter(p=>p.stato===filtro);
 
-    try {
-      const res = await fetch("/api/ai-eventi", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
-      });
-
-      if (!res.ok || !res.body) throw new Error("Errore connessione API");
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        const righe = buffer.split("\n");
-        buffer = righe.pop() ?? "";
-
-        for (const riga of righe) {
-          if (!riga.trim()) continue;
-          try {
-            const data = JSON.parse(riga) as {
-              tipo: string;
-              msg?: string;
-              eventi?: object[];
-              totale?: number;
-            };
-
-            if (data.tipo === "status" || data.tipo === "avviso") {
-              setMessaggi((prev) => [
-                ...prev,
-                { tipo: data.tipo as "status" | "avviso", testo: data.msg ?? "" },
-              ]);
-            } else if (data.tipo === "errore") {
-              setMessaggi((prev) => [
-                ...prev,
-                { tipo: "errore", testo: data.msg ?? "Errore" },
-              ]);
-            } else if (data.tipo === "eventi" && data.eventi) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              aggiungiEventiDinamici(data.eventi as any[]);
-              ricarica();
-              setMessaggi((prev) => [
-                ...prev,
-                { tipo: "status", testo: `✓ Trovati ${data.totale ?? 0} eventi — in attesa di approvazione` },
-              ]);
-              setTab("pendenti");
-            }
-          } catch {
-            /* riga non JSON, ignora */
-          }
-        }
-      }
-    } catch (err) {
-      setMessaggi((prev) => [
-        ...prev,
-        { tipo: "errore", testo: err instanceof Error ? err.message : "Errore sconosciuto" },
-      ]);
-    } finally {
-      setCercando(false);
-    }
-  }
-
-  const pendenti = eventi.filter((e) => !e.approvato);
-  const approvati = eventi.filter((e) => e.approvato);
-
-  if (!autorizzato) return null;
+  if (modifica) return (
+    <div>
+      <button onClick={()=>setModifica(null)} className="flex items-center gap-1.5 text-sm font-bold mb-5 border-0 bg-transparent cursor-pointer" style={{color:"#16a34a"}}>
+        <IcoArrowLeft size={13}/> Torna
+      </button>
+      <p className={LB + " mb-4"}>Modifica e approva</p>
+      <FormEvento
+        init={{titolo:modifica.titolo,data:modifica.data,dataFine:modifica.dataFine,
+          orario:modifica.orario,comune:modifica.comune,luogo:modifica.luogo,
+          categoria:modifica.categoria,descrizione:modifica.descrizione,
+          gratuito:modifica.gratuito,prezzo:modifica.prezzo,linkEsterno:modifica.linkEsterno,
+          organizzatore:modifica.organizzatore,telefono:modifica.telefono,email:modifica.email}}
+        onSalva={approvaConMod} btnLabel="Approva e pubblica" />
+    </div>
+  );
 
   return (
-    <main className="flex-1 pb-20" style={{ background: "#f5f3ef" }}>
-      {/* Hero */}
-      <div
-        style={{ background: "#f5f3ef" }}
-        className="px-5 pt-10 pb-14"
-      >
-        <div className="max-w-3xl mx-auto">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-sm font-bold mb-8 transition-opacity hover:opacity-70"
-            style={{ color: "#16a34a" }}
-          >
-            <IcoArrowLeft size={14} />
-            Torna alla home
-          </Link>
-          <p className="text-[11px] font-black uppercase tracking-[0.2em] mb-3" style={{ color: "#16a34a" }}>
-            Pannello Admin
-          </p>
-          <h1 className="font-black text-stone-900 mb-2" style={{ fontSize: "clamp(32px, 6vw, 56px)" }}>
-            AI Trova<br />
-            <span style={{ color: "#65a30d" }}>Eventi</span>
-          </h1>
-          <p className="text-sm leading-relaxed" style={{ color: "#44403c" }}>
-            Lascia che Claude cerchi sul web gli eventi del Cilento, poi revisiona e approva quelli da pubblicare.
-          </p>
+    <div className="flex flex-col gap-4">
+      <div className="flex gap-1 p-1 rounded-2xl" style={{background:"#f5f3ef"}}>
+        {(["in_attesa","approvata","rifiutata"] as const).map(s=>(
+          <button key={s} onClick={()=>setFiltro(s)}
+            className="flex-1 py-2 rounded-xl text-xs font-bold border-0 cursor-pointer transition-all"
+            style={filtro===s?{background:"white",color:"#1a3529",boxShadow:"0 1px 4px rgba(0,0,0,0.1)"}
+                            :{background:"transparent",color:"#78716c"}}>
+            {s==="in_attesa"?`In attesa (${attesa})`:s==="approvata"?"Approvate":"Rifiutate"}
+          </button>
+        ))}
+      </div>
+      {loading && <p className="text-sm text-stone-400 text-center py-8">Caricamento…</p>}
+      {!loading && filtrate.length===0 && (
+        <p className="text-sm text-stone-400 text-center py-8">
+          {filtro==="in_attesa"?"Nessuna proposta in attesa 🎉":"Nessuna proposta qui."}
+        </p>
+      )}
+      {filtrate.map(p => {
+        const st = CAT_STILE[p.categoria]??{bg:"#f5f3ef",color:"#44403c"};
+        const invio = new Date(p.dataInvio).toLocaleDateString("it-IT",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+        return (
+          <div key={p.id} className="bg-white rounded-3xl p-5 flex flex-col gap-3"
+            style={{boxShadow:"0 1px 2px rgba(0,0,0,0.04),0 4px 12px rgba(0,0,0,0.06)",opacity:busy===p.id ? 0.5 : 1}}>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-black px-2.5 py-1 rounded-full" style={st}>{p.categoria}</span>
+                <span className="text-[11px] text-stone-400">{p.data}{p.dataFine?` → ${p.dataFine}`:""}</span>
+              </div>
+              <span className="text-[10px] text-stone-300 shrink-0">{invio}</span>
+            </div>
+            <h3 className="text-[15px] font-black text-stone-900">{p.titolo}</h3>
+            <div className="flex flex-wrap gap-x-3 text-[12px] text-stone-400">
+              <span className="flex items-center gap-1"><IcoMapPin size={10}/>{p.luogo||p.comune} · {p.comune}</span>
+              {p.orario&&<span className="flex items-center gap-1"><IcoClock size={10}/>{p.orario}</span>}
+              {p.organizzatore&&<span className="font-semibold text-stone-500">{p.organizzatore}</span>}
+            </div>
+            <p className="text-[13px] text-stone-500 leading-relaxed">{p.descrizione}</p>
+            {p.nota&&<p className="text-[12px] text-stone-400 italic">📌 {p.nota}</p>}
+            {(p.telefono||p.email)&&(
+              <div className="flex gap-3 text-[11px]">
+                {p.telefono&&<a href={`tel:${p.telefono}`} className="text-stone-400 hover:text-stone-700">{p.telefono}</a>}
+                {p.email&&<a href={`mailto:${p.email}`} className="text-stone-400 hover:text-stone-700">{p.email}</a>}
+              </div>
+            )}
+            <div className="flex gap-2 pt-1">
+              {p.stato==="in_attesa"&&<>
+                <button onClick={()=>azione(p.id,"rifiutata")} disabled={!!busy}
+                  className="flex-1 py-2.5 rounded-2xl text-sm font-bold border-0 cursor-pointer"
+                  style={{background:"#fef2f2",color:"#dc2626"}}>Rifiuta</button>
+                <button onClick={()=>setModifica(p)} disabled={!!busy}
+                  className="flex-1 py-2.5 rounded-2xl text-sm font-bold border-0 cursor-pointer"
+                  style={{background:"#f5f3ef",color:"#44403c"}}>Modifica</button>
+                <button onClick={()=>azione(p.id,"approvata")} disabled={!!busy}
+                  className="flex-[2] py-2.5 rounded-2xl text-sm font-black border-0 cursor-pointer"
+                  style={{background:"#a3e635",color:"#14532d"}}>✓ Approva</button>
+              </>}
+              {p.stato!=="in_attesa"&&(
+                <button onClick={()=>elimina(p.id)} disabled={!!busy}
+                  className="text-xs font-bold px-3 py-2 rounded-xl border-0 cursor-pointer ml-auto"
+                  style={{background:"#fef2f2",color:"#dc2626"}}>Elimina</button>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TAB ARCHIVIO KV
+// ─────────────────────────────────────────────────────────────────────────────
+function TabArchivio({refreshKey}:{refreshKey:number}) {
+  const [eventi, setEventi] = useState<EventoDinamico[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [cerca, setCerca] = useState("");
+  const [delId, setDelId] = useState<string|null>(null);
+
+  const carica = useCallback(async()=>{
+    setLoading(true);
+    try { const r=await fetch("/api/eventi-admin"); setEventi(await r.json()); }
+    finally { setLoading(false); }
+  },[]);
+
+  useEffect(()=>{ carica(); },[carica,refreshKey]);
+
+  async function elimina(id:string) {
+    if(!confirm("Rimuovere?")) return;
+    setDelId(id);
+    await fetch(`/api/eventi-admin?id=${id}`,{method:"DELETE"});
+    await carica(); setDelId(null);
+  }
+
+  const oggi = new Date().toISOString().split("T")[0];
+  const filtrati = eventi.filter(e=>!cerca||[e.titolo,e.comune,e.categoria].join(" ").toLowerCase().includes(cerca.toLowerCase()));
+  const attivi = filtrati.filter(e=>(e.dataFine??e.data)>=oggi);
+  const passati = filtrati.filter(e=>(e.dataFine??e.data)<oggi);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-3">
+        <input value={cerca} onChange={e=>setCerca(e.target.value)}
+          placeholder="Cerca per titolo, comune, categoria…"
+          className={CL+" flex-1"} style={IS}/>
+        <button onClick={()=>{if(confirm("Svuotare TUTTI gli eventi KV?"))fetch("/api/eventi-admin",{method:"DELETE"}).then(carica);}}
+          className="shrink-0 text-xs font-bold px-3 py-2.5 rounded-2xl border-0 cursor-pointer"
+          style={{background:"#fef2f2",color:"#dc2626"}}>Reset</button>
+      </div>
+      <p className="text-[11px] font-black uppercase tracking-widest text-stone-400">
+        {attivi.length} attivi · {passati.length} passati
+      </p>
+      {loading && <p className="text-sm text-stone-400 text-center py-6">Caricamento…</p>}
+      {[{label:"Attivi",lista:attivi},{label:"Passati",lista:passati}].filter(g=>g.lista.length>0).map(({label,lista})=>(
+        <div key={label}>
+          <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2">{label} ({lista.length})</p>
+          <div className="flex flex-col gap-2">
+            {lista.map(e=>{
+              const st=CAT_STILE[e.categoria]??{bg:"#f5f3ef",color:"#44403c"};
+              return (
+                <div key={e.id} className="bg-white rounded-2xl px-4 py-3.5 flex items-start gap-3"
+                  style={{boxShadow:"0 1px 3px rgba(0,0,0,0.06)",opacity:delId===e.id ? 0.4 : 1}}>
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full shrink-0 mt-0.5" style={st}>{e.categoria}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-bold text-stone-900 truncate">{e.titolo}</p>
+                    <p className="text-[11px] text-stone-400 flex items-center gap-2 mt-0.5">
+                      <IcoCalendar size={10}/>{e.data}{e.dataFine?`→${e.dataFine}`:""}&nbsp;
+                      <IcoMapPin size={10}/>{e.comune}
+                    </p>
+                  </div>
+                  <button onClick={()=>elimina(e.id)} disabled={!!delId}
+                    className="text-stone-300 hover:text-red-400 text-lg leading-none font-bold border-0 bg-transparent cursor-pointer shrink-0 transition-colors">×</button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TAB AI / CRON
+// ─────────────────────────────────────────────────────────────────────────────
+function TabCron() {
+  const [log, setLog] = useState<string[]>([]);
+  const [running, setRunning] = useState(false);
+  const [periodo, setPeriodo] = useState("");
+  const [testo, setTesto] = useState("");
+  const [importando, setImportando] = useState(false);
+  const [importMsg, setImportMsg] = useState("");
+
+  async function avviaCron() {
+    setRunning(true); setLog(["Avvio pipeline…"]);
+    try {
+      const p = new URLSearchParams({chiave:"cilento2025"});
+      if(periodo) p.set("periodo",periodo);
+      const r = await fetch(`/api/cron?${p}`);
+      const d = await r.json();
+      if(d.log) setLog(d.log);
+      setLog(prev=>[...prev, d.ok
+        ?`✓ ${d.trovati} trovati, ${d.nuovi} nuovi — siti: ${d.sitiFunzionanti}`
+        :`✕ ${d.messaggio}`]);
+    } catch(err){ setLog(prev=>[...prev,`✕ ${err instanceof Error?err.message:"Errore"}`]); }
+    finally{ setRunning(false); }
+  }
+
+  async function importaDaTesto() {
+    if(!testo.trim()) return;
+    setImportando(true); setImportMsg("");
+    try {
+      // Chiama l'API AI con il testo come contesto
+      const res = await fetch("/api/ai-eventi",{
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ query:`Estrai TUTTI gli eventi da questo testo e strutturali come eventi del Cilento:\n\n${testo.slice(0,4000)}` }),
+      });
+      if (!res.ok || !res.body) throw new Error("API non disponibile");
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf="";
+      while(true){
+        const {done,value}=await reader.read();
+        if(done) break;
+        buf+=dec.decode(value,{stream:true});
+      }
+      // Conta eventi trovati dai messaggi JSON
+      const matches = buf.match(/"tipo":"eventi"/g);
+      setImportMsg(matches ? `✓ Eventi estratti e salvati per approvazione` : "Elaborazione completata");
+    } catch(err){ setImportMsg(`✕ ${err instanceof Error?err.message:"Errore"}`); }
+    finally{ setImportando(false); }
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Cron */}
+      <div className="flex flex-col gap-3">
+        <p className="text-[10px] font-black uppercase tracking-widest text-stone-400">Ricerca AI automatica</p>
+        <input value={periodo} onChange={e=>setPeriodo(e.target.value)}
+          placeholder="Periodo (es. luglio 2026, estate 2026…)"
+          className={CL} style={IS}/>
+        <button onClick={avviaCron} disabled={running}
+          className="w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-0 cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
+          style={{background:"linear-gradient(135deg,#1a3529,#14532d)",color:"#a3e635"}}>
+          {running
+            ? <><span className="w-4 h-4 rounded-full border-2 border-lime-400/30 border-t-lime-400 animate-spin"/>Ricerca in corso…</>
+            : <><IcoSparkle size={15}/>Avvia ricerca (web + scraping)</>}
+        </button>
+        {log.length>0 && (
+          <div className="rounded-2xl p-4 flex flex-col gap-1" style={{background:"#1a3529"}}>
+            <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{color:"#a3e635"}}>Log</p>
+            {log.map((l,i)=>(
+              <p key={i} className="text-[12px] font-mono"
+                style={{color:l.startsWith("✓")?"#86efac":l.startsWith("✕")?"#fca5a5":"#6ee7b7"}}>
+                {l}
+              </p>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Import testo */}
+      <div className="flex flex-col gap-3 pt-4 border-t border-stone-100">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-1">Importa da testo libero</p>
+          <p className="text-xs text-stone-400 mb-3">Incolla un post Facebook, newsletter Pro Loco, email, pagina web — l'AI estrae gli eventi.</p>
+        </div>
+        <textarea value={testo} onChange={e=>setTesto(e.target.value)}
+          placeholder="Incolla qui il testo con gli eventi…"
+          rows={6} className={CL} style={{...IS,resize:"vertical"}}/>
+        <button onClick={importaDaTesto} disabled={importando||!testo.trim()}
+          className="w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-0 cursor-pointer disabled:opacity-50"
+          style={{background:"#f3e8ff",color:"#7c3aed"}}>
+          {importando
+            ? <><span className="w-4 h-4 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin"/>Estrazione…</>
+            : <><IcoDownload size={15}/>Estrai eventi dal testo</>}
+        </button>
+        {importMsg&&<p className="text-xs px-3 py-2 rounded-xl" style={{background:"#f0fdf4",color:"#166534"}}>{importMsg}</p>}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shell principale
+// ─────────────────────────────────────────────────────────────────────────────
+export default function PaginaAdmin() {
+  const router = useRouter();
+  const [auth, setAuth] = useState(false);
+  const [tab, setTab] = useState<Tab>("crea");
+  const [rk, setRk] = useState(0);
+  const [badge, setBadge] = useState(0);
+
+  useEffect(()=>{
+    if(!getUtente()){ router.replace("/registrati"); return; }
+    setAuth(true);
+    fetch("/api/proposte").then(r=>r.json()).then((l:Proposta[])=>
+      setBadge(l.filter(p=>p.stato==="in_attesa").length)
+    ).catch(()=>{});
+  },[router,rk]);
+
+  if (!auth) return null;
+
+  const TABS:{id:Tab;label:string;badge?:number}[] = [
+    {id:"crea",     label:"✏️ Crea"},
+    {id:"proposte", label:"📬 Proposte", badge},
+    {id:"archivio", label:"🗂️ Archivio"},
+    {id:"cron",     label:"🤖 AI"},
+  ];
+
+  return (
+    <main className="flex-1 pb-24" style={{background:"#f5f3ef"}}>
+      {/* Header */}
+      <div className="px-4 pt-8 pb-5 max-w-3xl mx-auto">
+        <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-bold mb-5 transition-opacity hover:opacity-70" style={{color:"#16a34a"}}>
+          <IcoArrowLeft size={14}/> Home
+        </Link>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
+            style={{background:"linear-gradient(135deg,#1a3529,#14532d)"}}>
+            <IcoSend size={20} style={{color:"#a3e635"}}/>
+          </div>
+          <div>
+            <h1 className="text-2xl font-black text-stone-900">Gestione eventi</h1>
+            <p className="text-sm" style={{color:"#78716c"}}>Crea · Approva · Pubblica</p>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 -mt-8 flex flex-col gap-5">
-
-        {/* Box ricerca */}
-        <div
-          className="bg-white rounded-3xl p-5"
-          style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.08)" }}
-        >
-          <p className="text-[11px] font-black uppercase tracking-widest text-stone-400 mb-4">
-            Ricerca AI
-          </p>
-          <div className="flex gap-3">
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !cercando && cercaEventi()}
-              placeholder="es. sagre agosto, concerti estate, eventi sportivi…"
-              className="flex-1 rounded-2xl px-4 py-3 text-sm font-medium text-stone-800 focus:outline-none"
-              style={{ background: "#f5f3ef" }}
-              disabled={cercando}
-            />
-            <button
-              onClick={cercaEventi}
-              disabled={cercando}
-              className="shrink-0 px-5 py-3 rounded-2xl text-sm font-black border-0 cursor-pointer transition-opacity disabled:opacity-50"
-              style={{ background: "#a3e635", color: "#14532d" }}
-            >
-              {cercando ? "…" : "Cerca"}
+      {/* Tab bar sticky */}
+      <div className="sticky top-0 z-20 px-4 pb-3 pt-1" style={{background:"#f5f3ef"}}>
+        <div className="max-w-3xl mx-auto flex gap-1 p-1 rounded-2xl" style={{background:"white",boxShadow:"0 2px 12px rgba(0,0,0,0.07)"}}>
+          {TABS.map(({id,label,badge:b})=>(
+            <button key={id} onClick={()=>setTab(id)}
+              className="flex-1 py-2.5 rounded-xl text-xs font-bold border-0 cursor-pointer transition-all relative"
+              style={tab===id?{background:"#1a3529",color:"#a3e635"}:{background:"transparent",color:"#78716c"}}>
+              {label}
+              {b&&b>0?<span className="absolute -top-1 -right-0.5 w-4 h-4 rounded-full text-[9px] font-black flex items-center justify-center" style={{background:"#dc2626",color:"white"}}>{b>9?"9+":b}</span>:null}
             </button>
-          </div>
-
-          {/* Log messaggi */}
-          {messaggi.length > 0 && (
-            <div className="mt-4 flex flex-col gap-1.5">
-              {messaggi.map((m, i) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-2 text-[12px] font-medium px-3 py-2 rounded-xl"
-                  style={
-                    m.tipo === "errore"
-                      ? { background: "#fef2f2", color: "#dc2626" }
-                      : m.tipo === "avviso"
-                      ? { background: "#fefce8", color: "#a16207" }
-                      : { background: "#f0fdf4", color: "#166534" }
-                  }
-                >
-                  <span className="shrink-0 mt-0.5">
-                    {m.tipo === "errore" ? "✕" : m.tipo === "avviso" ? "⚠" : "→"}
-                  </span>
-                  {m.testo}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Spinner */}
-          {cercando && (
-            <div className="mt-3 flex items-center gap-2 text-sm text-stone-400">
-              <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-              </svg>
-              Claude sta cercando eventi sul web…
-            </div>
-          )}
+          ))}
         </div>
+      </div>
 
-        {/* Statistiche */}
-        {eventi.length > 0 && (
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { n: eventi.length, label: "Trovati", bg: "#f5f3ef", col: "#78716c" },
-              { n: pendenti.length, label: "Da approvare", bg: "#fef3c7", col: "#92400e" },
-              { n: approvati.length, label: "Pubblicati", bg: "#dcfce7", col: "#166534" },
-            ].map((s) => (
-              <div
-                key={s.label}
-                className="rounded-2xl p-3.5 flex flex-col gap-0.5"
-                style={{ background: s.bg }}
-              >
-                <span className="text-2xl font-black" style={{ color: s.col }}>{s.n}</span>
-                <span className="text-[11px] font-semibold text-stone-500">{s.label}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Tab pendenti / approvati */}
-        {eventi.length > 0 && (
-          <>
-            <div
-              className="bg-white rounded-2xl p-1 flex gap-1"
-              style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
-            >
-              {(["pendenti", "approvati"] as const).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-bold border-0 cursor-pointer transition-all capitalize"
-                  style={
-                    tab === t
-                      ? { background: "#1a3529", color: "#a3e635" }
-                      : { background: "transparent", color: "#78716c" }
-                  }
-                >
-                  {t === "pendenti" ? `Da approvare (${pendenti.length})` : `Pubblicati (${approvati.length})`}
-                </button>
-              ))}
-            </div>
-
-            {/* Lista eventi */}
-            {tab === "pendenti" && (
-              <>
-                {pendenti.length === 0 ? (
-                  <p className="text-sm text-stone-400 text-center py-8">
-                    Nessun evento in attesa. Usa la ricerca AI per trovarne di nuovi.
-                  </p>
-                ) : (
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[11px] font-black uppercase tracking-widest text-stone-400">
-                        {pendenti.length} da esaminare
-                      </p>
-                      <button
-                        onClick={() => { svuotaPendenti(); ricarica(); }}
-                        className="text-xs font-bold text-stone-400 hover:text-red-500 transition-colors"
-                      >
-                        Rifiuta tutti
-                      </button>
-                    </div>
-                    {pendenti.map((e) => (
-                      <EventoCard
-                        key={e.id}
-                        evento={e}
-                        pendente
-                        onApprova={() => { approvaEvento(e.id); ricarica(); }}
-                        onRifiuta={() => { rifiutaEvento(e.id); ricarica(); }}
-                      />
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-
-            {tab === "approvati" && (
-              <>
-                {approvati.length === 0 ? (
-                  <p className="text-sm text-stone-400 text-center py-8">
-                    Nessun evento ancora approvato.
-                  </p>
-                ) : (
-                  <div className="flex flex-col gap-3">
-                    <p className="text-[11px] font-black uppercase tracking-widest text-stone-400">
-                      {approvati.length} pubblicati nella home
-                    </p>
-                    {approvati.map((e) => (
-                      <EventoCard
-                        key={e.id}
-                        evento={e}
-                        pendente={false}
-                        onRifiuta={() => { rifiutaEvento(e.id); ricarica(); }}
-                      />
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </>
-        )}
-
-        {/* Istruzioni primo accesso */}
-        {eventi.length === 0 && !cercando && (
-          <div
-            className="rounded-3xl p-6 flex flex-col gap-3"
-            style={{ background: "rgba(26,53,41,0.06)", border: "1.5px dashed rgba(26,53,41,0.15)" }}
-          >
-            <p className="text-[11px] font-black uppercase tracking-widest text-stone-400">Come funziona</p>
-            {[
-              { ico: "🔍", testo: "Clicca Cerca — Claude cercherà automaticamente eventi nel Cilento sul web" },
-              { ico: "📋", testo: "Revisiona gli eventi trovati e approva quelli che vuoi pubblicare" },
-              { ico: "✅", testo: "Gli eventi approvati appaiono subito nella home dell'app" },
-            ].map((s) => (
-              <div key={s.testo} className="flex items-start gap-3">
-                <span className="text-lg shrink-0">{s.ico}</span>
-                <p className="text-sm text-stone-500 leading-relaxed">{s.testo}</p>
-              </div>
-            ))}
-            <div className="mt-2 p-3.5 rounded-2xl text-sm" style={{ background: "#fef3c7", color: "#92400e" }}>
-              <strong>Nota:</strong> la ricerca AI usa la tua API key Anthropic e consuma crediti.
-              Usa la ricerca con query specifica per risultati migliori.
-            </div>
-
-            {/* Link alla home per aggiungere la api key */}
-            <div className="flex items-center gap-2">
-              <IcoCalendar size={14} className="text-stone-400 shrink-0" />
-              <p className="text-xs text-stone-400">
-                Assicurati di aver configurato{" "}
-                <code className="text-stone-600 font-bold">ANTHROPIC_API_KEY</code>{" "}
-                nel file <code className="text-stone-600 font-bold">.env.local</code>
-              </p>
-            </div>
-          </div>
-        )}
+      {/* Tab content */}
+      <div className="max-w-3xl mx-auto px-4">
+        {tab==="crea"     && <TabCrea onSuccess={()=>setRk(k=>k+1)}/>}
+        {tab==="proposte" && <TabProposte refreshKey={rk}/>}
+        {tab==="archivio" && <TabArchivio refreshKey={rk}/>}
+        {tab==="cron"     && <TabCron/>}
       </div>
     </main>
   );

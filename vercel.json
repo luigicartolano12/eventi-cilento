@@ -5,10 +5,8 @@
   "installCommand": "npm install",
   "regions": ["fra1"],
   "crons": [
-    {
-      "path": "/api/cron",
-      "schedule": "0 6 * * *"
-    }
+    { "path": "/api/cron", "schedule": "0 6 * * *" },
+    { "path": "/api/cron", "schedule": "0 17 * * *" }
   ],
   "headers": [
     {
