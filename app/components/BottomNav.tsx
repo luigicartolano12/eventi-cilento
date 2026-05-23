@@ -33,6 +33,17 @@ function IcoMoon({ active }: { active: boolean }) {
   );
 }
 
+function IcoMapNav({ active }: { active: boolean }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+      stroke={active ? "#16a34a" : "#a8a29e"} strokeWidth={active ? 2.2 : 1.75} strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+      <line x1="9" y1="3" x2="9" y2="18" />
+      <line x1="15" y1="6" x2="15" y2="21" />
+    </svg>
+  );
+}
+
 function IcoChat({ active }: { active: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
@@ -94,14 +105,14 @@ export function BottomNav() {
         </span>
       </Link>
 
-      {/* Notte */}
+      {/* Mappa */}
       <Link
-        href="/notte"
+        href="/mappa"
         className="flex-1 flex flex-col items-center justify-center gap-1 py-3 transition-opacity"
       >
-        <IcoMoon active={pathname.startsWith("/notte") || pathname.startsWith("/locali")} />
-        <span className="text-[10px] font-bold" style={{ color: (pathname.startsWith("/notte") || pathname.startsWith("/locali")) ? "#16a34a" : "#a8a29e" }}>
-          Notte
+        <IcoMapNav active={pathname.startsWith("/mappa")} />
+        <span className="text-[10px] font-bold" style={{ color: pathname.startsWith("/mappa") ? "#16a34a" : "#a8a29e" }}>
+          Mappa
         </span>
       </Link>
 

@@ -5,6 +5,7 @@ import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { BottomNav } from "./components/BottomNav";
 import { ChatWidget } from "./components/ChatWidget";
+import { Analytics } from "@vercel/analytics/next";
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -73,6 +74,7 @@ export default function RootLayout({
         <Footer />
         <BottomNav />
         <ChatWidget />
+        <Analytics />
       </body>
     </html>
   );

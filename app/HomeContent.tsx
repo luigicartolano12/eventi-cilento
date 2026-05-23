@@ -115,6 +115,52 @@ function MiniCard({ evento }: { evento: Evento }) {
   );
 }
 
+// ── Hero stagionale ───────────────────────────────────────────────────────────
+const STAGIONI: Record<string, {
+  label: string;
+  emoji: string;
+  gradient: string;
+  tag: string;
+  desc: string;
+}> = {
+  primavera: {
+    label: "È primavera",
+    emoji: "🌸",
+    gradient: "linear-gradient(135deg, #86efac 0%, #bbf7d0 50%, #fde68a 100%)",
+    tag: "Natura & Sagre",
+    desc: "Fioritura, trekking e prime sagre. Il Cilento si risveglia.",
+  },
+  estate: {
+    label: "È estate",
+    emoji: "🌊",
+    gradient: "linear-gradient(135deg, #0ea5e9 0%, #38bdf8 40%, #34d399 100%)",
+    tag: "Mare & Concerti",
+    desc: "Serate sul mare, sagre e festival. La stagione più viva del Cilento.",
+  },
+  autunno: {
+    label: "È autunno",
+    emoji: "🍂",
+    gradient: "linear-gradient(135deg, #f59e0b 0%, #ea580c 50%, #b45309 100%)",
+    tag: "Sagre & Cultura",
+    desc: "Vendemmia, sagre del fungo e castagne. I sapori del Cilento.",
+  },
+  inverno: {
+    label: "È inverno",
+    emoji: "🌿",
+    gradient: "linear-gradient(135deg, #1a3529 0%, #166534 50%, #15803d 100%)",
+    tag: "Cultura & Mercati",
+    desc: "Mercatini, presepi e tradizioni. Il Cilento autentico.",
+  },
+};
+
+function getStagione(): keyof typeof STAGIONI {
+  const m = new Date().getMonth(); // 0–11
+  if (m >= 2 && m <= 4) return "primavera";
+  if (m >= 5 && m <= 8) return "estate";
+  if (m >= 9 && m <= 10) return "autunno";
+  return "inverno";
+}
+
 // ── Componente principale ─────────────────────────────────────────────────────
 export function HomeContent({ eventi }: { eventi: Evento[] }) {
   const [eventiExtra, setEventiExtra] = useState<Evento[]>([]);
@@ -180,32 +226,73 @@ export function HomeContent({ eventi }: { eventi: Evento[] }) {
 
   // ── RENDER ────────────────────────────────────────────────────────────────
 
+  const stagione = getStagione();
+  const s = STAGIONI[stagione];
+
   return (
     <>
-      {/* ── 01 HEAD ── */}
-      <div style={{ background: "#f5f3ef" }} className="px-5 pt-14 pb-6">
-        <div className="max-w-6xl mx-auto">
+      {/* ── 01 HERO STAGIONALE ── */}
+      <div
+        className="relative overflow-hidden px-5 pt-12 pb-10"
+        style={{ background: s.gradient }}
+      >
+        {/* Cerchi decorativi sfumati */}
+        <div
+          className="absolute -top-16 -right-16 rounded-full opacity-20 pointer-events-none"
+          style={{ width: 280, height: 280, background: "rgba(255,255,255,0.4)", filter: "blur(40px)" }}
+        />
+        <div
+          className="absolute bottom-0 -left-10 rounded-full opacity-10 pointer-events-none"
+          style={{ width: 200, height: 200, background: "rgba(0,0,0,0.3)", filter: "blur(50px)" }}
+        />
+
+        <div className="max-w-6xl mx-auto relative z-10">
+          {/* Tag stagione */}
+          <div className="flex items-center gap-2 mb-5">
+            <span
+              className="text-[11px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full"
+              style={{ background: "rgba(255,255,255,0.25)", color: "white", backdropFilter: "blur(8px)" }}
+            >
+              {s.tag}
+            </span>
+          </div>
+
+          {/* Emoji grande + headline */}
+          <div className="flex items-end gap-4 mb-4">
+            <span style={{ fontSize: 56, lineHeight: 1 }}>{s.emoji}</span>
+            <h1
+              className="font-black leading-[0.88] tracking-tight"
+              style={{ fontSize: "clamp(38px, 7vw, 76px)", color: "white", textShadow: "0 2px 12px rgba(0,0,0,0.18)" }}
+            >
+              Scopri gli<br />
+              <span style={{ opacity: 0.85 }}>eventi</span><br />
+              del Cilento.
+            </h1>
+          </div>
+
+          {/* Sottotitolo stagionale */}
           <p
-            className="text-[11px] font-black uppercase tracking-[0.2em] mb-5"
-            style={{ color: "#16a34a" }}
+            className="text-sm leading-relaxed max-w-xs font-medium"
+            style={{ color: "rgba(255,255,255,0.85)" }}
           >
-            Cilento &amp; Vallo di Diano
+            {s.desc}
           </p>
-          {/* ── 02 SUBHEAD ── */}
-          <h1
-            className="font-black leading-[0.9] tracking-tight text-stone-900 mb-3"
-            style={{ fontSize: "clamp(42px, 7.5vw, 84px)" }}
-          >
-            Scopri gli<br />
-            <span style={{ color: "#65a30d" }}>eventi</span><br />
-            del Cilento.
-          </h1>
-          <p
-            className="text-sm leading-relaxed max-w-xs"
-            style={{ color: "#78716c" }}
-          >
-            Sagre, concerti, mostre, sport e natura.
-          </p>
+
+          {/* Stat pill */}
+          <div className="flex items-center gap-3 mt-6">
+            <span
+              className="text-[12px] font-black px-3.5 py-1.5 rounded-full"
+              style={{ background: "rgba(255,255,255,0.2)", color: "white", backdropFilter: "blur(8px)" }}
+            >
+              📍 Cilento &amp; Vallo di Diano
+            </span>
+            <span
+              className="text-[12px] font-black px-3.5 py-1.5 rounded-full"
+              style={{ background: "rgba(255,255,255,0.2)", color: "white", backdropFilter: "blur(8px)" }}
+            >
+              {s.label} {s.emoji}
+            </span>
+          </div>
         </div>
       </div>
 

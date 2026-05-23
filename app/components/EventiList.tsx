@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Evento, Categoria, CATEGORIE } from "@/lib/events";
 import { EventCard } from "./EventCard";
+import { CalendarioEventi } from "./CalendarioEventi";
 import {
   IcoMapPin, IcoSearch, IcoCalendar, IcoLocate,
   IcoSagra, IcoMusica, IcoCultura, IcoSport, IcoReligioso, IcoMercato, IcoNatura, IcoSalute,
@@ -146,6 +147,8 @@ export function EventiList({
     setSoloAccessibili(false);
   }
 
+  const [vistaCalendario, setVistaCalendario] = useState(false);
+
   return (
     <div>
       {/* ── Intestazione lista ── */}
@@ -153,10 +156,45 @@ export function EventiList({
         <p className="text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: "#78716c" }}>
           Tutti gli eventi
         </p>
-        <span className="text-sm text-stone-400">
-          <span className="font-black text-stone-700">{eventiFiltrati.length}</span>{" "}
-          {eventiFiltrati.length === 1 ? "risultato" : "risultati"}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-stone-400">
+            <span className="font-black text-stone-700">{eventiFiltrati.length}</span>{" "}
+            {eventiFiltrati.length === 1 ? "risultato" : "risultati"}
+          </span>
+          {/* Toggle vista lista / calendario */}
+          <div
+            className="flex items-center rounded-xl overflow-hidden"
+            style={{ border: "1.5px solid rgba(0,0,0,0.08)", background: "#f5f3ef" }}
+          >
+            <button
+              onClick={() => setVistaCalendario(false)}
+              className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold border-0 cursor-pointer transition-all"
+              style={!vistaCalendario
+                ? { background: "white", color: "#1a1a1a", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" }
+                : { background: "transparent", color: "#78716c" }}
+              title="Vista lista"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+                <circle cx="3" cy="6" r="1.5" fill="currentColor" stroke="none"/>
+                <circle cx="3" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+                <circle cx="3" cy="18" r="1.5" fill="currentColor" stroke="none"/>
+              </svg>
+              Lista
+            </button>
+            <button
+              onClick={() => setVistaCalendario(true)}
+              className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold border-0 cursor-pointer transition-all"
+              style={vistaCalendario
+                ? { background: "white", color: "#16a34a", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" }
+                : { background: "transparent", color: "#78716c" }}
+              title="Vista calendario"
+            >
+              <IcoCalendar size={12} />
+              Calendario
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* ── Barra filtri ── */}
@@ -340,27 +378,39 @@ export function EventiList({
         </div>
       </div>
 
-      {/* ── Griglia ── */}
-      {eventiFiltrati.length === 0 ? (
+      {/* ── Vista Calendario ── */}
+      {vistaCalendario && (
         <div
-          className="text-center py-28 bg-white rounded-3xl"
-          style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06)" }}
+          className="bg-white rounded-3xl p-5 mb-8"
+          style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06), 0 16px 40px rgba(0,0,0,0.04)" }}
         >
+          <CalendarioEventi eventi={eventiFiltrati} />
+        </div>
+      )}
+
+      {/* ── Griglia lista ── */}
+      {!vistaCalendario && (
+        eventiFiltrati.length === 0 ? (
           <div
-            className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-            style={{ background: "#f5f3ef" }}
+            className="text-center py-28 bg-white rounded-3xl"
+            style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06)" }}
           >
-            <IcoMapPin size={28} className="text-stone-300" />
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{ background: "#f5f3ef" }}
+            >
+              <IcoMapPin size={28} className="text-stone-300" />
+            </div>
+            <p className="text-stone-700 font-bold mb-1">Nessun evento trovato</p>
+            <p className="text-stone-400 text-sm">Prova a modificare i filtri.</p>
           </div>
-          <p className="text-stone-700 font-bold mb-1">Nessun evento trovato</p>
-          <p className="text-stone-400 text-sm">Prova a modificare i filtri.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {eventiFiltrati.map((evento) => (
-            <EventCard key={evento.id} evento={evento} />
-          ))}
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {eventiFiltrati.map((evento) => (
+              <EventCard key={evento.id} evento={evento} />
+            ))}
+          </div>
+        )
       )}
     </div>
   );

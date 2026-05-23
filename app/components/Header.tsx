@@ -41,6 +41,13 @@ export function Header() {
           >
             Notte
           </Link>
+          <Link
+            href="/mappa"
+            className="text-sm font-semibold px-3 py-1.5 rounded-xl transition-all hover:bg-stone-100"
+            style={{ color: "#166534" }}
+          >
+            🗺️ Mappa
+          </Link>
         </nav>
 
         <div className="flex items-center gap-2">
