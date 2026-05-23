@@ -1,5 +1,7 @@
 # CLAUDE.md — Contesto progetto: Eventi Cilento
 
+> 📌 **Se stai leggendo questo da un nuovo account Claude:** apri prima `MIGRATION.md` per i passi di setup e lo stato attuale del progetto.
+
 ## Cos'è questo progetto
 Web app Next.js 15 (App Router) che aggrega automaticamente eventi, sagre e esperienze turistiche del Cilento, Vallo di Diano e Golfo di Policastro (provincia di Salerno, Campania). L'obiettivo è essere la guida eventi di riferimento per residenti e turisti in questa area.
 
@@ -120,6 +122,23 @@ Claude Opus riceve tutto il contesto (scraping + web search) e restituisce un ar
 ```
 
 ---
+
+## 🚨 Audit produzione 2026-05-23 — Task pendenti
+
+Vedi `MIGRATION.md` per i dettagli operativi. Ordine consigliato:
+
+| # | Task | File principali | Priorità |
+|---|---|---|---|
+| 1 | Fix **0 eventi homepage** — `app/page.tsx` async + KV server-side + fallback `EVENTI_REALI_2026` | `app/page.tsx`, `app/HomeContent.tsx` | 🔴 |
+| 2 | Fix **mappa 0 eventi** — stesso pattern del Task 1 | `app/mappa/page.tsx` | 🔴 |
+| 3 | Fix dominio **og:image** `eventicilentoapp` → `eventi-cilento` | `app/layout.tsx` | 🔴 |
+| 4 | Unificare **/notte → /locali** (redirect) | `app/notte/page.tsx`, `app/components/Header.tsx` | 🟡 |
+| 5 | Empty state migliorato con illustrazione + CTA | `app/components/EventiList.tsx` | 🟡 |
+| 6 | Date preset chips (Oggi/Weekend/7gg/Mese) | `app/components/EventiList.tsx` | 🟡 |
+| 7 | Estrarre `lib/season.ts` da HomeContent | `app/HomeContent.tsx`, `lib/season.ts` | 🟢 |
+| 8 | CTA esperienze context-aware (Prenota/Maps/Scopri) | `app/esperienze/[id]/page.tsx` | 🟢 |
+| 9 | Footer: aggiungere link `/mappa` + sezione Fonti | `app/components/Footer.tsx` | 🟢 |
+| 10 | Trigger **seed in produzione** una tantum | `curl /api/seed-eventi?chiave=…&reset=1` | 🔴 |
 
 ## Problemi noti e TODO prioritari
 
