@@ -135,6 +135,13 @@ async function scrapeUrl(url: string, label: string): Promise<string> {
     });
     if (!res.ok) return "";
     const html = await res.text();
+
+    // Estrai og:image (immagine principale dell'articolo/evento)
+    const ogMatch =
+      html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']{10,300})["']/i) ??
+      html.match(/<meta[^>]+content=["']([^"']{10,300})["'][^>]+property=["']og:image["']/i);
+    const ogImage = ogMatch ? ogMatch[1].trim() : "";
+
     const text = html
       .replace(/<script[\s\S]*?<\/script>/gi, "")
       .replace(/<style[\s\S]*?<\/style>/gi, "")
@@ -144,8 +151,11 @@ async function scrapeUrl(url: string, label: string): Promise<string> {
       .replace(/&lt;/g, "<").replace(/&gt;/g, ">")
       .replace(/&quot;/g, '"').replace(/&#[0-9]+;/g, " ")
       .replace(/\s{2,}/g, " ").trim()
-      .slice(0, 3500); // leggermente ridotto per tenere il prompt compatto
-    return text ? `\n\n=== ${label} (${url}) ===\n${text}` : "";
+      .slice(0, 4000);
+
+    if (!text) return "";
+    const imgTag = ogImage ? `\n[OG_IMAGE: ${ogImage}]` : "";
+    return `\n\n=== ${label} (${url}) ===${imgTag}\n${text}`;
   } catch {
     return "";
   } finally {
@@ -211,13 +221,14 @@ export async function GET(request: Request) {
   "telefono":"+39...",
   "sorgente":"https://url-sito-fonte",
   "facebook":"https://facebook.com/... (se trovato)",
-  "instagram":"https://instagram.com/... (se trovato)"
+  "instagram":"https://instagram.com/... (se trovato)",
+  "immagine":"URL immagine ufficiale se presente nel tag [OG_IMAGE:] della sorgente, altrimenti ometti"
 }]`;
 
   const promptConContesto = `Analizza questo testo estratto da ${funzionanti} siti di eventi e notizie locali del Cilento, Vallo di Diano e Golfo di Policastro.
 
 TESTO ESTRATTO:
-${contesto.slice(0, 16000)}
+${contesto.slice(0, 80000)}
 
 ━━━ REGOLE FONDAMENTALI ━━━
 ⛔ NON inventare eventi. NON aggiungere eventi non trovati esplicitamente nel testo.
@@ -243,7 +254,7 @@ Restituisci un array JSON vuoto: []`;
   try {
     const risposta = await client.messages.create({
       model: "claude-haiku-4-5",
-      max_tokens: 6000,
+      max_tokens: 10000,
       system: "Rispondi SOLO con un array JSON valido. Nessun markdown, nessun testo prima o dopo. Solo [ ... ].",
       messages: [{ role: "user", content: haContesto ? promptConContesto : promptSenzaContesto }],
     });

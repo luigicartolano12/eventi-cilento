@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { eventi, formattaData } from "@/lib/events";
 import { getEventiKV } from "@/lib/kv-store";
 import type { EventoDinamico } from "@/lib/eventi-dinamici";
+import { fotoFallbackEvento } from "@/lib/foto-fallback";
 import {
   IcoSagra, IcoMusica, IcoCultura, IcoSport, IcoReligioso, IcoMercato, IcoNatura,
   IcoMapPin, IcoCalendar, IcoClock, IcoUsers,
@@ -64,12 +65,12 @@ export default async function PaginaEvento({
           </Link>
           <article className="bg-white rounded-2xl shadow-sm border border-stone-200/80 overflow-hidden">
             <div className="relative h-56 sm:h-72 flex items-center justify-center" style={{ background: gradientCategoria[eventoStatico.categoria] }}>
-              {eventoStatico.immagine ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={eventoStatico.immagine} alt={eventoStatico.titolo} className="absolute inset-0 w-full h-full object-cover" />
-              ) : (
-                <IcoCategoria size={72} strokeWidth={1.1} className="text-white opacity-60" />
-              )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={eventoStatico.immagine || fotoFallbackEvento(eventoStatico.categoria, eventoStatico.id)}
+                alt={eventoStatico.titolo}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
               <div className="absolute bottom-4 left-4">
                 <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-sm" style={{ color: testoCategoriaColore[eventoStatico.categoria] }}>
                   {eventoStatico.categoria}
@@ -145,17 +146,12 @@ function PaginaEventoKV({ evento }: { evento: EventoDinamico }) {
         <article className="bg-white rounded-2xl shadow-sm border border-stone-200/80 overflow-hidden">
           {/* Banner categoria / immagine */}
           <div className="relative h-48 sm:h-64 flex items-center justify-center" style={{ background: gradientCategoria[evento.categoria] }}>
-            {evento.immagine ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={evento.immagine}
-                alt={evento.titolo}
-                className="absolute inset-0 w-full h-full object-cover"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-              />
-            ) : (
-              <IcoCategoria size={64} strokeWidth={1.1} className="text-white opacity-60" />
-            )}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={evento.immagine || fotoFallbackEvento(evento.categoria, evento.id)}
+              alt={evento.titolo}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
             <div className="absolute inset-0" style={{background:"linear-gradient(to bottom,transparent 40%,rgba(0,0,0,0.45) 100%)"}}/>
             <div className="absolute bottom-4 left-4 flex items-center gap-2">
               <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-sm" style={{ color: testoCategoriaColore[evento.categoria] }}>

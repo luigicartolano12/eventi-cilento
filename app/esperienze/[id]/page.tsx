@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { esperienze, STILE_CATEGORIA } from "@/lib/esperienze";
 import { fotoEsperienza, fotoGallery } from "@/lib/photos";
+import { fotoFallbackEsperienza } from "@/lib/foto-fallback";
 import { IcoArrowLeft, IcoMapPin, IcoClock, IcoGlobe, IcoFacebook, IcoInstagram, IcoPhone, IcoMail, IcoExternalLink } from "@/app/components/icons";
 
 export async function generateStaticParams() {
@@ -29,9 +30,8 @@ export default async function PaginaEsperienza({
 
   const stile = STILE_CATEGORIA[esp.categoria];
 
-  // Nessuna foto casuale — solo foto esplicite dall'esperienza stessa
-  // Le variabili fotoEsperienza/fotoGallery restituiscono "" → gradiente visibile
   void fotoEsperienza; void fotoGallery; // suppress unused import warnings
+  const imgHero = fotoFallbackEsperienza(esp.categoria, esp.id);
 
   return (
     <main style={{ background: "#f5f3ef" }} className="min-h-screen pb-20">
@@ -47,26 +47,22 @@ export default async function PaginaEsperienza({
         </Link>
       </div>
 
-      {/* ── Hero gradiente categoria ── */}
+      {/* ── Hero immagine ── */}
       <div
         className="relative overflow-hidden flex items-center justify-center"
         style={{ height: "clamp(220px, 52vw, 460px)", background: stile.gradient }}
       >
-        {/* Icona grande centrata */}
-        <span className="text-[100px] opacity-20 select-none">
-          {esp.categoria === "Mare" ? "🌊" :
-           esp.categoria === "Gastronomia" ? "🍽️" :
-           esp.categoria === "Natura" ? "🌿" :
-           esp.categoria === "Cultura" ? "🏛️" :
-           esp.categoria === "Benessere" ? "🧘" :
-           esp.categoria === "Sport" ? "🚴" :
-           esp.categoria === "Artigianato" ? "🎨" : "⭐"}
-        </span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={imgHero}
+          alt={esp.titolo}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
         <div
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, transparent 40%, rgba(0,0,0,0.50) 100%)",
+              "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, transparent 35%, rgba(0,0,0,0.55) 100%)",
           }}
         />
 

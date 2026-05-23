@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Evento, formattaData } from "@/lib/events";
+import { fotoFallbackEvento } from "@/lib/foto-fallback";
 import {
   IcoMapPin, IcoCalendar, IcoClock, IcoPlay,
   IcoWheelchair, IcoParking, IcoPaw, IcoBooking,
@@ -36,7 +37,7 @@ const IconeCategoria: Record<string, React.ComponentType<any>> = {
 
 export function EventCard({ evento }: { evento: Evento }) {
   const { servizi } = evento;
-  const imgSrc = evento.immagine || "";
+  const imgSrc = evento.immagine || fotoFallbackEvento(evento.categoria, evento.id);
   const IcoCategoria = IconeCategoria[evento.categoria];
   const colore = categoriaColore[evento.categoria] ?? "#16a34a";
 
@@ -59,25 +60,17 @@ export function EventCard({ evento }: { evento: Evento }) {
         className="relative overflow-hidden flex items-center justify-center shrink-0"
         style={{ height: 176, background: gradientCategoria[evento.categoria] }}
       >
-        {/* Foto (se presente) */}
-        {imgSrc && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={imgSrc}
-            alt={evento.titolo}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-          />
-        )}
-
-        {/* Icona categoria (sfondo senza foto) */}
-        {!imgSrc && IcoCategoria && (
-          <IcoCategoria
-            size={56}
-            strokeWidth={0.9}
-            className="text-white opacity-20 group-hover:opacity-30 transition-opacity"
-          />
-        )}
+        {/* Foto (reale o fallback per categoria) */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={imgSrc}
+          alt={evento.titolo}
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          onError={(e) => {
+            // Se anche il fallback non carica, mostra l'icona categoria
+            (e.currentTarget as HTMLImageElement).style.display = "none";
+          }}
+        />
 
         {/* Overlay sfumato basso */}
         <div

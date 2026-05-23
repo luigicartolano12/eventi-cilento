@@ -11,40 +11,39 @@ import {
 } from "@/lib/esperienze";
 import type { EsperienzaDinamica } from "@/lib/kv-store";
 import { fotoEsperienza } from "@/lib/photos";
+import { fotoFallbackEsperienza } from "@/lib/foto-fallback";
 import { IcoArrowLeft, IcoMapPin, IcoClock, IcoSearch, IcoCheck } from "@/app/components/icons";
 
 
 function EsperienzaCard({ esp }: { esp: Esperienza }) {
   const stile = STILE_CATEGORIA[esp.categoria];
+  const imgSrc = fotoFallbackEsperienza(esp.categoria, esp.id);
+
   return (
     <Link
       href={`/esperienze/${esp.id}`}
-      className="group flex flex-col rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
+      className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
       style={{
         background: "#fff",
-        boxShadow:
-          "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06), 0 16px 40px rgba(0,0,0,0.06)",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.07)",
       }}
     >
-      {/* Immagine / Gradiente categoria */}
+      {/* Immagine */}
       <div
-        className="relative overflow-hidden flex items-center justify-center"
-        style={{ height: 200, background: stile.gradient }}
+        className="relative overflow-hidden flex items-center justify-center shrink-0"
+        style={{ height: 180, background: stile.gradient }}
       >
-        {/* Icona centrata come placeholder visivo */}
-        <span className="text-5xl opacity-25 group-hover:opacity-35 transition-opacity select-none">
-          {esp.categoria === "Mare" ? "🌊" :
-           esp.categoria === "Gastronomia" ? "🍽️" :
-           esp.categoria === "Natura" ? "🌿" :
-           esp.categoria === "Cultura" ? "🏛️" :
-           esp.categoria === "Benessere" ? "🧘" :
-           esp.categoria === "Sport" ? "🚴" :
-           esp.categoria === "Artigianato" ? "🎨" : "⭐"}
-        </span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={imgSrc}
+          alt={esp.titolo}
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+        />
         <div
           className="absolute inset-0"
           style={{
-            background: "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.35) 100%)",
+            background: "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.32) 100%)",
           }}
         />
         {/* Categoria badge */}
