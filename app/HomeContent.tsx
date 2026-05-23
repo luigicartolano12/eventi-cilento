@@ -231,106 +231,78 @@ export function HomeContent({ eventi }: { eventi: Evento[] }) {
 
   return (
     <>
-      {/* ── 01 HERO STAGIONALE ── */}
+      {/* ── 01 HERO ── */}
       <div
-        className="relative overflow-hidden px-5 pt-12 pb-10"
-        style={{ background: s.gradient }}
+        className="relative overflow-hidden px-5 pt-14 pb-12"
+        style={{ background: "#111827" }}
       >
-        {/* Cerchi decorativi sfumati */}
+        {/* Blob di luce verde — decorativo */}
         <div
-          className="absolute -top-16 -right-16 rounded-full opacity-20 pointer-events-none"
-          style={{ width: 280, height: 280, background: "rgba(255,255,255,0.4)", filter: "blur(40px)" }}
-        />
-        <div
-          className="absolute bottom-0 -left-10 rounded-full opacity-10 pointer-events-none"
-          style={{ width: 200, height: 200, background: "rgba(0,0,0,0.3)", filter: "blur(50px)" }}
+          className="absolute pointer-events-none"
+          style={{
+            top: "-20%", right: "-10%",
+            width: 480, height: 480,
+            borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(74,222,128,0.14) 0%, transparent 70%)",
+          }}
         />
 
         <div className="max-w-6xl mx-auto relative z-10">
-          {/* Tag stagione */}
-          <div className="flex items-center gap-2 mb-5">
+          {/* Stagione pill — compatta e chiara */}
+          <div className="flex items-center gap-2 mb-7">
+            <span style={{ fontSize: 18 }}>{s.emoji}</span>
             <span
-              className="text-[11px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full"
-              style={{ background: "rgba(255,255,255,0.25)", color: "white", backdropFilter: "blur(8px)" }}
+              className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+              style={{ color: "rgba(255,255,255,0.4)" }}
             >
-              {s.tag}
+              {s.tag} · {s.label}
             </span>
           </div>
 
-          {/* Emoji grande + headline */}
-          <div className="flex items-end gap-4 mb-4">
-            <span style={{ fontSize: 56, lineHeight: 1 }}>{s.emoji}</span>
-            <h1
-              className="font-black leading-[0.88] tracking-tight"
-              style={{ fontSize: "clamp(38px, 7vw, 76px)", color: "white", textShadow: "0 2px 12px rgba(0,0,0,0.18)" }}
-            >
-              Scopri gli<br />
-              <span style={{ opacity: 0.85 }}>eventi</span><br />
-              del Cilento.
-            </h1>
-          </div>
+          {/* Headline */}
+          <h1
+            className="font-black tracking-tight text-white mb-5"
+            style={{ fontSize: "clamp(40px, 7.5vw, 84px)", lineHeight: 0.93 }}
+          >
+            Scopri gli<br />
+            <span style={{ color: "#4ade80" }}>eventi</span><br />
+            del Cilento.
+          </h1>
 
-          {/* Sottotitolo stagionale */}
+          {/* Sottotitolo */}
           <p
-            className="text-sm leading-relaxed max-w-xs font-medium"
-            style={{ color: "rgba(255,255,255,0.85)" }}
+            className="text-[15px] leading-relaxed max-w-sm"
+            style={{ color: "rgba(255,255,255,0.45)" }}
           >
             {s.desc}
           </p>
-
-          {/* Stat pill */}
-          <div className="flex items-center gap-3 mt-6">
-            <span
-              className="text-[12px] font-black px-3.5 py-1.5 rounded-full"
-              style={{ background: "rgba(255,255,255,0.2)", color: "white", backdropFilter: "blur(8px)" }}
-            >
-              📍 Cilento &amp; Vallo di Diano
-            </span>
-            <span
-              className="text-[12px] font-black px-3.5 py-1.5 rounded-full"
-              style={{ background: "rgba(255,255,255,0.2)", color: "white", backdropFilter: "blur(8px)" }}
-            >
-              {s.label} {s.emoji}
-            </span>
-          </div>
         </div>
       </div>
 
-      {/* ── 03 EVENTI IN PRIMO PIANO (oggi o prossimi) ── */}
+      {/* ── 03 EVENTI IN PRIMO PIANO ── */}
       {sezioneCount > 0 && (
-        <div style={{ background: "#f5f3ef" }} className="px-5 pb-8">
+        <div style={{ background: "#f5f3ef" }} className="px-5 pt-8 pb-6">
           <div className="max-w-6xl mx-auto">
-            {/* Label + data + comuni */}
-            <div className="flex items-center gap-2.5 mb-4 flex-wrap">
+            {/* Label sezione */}
+            <div className="flex items-baseline gap-2.5 mb-4">
               <span
-                className="w-2 h-2 rounded-full shrink-0"
+                className="w-2 h-2 rounded-full shrink-0 self-center"
                 style={{
                   background: "#16a34a",
                   animation: oggi.length > 0 ? "pulse 2s infinite" : "none",
                 }}
               />
-              <span className="text-sm font-black" style={{ color: "#16a34a" }}>
-                {sezioneCount} {sezioneCount === 1 ? "evento" : "eventi"} {sezioneLabel}
+              <span className="text-[13px] font-bold text-stone-900">
+                {oggi.length > 0 ? "Oggi" : "In programma"}
               </span>
-              <span
-                className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full capitalize"
-                style={{ background: "#dcfce7", color: "#166534" }}
-              >
+              <span className="text-[11px] text-stone-400 capitalize">
                 {formattaData(oggiISOfixed)}
               </span>
-              {comuniSet.length > 0 && (
-                <span
-                  className="text-[11px] font-medium hidden sm:inline truncate max-w-xs"
-                  style={{ color: "#78716c" }}
-                >
-                  {comuniLabel}
-                </span>
-              )}
             </div>
 
             {/* Scroll orizzontale card piccole */}
             <div
-              className="flex gap-3 overflow-x-auto pb-3"
+              className="flex gap-3 overflow-x-auto pb-2"
               style={{ scrollbarWidth: "none" }}
             >
               {prossimi.map((e) => <MiniCard key={e.id} evento={e} />)}

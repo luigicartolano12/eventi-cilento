@@ -5,14 +5,7 @@ import { UserButton } from "./UserButton";
 export function Header() {
   return (
     <header style={{ background: "white", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-      {/* Banner beta */}
-      <div
-        className="w-full text-center py-1.5 text-[11px] font-bold tracking-wide"
-        style={{ background: "#fef3c7", color: "#92400e" }}
-      >
-        🌿 Versione Beta — stiamo aggiungendo nuovi contenuti ogni giorno
-      </div>
-      <div className="max-w-6xl mx-auto px-5 py-4 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-5 py-3.5 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black"

@@ -151,230 +151,186 @@ export function EventiList({
 
   return (
     <div>
-      {/* ── Intestazione lista ── */}
-      <div className="flex items-center justify-between mb-5 pt-2">
-        <p className="text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: "#78716c" }}>
-          Tutti gli eventi
-        </p>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-stone-400">
-            <span className="font-black text-stone-700">{eventiFiltrati.length}</span>{" "}
+      {/* ── Intestazione ── */}
+      <div className="flex items-center justify-between mb-4 pt-2">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-stone-400 mb-0.5">
+            Tutti gli eventi
+          </p>
+          <p className="text-sm font-semibold text-stone-700">
+            <span className="font-black">{eventiFiltrati.length}</span>{" "}
             {eventiFiltrati.length === 1 ? "risultato" : "risultati"}
-          </span>
-          {/* Toggle vista lista / calendario */}
-          <div
-            className="flex items-center rounded-xl overflow-hidden"
-            style={{ border: "1.5px solid rgba(0,0,0,0.08)", background: "#f5f3ef" }}
+          </p>
+        </div>
+
+        {/* Toggle vista — più prominente */}
+        <div
+          className="flex items-center p-1 rounded-xl gap-1"
+          style={{ background: "white", boxShadow: "0 1px 3px rgba(0,0,0,0.07), 0 4px 12px rgba(0,0,0,0.05)" }}
+        >
+          <button
+            onClick={() => setVistaCalendario(false)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold border-0 cursor-pointer transition-all"
+            style={!vistaCalendario
+              ? { background: "#f0fdf4", color: "#16a34a" }
+              : { background: "transparent", color: "#9ca3af" }}
           >
-            <button
-              onClick={() => setVistaCalendario(false)}
-              className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold border-0 cursor-pointer transition-all"
-              style={!vistaCalendario
-                ? { background: "white", color: "#1a1a1a", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" }
-                : { background: "transparent", color: "#78716c" }}
-              title="Vista lista"
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
-                <circle cx="3" cy="6" r="1.5" fill="currentColor" stroke="none"/>
-                <circle cx="3" cy="12" r="1.5" fill="currentColor" stroke="none"/>
-                <circle cx="3" cy="18" r="1.5" fill="currentColor" stroke="none"/>
-              </svg>
-              Lista
-            </button>
-            <button
-              onClick={() => setVistaCalendario(true)}
-              className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold border-0 cursor-pointer transition-all"
-              style={vistaCalendario
-                ? { background: "white", color: "#16a34a", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" }
-                : { background: "transparent", color: "#78716c" }}
-              title="Vista calendario"
-            >
-              <IcoCalendar size={12} />
-              Calendario
-            </button>
-          </div>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+            Lista
+          </button>
+          <button
+            onClick={() => setVistaCalendario(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold border-0 cursor-pointer transition-all"
+            style={vistaCalendario
+              ? { background: "#f0fdf4", color: "#16a34a" }
+              : { background: "transparent", color: "#9ca3af" }}
+          >
+            <IcoCalendar size={12} />
+            Calendario
+          </button>
         </div>
       </div>
 
-      {/* ── Barra filtri ── */}
+      {/* ── Filtri ── */}
       <div
-        className="bg-white rounded-3xl p-5 mb-5"
-        style={{
-          boxShadow:
-            "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06), 0 16px 40px rgba(0,0,0,0.04)",
-        }}
+        className="bg-white rounded-2xl mb-5 overflow-hidden"
+        style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.07)" }}
       >
         {/* Ricerca */}
-        <div
-          className="flex items-center gap-3 rounded-2xl px-4 py-3.5 mb-4"
-          style={{ background: "#f5f3ef" }}
-        >
-          <IcoSearch size={16} className="text-stone-400 shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-stone-100">
+          <IcoSearch size={15} className="text-stone-300 shrink-0" />
           <input
             type="search"
             value={cerca}
             onChange={(e) => setCerca(e.target.value)}
             placeholder="Cerca eventi, luoghi, categorie…"
-            className="flex-1 bg-transparent text-stone-800 placeholder:text-stone-400 focus:outline-none font-medium"
-            /* fontSize >= 16 previene lo zoom automatico su iOS */
+            className="flex-1 bg-transparent text-stone-800 placeholder:text-stone-300 focus:outline-none font-medium"
             style={{ fontSize: 16 }}
           />
           {cerca && (
             <button
               onClick={() => setCerca("")}
-              className="text-stone-400 hover:text-stone-600 border-0 bg-transparent cursor-pointer text-xl leading-none transition-colors"
+              className="text-stone-300 hover:text-stone-500 border-0 bg-transparent cursor-pointer text-xl leading-none transition-colors"
             >
               ×
             </button>
           )}
         </div>
 
-        {/* Pills area geografica */}
-        <div className="flex gap-2 mb-4 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-          {AREE.map(({ id, label }) => (
+        {/* Categorie */}
+        <div className="px-4 py-3 border-b border-stone-100">
+          <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
             <button
-              key={id}
-              onClick={() => setArea(id)}
-              className="shrink-0 text-xs font-bold px-4 py-2 rounded-full border-0 cursor-pointer transition-all whitespace-nowrap"
-              style={
-                area === id
-                  ? { background: "#16a34a", color: "white" }
-                  : { background: "#f5f3ef", color: "#78716c" }
-              }
+              onClick={() => setCategoria(null)}
+              className="shrink-0 flex items-center gap-1.5 rounded-full border-0 cursor-pointer transition-all px-3 py-1.5 text-[12px] font-semibold whitespace-nowrap"
+              style={!categoria
+                ? { background: "#16a34a", color: "white" }
+                : { background: "#f5f3ef", color: "#78716c" }}
             >
-              {label}
+              🌿 Tutte
             </button>
-          ))}
+            {CATEGORIE.map((cat) => {
+              const Ico = IconeCategoria[cat];
+              const attivo = categoria === cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setCategoria(attivo ? null : cat)}
+                  className="shrink-0 flex items-center gap-1.5 rounded-full border-0 cursor-pointer transition-all px-3 py-1.5 text-[12px] font-semibold whitespace-nowrap"
+                  style={attivo
+                    ? { background: "#16a34a", color: "white" }
+                    : { background: "#f5f3ef", color: "#78716c" }}
+                >
+                  <Ico size={11} strokeWidth={2} />
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Calendario range + Posizione */}
-        <div className="flex flex-col gap-2 mb-4">
-          {/* Range date */}
+        {/* Area geografica */}
+        <div className="px-4 py-3 border-b border-stone-100">
+          <div className="flex gap-2 flex-wrap">
+            {AREE.map(({ id, label }) => (
+              <button
+                key={id}
+                onClick={() => setArea(id)}
+                className="shrink-0 text-[12px] font-semibold px-3 py-1.5 rounded-full border-0 cursor-pointer transition-all whitespace-nowrap"
+                style={area === id
+                  ? { background: "#111827", color: "white" }
+                  : { background: "#f5f3ef", color: "#78716c" }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Date + Posizione */}
+        <div className="px-4 py-3 flex flex-col gap-2 border-b border-stone-100">
           <div className="flex gap-2 items-center">
-            <IcoCalendar size={14} className="text-stone-400 shrink-0" />
-            <div
-              className="flex-1 flex items-center gap-1.5 rounded-2xl px-3 py-2.5"
-              style={{ background: "#f5f3ef" }}
-            >
-              <span className="text-[11px] font-bold text-stone-400 shrink-0">Dal</span>
+            <IcoCalendar size={13} className="text-stone-300 shrink-0" />
+            <div className="flex-1 flex items-center gap-1 rounded-xl px-3 py-2" style={{ background: "#f5f3ef" }}>
+              <span className="text-[11px] font-semibold text-stone-400 shrink-0">Dal</span>
               <input
                 type="date"
                 value={dataInizio}
                 onChange={(e) => setDataInizio(e.target.value)}
-                className="flex-1 bg-transparent font-medium text-stone-700 focus:outline-none min-w-0"
-                style={{ colorScheme: "light", fontSize: 15 }}
+                className="flex-1 bg-transparent font-medium text-stone-700 focus:outline-none min-w-0 text-[13px]"
+                style={{ colorScheme: "light" }}
               />
             </div>
-            <span className="text-stone-300 text-sm shrink-0">→</span>
-            <div
-              className="flex-1 flex items-center gap-1.5 rounded-2xl px-3 py-2.5"
-              style={{ background: "#f5f3ef" }}
-            >
-              <span className="text-[11px] font-bold text-stone-400 shrink-0">Al</span>
+            <span className="text-stone-300 shrink-0">–</span>
+            <div className="flex-1 flex items-center gap-1 rounded-xl px-3 py-2" style={{ background: "#f5f3ef" }}>
+              <span className="text-[11px] font-semibold text-stone-400 shrink-0">Al</span>
               <input
                 type="date"
                 value={dataFine}
                 onChange={(e) => setDataFine(e.target.value)}
-                className="flex-1 bg-transparent font-medium text-stone-700 focus:outline-none min-w-0"
-                style={{ colorScheme: "light", fontSize: 15 }}
+                className="flex-1 bg-transparent font-medium text-stone-700 focus:outline-none min-w-0 text-[13px]"
+                style={{ colorScheme: "light" }}
               />
             </div>
             {(dataInizio || dataFine) && (
               <button
                 onClick={() => { setDataInizio(""); setDataFine(""); }}
-                className="text-stone-400 border-0 bg-transparent cursor-pointer text-xl leading-none hover:text-stone-600 transition-colors shrink-0"
+                className="text-stone-300 border-0 bg-transparent cursor-pointer text-lg leading-none hover:text-stone-500 transition-colors shrink-0"
               >×</button>
             )}
           </div>
-          {/* Posizione */}
+
           <button
             onClick={locationLabel ? () => setLocationLabel("") : rilevaPosizione}
             disabled={locationLoading}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border-0 cursor-pointer transition-all font-semibold text-sm disabled:opacity-50 w-full justify-center"
-            style={
-              locationLabel
-                ? { background: "#dcfce7", color: "#166534" }
-                : { background: "#f5f3ef", color: "#78716c" }
-            }
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border-0 cursor-pointer transition-all font-semibold text-[13px] disabled:opacity-50 w-full justify-center"
+            style={locationLabel
+              ? { background: "#f0fdf4", color: "#16a34a" }
+              : { background: "#f5f3ef", color: "#78716c" }}
           >
-            <IcoLocate size={14} />
+            <IcoLocate size={13} />
             <span className="truncate max-w-[200px]">
               {locationLoading ? "Rilevamento…" : locationLabel || "Vicino a me"}
             </span>
           </button>
         </div>
 
-        {/* Toggles + azzera */}
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+        {/* Toggles + reset */}
+        <div className="px-4 py-3 flex flex-wrap items-center gap-x-5 gap-y-2">
           <Toggle label="Solo gratuiti" value={soloGratuiti} onChange={setSoloGratuiti} />
           <Toggle label="Solo accessibili" value={soloAccessibili} onChange={setSoloAccessibili} />
-
           {filtriAttivi && (
             <button
               onClick={resetFiltri}
-              className="ml-auto text-xs font-bold px-3 py-1.5 rounded-full cursor-pointer border-0 transition-colors"
+              className="ml-auto text-[12px] font-semibold px-3 py-1.5 rounded-full cursor-pointer border-0 transition-colors"
               style={{ background: "#fef2f2", color: "#dc2626" }}
             >
-              × Azzera filtri
+              Azzera filtri
             </button>
           )}
-        </div>
-      </div>
-
-      {/* ── Categorie — pills compatti ── */}
-      <div className="mb-6">
-        <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-2.5" style={{ color: "#78716c" }}>
-          Filtra per categoria
-        </p>
-        <div className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
-          {/* Tutte */}
-          <button
-            onClick={() => setCategoria(null)}
-            className="shrink-0 flex items-center gap-2 rounded-2xl border-0 cursor-pointer transition-all duration-200 px-3.5 py-2"
-            style={{
-              background: !categoria ? "#a3e635" : "white",
-              boxShadow: !categoria
-                ? "0 0 0 2px #65a30d"
-                : "0 1px 2px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.06)",
-              color: !categoria ? "#14532d" : "#44403c",
-            }}
-          >
-            <span style={{ fontSize: 15 }}>🌿</span>
-            <span className="text-[12px] font-black whitespace-nowrap">Tutte</span>
-          </button>
-
-          {CATEGORIE.map((cat) => {
-            const Ico = IconeCategoria[cat];
-            const attivo = categoria === cat;
-            return (
-              <button
-                key={cat}
-                onClick={() => setCategoria(attivo ? null : cat)}
-                className="shrink-0 flex items-center gap-2 rounded-2xl border-0 cursor-pointer transition-all duration-200 px-3.5 py-2"
-                style={{
-                  background: attivo ? "#a3e635" : "white",
-                  boxShadow: attivo
-                    ? "0 0 0 2px #65a30d"
-                    : "0 1px 2px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.06)",
-                }}
-              >
-                {/* Cerchio icona colorata */}
-                <div
-                  className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
-                  style={{ background: attivo ? "rgba(20,83,45,0.15)" : gradientCategoria[cat] }}
-                >
-                  <Ico size={12} strokeWidth={2} className={attivo ? "text-green-800" : "text-white"} />
-                </div>
-                <span
-                  className="text-[12px] font-black whitespace-nowrap"
-                  style={{ color: attivo ? "#14532d" : "#44403c" }}
-                >
-                  {cat}
-                </span>
-              </button>
-            );
-          })}
         </div>
       </div>
 

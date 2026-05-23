@@ -1,32 +1,31 @@
 import Link from "next/link";
 import { Evento, formattaData } from "@/lib/events";
-import { fotoEvento } from "@/lib/photos";
 import {
   IcoMapPin, IcoCalendar, IcoClock, IcoPlay,
-  IcoCheck, IcoWheelchair, IcoParking, IcoPaw, IcoBooking,
+  IcoWheelchair, IcoParking, IcoPaw, IcoBooking,
   IcoSagra, IcoMusica, IcoCultura, IcoSport, IcoReligioso, IcoMercato, IcoNatura, IcoSalute,
 } from "./icons";
 
-const testoCategoriaColore: Record<string, string> = {
-  Sagra:    "#ea580c",
-  Musica:   "#9333ea",
-  Cultura:  "#2563eb",
-  Sport:    "#16a34a",
-  Religioso:"#d97706",
-  Mercato:  "#db2777",
-  Natura:   "#059669",
-  Salute:   "#be185d",
+const categoriaColore: Record<string, string> = {
+  Sagra:     "#ea580c",
+  Musica:    "#9333ea",
+  Cultura:   "#2563eb",
+  Sport:     "#16a34a",
+  Religioso: "#d97706",
+  Mercato:   "#db2777",
+  Natura:    "#059669",
+  Salute:    "#be185d",
 };
 
 const gradientCategoria: Record<string, string> = {
-  Sagra:    "linear-gradient(160deg, #fb923c 0%, #fbbf24 100%)",
-  Musica:   "linear-gradient(160deg, #a855f7 0%, #818cf8 100%)",
-  Cultura:  "linear-gradient(160deg, #3b82f6 0%, #22d3ee 100%)",
-  Sport:    "linear-gradient(160deg, #22c55e 0%, #10b981 100%)",
-  Religioso:"linear-gradient(160deg, #facc15 0%, #f59e0b 100%)",
-  Mercato:  "linear-gradient(160deg, #f472b6 0%, #fb7185 100%)",
-  Natura:   "linear-gradient(160deg, #059669 0%, #14b8a6 100%)",
-  Salute:   "linear-gradient(160deg, #ec4899 0%, #f43f5e 100%)",
+  Sagra:     "linear-gradient(160deg, #fb923c 0%, #fbbf24 100%)",
+  Musica:    "linear-gradient(160deg, #a855f7 0%, #818cf8 100%)",
+  Cultura:   "linear-gradient(160deg, #3b82f6 0%, #22d3ee 100%)",
+  Sport:     "linear-gradient(160deg, #22c55e 0%, #10b981 100%)",
+  Religioso: "linear-gradient(160deg, #facc15 0%, #f59e0b 100%)",
+  Mercato:   "linear-gradient(160deg, #f472b6 0%, #fb7185 100%)",
+  Natura:    "linear-gradient(160deg, #059669 0%, #14b8a6 100%)",
+  Salute:    "linear-gradient(160deg, #ec4899 0%, #f43f5e 100%)",
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -35,210 +34,183 @@ const IconeCategoria: Record<string, React.ComponentType<any>> = {
   Religioso: IcoReligioso, Mercato: IcoMercato, Natura: IcoNatura, Salute: IcoSalute,
 };
 
-
 export function EventCard({ evento }: { evento: Evento }) {
   const { servizi } = evento;
-  // Solo foto esplicite (campo immagine) — nessun servizio casuale
   const imgSrc = evento.immagine || "";
   const IcoCategoria = IconeCategoria[evento.categoria];
+  const colore = categoriaColore[evento.categoria] ?? "#16a34a";
 
-  const hasBadge =
-    servizi.ingressoGratuito ||
-    servizi.accessibileDisabili ||
-    servizi.parcheggio ||
-    servizi.petFriendly ||
-    servizi.prenotazioneRichiesta;
+  // Luogo da mostrare: "Luogo, Comune" oppure solo "Comune"
+  const luogoLabel = evento.luogo && evento.luogo !== evento.comune
+    ? `${evento.luogo}, ${evento.comune}`
+    : evento.comune;
 
   return (
-    <div
-      className="group flex flex-col rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
+    <Link
+      href={`/events/${evento.id}`}
+      className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
       style={{
         background: "#fff",
-        boxShadow:
-          "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06), 0 16px 40px rgba(0,0,0,0.06)",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.07)",
       }}
     >
-      {/* ── Immagine / Gradiente categoria ── */}
-      <Link
-        href={`/events/${evento.id}`}
-        className="block relative overflow-hidden flex items-center justify-center"
-        style={{ height: 200, background: gradientCategoria[evento.categoria] }}
+      {/* ── Copertina ── */}
+      <div
+        className="relative overflow-hidden flex items-center justify-center shrink-0"
+        style={{ height: 176, background: gradientCategoria[evento.categoria] }}
       >
-        {/* Foto ufficiale (solo se presente nel campo immagine) */}
+        {/* Foto (se presente) */}
         {imgSrc && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={imgSrc}
             alt={evento.titolo}
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).style.display = "none";
-            }}
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
           />
         )}
 
-        {/* Icona categoria centrata (visibile quando non c'è foto) */}
+        {/* Icona categoria (sfondo senza foto) */}
         {!imgSrc && IcoCategoria && (
           <IcoCategoria
-            size={64}
-            strokeWidth={1.0}
-            className="text-white opacity-30 group-hover:opacity-40 transition-opacity"
+            size={56}
+            strokeWidth={0.9}
+            className="text-white opacity-20 group-hover:opacity-30 transition-opacity"
           />
         )}
 
-        {/* Overlay sfumato in basso */}
+        {/* Overlay sfumato basso */}
         <div
           className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.30) 100%)",
-          }}
+          style={{ background: "linear-gradient(to bottom, transparent 45%, rgba(0,0,0,0.26) 100%)" }}
         />
 
-        {/* Tag categoria — in alto a sinistra */}
-        <span
-          className="absolute top-3 left-3 text-[10px] font-black px-2.5 py-1 rounded-full text-white z-10"
-          style={{ background: "rgba(0,0,0,0.32)", backdropFilter: "blur(8px)" }}
-        >
-          {evento.categoria}
-        </span>
+        {/* Pill categoria + gratuito — top left */}
+        <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">
+          <span
+            className="text-[10px] font-bold px-2.5 py-0.5 rounded-full text-white"
+            style={{ background: colore + "dd", backdropFilter: "blur(6px)" }}
+          >
+            {evento.categoria}
+          </span>
+          {servizi.ingressoGratuito && (
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+              style={{ background: "rgba(220,252,231,0.92)", color: "#166534" }}
+            >
+              Gratis
+            </span>
+          )}
+        </div>
 
-        {/* Badge video */}
+        {/* Badge video — top right */}
         {evento.video && (
           <span
-            className="absolute top-3.5 right-3.5 inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full text-white z-10"
-            style={{
-              background: "rgba(0,0,0,0.38)",
-              backdropFilter: "blur(8px)",
-            }}
+            className="absolute top-3 right-3 inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full text-white z-10"
+            style={{ background: "rgba(0,0,0,0.38)", backdropFilter: "blur(6px)" }}
           >
-            <IcoPlay size={9} />
-            Video
+            <IcoPlay size={9} /> Video
           </span>
         )}
-      </Link>
+      </div>
 
       {/* ── Corpo ── */}
-      <div className="flex flex-col gap-1.5 px-5 pt-4 pb-5 flex-1">
+      <div className="flex flex-col gap-2.5 px-4 pt-4 pb-4 flex-1">
 
-        {/* Categoria */}
-        <span
-          className="text-[11px] font-black uppercase tracking-widest"
-          style={{ color: testoCategoriaColore[evento.categoria] }}
+        {/* Titolo — gerarchia principale */}
+        <h2
+          className="text-[15px] font-bold text-stone-900 leading-snug tracking-tight"
+          style={{
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
         >
-          {evento.categoria}
-        </span>
-
-        {/* Titolo */}
-        <h2 className="text-[17px] font-bold text-black leading-snug tracking-tight">
           {evento.titolo}
         </h2>
 
-        {/* Data + Orario + Comune */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
-          <span className="inline-flex items-center gap-1 text-[13px] text-stone-400 font-medium">
-            <IcoCalendar size={11} className="text-stone-300" />
+        {/* Meta: data · orario */}
+        <div className="flex items-center gap-2.5 text-[12px] text-stone-400 font-medium">
+          <span className="inline-flex items-center gap-1">
+            <IcoCalendar size={10} className="text-stone-300" />
             <span className="capitalize">
               {formattaData(evento.data)}
               {evento.dataFine && ` – ${formattaData(evento.dataFine)}`}
             </span>
           </span>
           {evento.orario && (
-            <span className="inline-flex items-center gap-1 text-[13px] text-stone-400 font-medium">
-              <IcoClock size={11} className="text-stone-300" />
-              {evento.orario}
-            </span>
+            <>
+              <span className="text-stone-200">·</span>
+              <span className="inline-flex items-center gap-1">
+                <IcoClock size={10} className="text-stone-300" />
+                {evento.orario}
+              </span>
+            </>
           )}
-          <a
-            href={`https://maps.google.com/?q=${encodeURIComponent(`${evento.luogo}, ${evento.comune}, Salerno, Campania, Italia`)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1 text-[13px] text-stone-400 font-medium hover:text-stone-600 transition-colors"
-          >
-            <IcoMapPin size={11} className="text-stone-300" />
-            {evento.comune}
-          </a>
         </div>
 
-        {/* ── Badge servizi ── */}
-        {hasBadge && (
-          <div className="flex flex-wrap items-center gap-1.5 mt-2">
-            {servizi.ingressoGratuito && (
-              <span
-                className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                style={{ background: "#dcfce7", color: "#166534" }}
-              >
-                <IcoCheck size={9} />
-                Gratuito
-              </span>
-            )}
+        {/* Meta: luogo */}
+        <span className="inline-flex items-center gap-1 text-[12px] text-stone-400 font-medium">
+          <IcoMapPin size={10} className="text-stone-300" />
+          {luogoLabel}
+        </span>
+
+        {/* Badge accessibilità — compatti, solo icone */}
+        {(servizi.accessibileDisabili || servizi.parcheggio || servizi.petFriendly || servizi.prenotazioneRichiesta) && (
+          <div className="flex items-center gap-1.5 mt-0.5">
             {servizi.accessibileDisabili && (
               <span
-                className="inline-flex items-center justify-center rounded-full"
+                className="w-5 h-5 rounded-full flex items-center justify-center"
                 title="Accessibile ai disabili"
-                style={{
-                  width: 22,
-                  height: 22,
-                  background: "#dbeafe",
-                  color: "#1e40af",
-                }}
+                style={{ background: "#dbeafe", color: "#1e40af" }}
               >
-                <IcoWheelchair size={12} />
+                <IcoWheelchair size={11} />
               </span>
             )}
             {servizi.parcheggio && (
               <span
-                className="inline-flex items-center justify-center rounded-full"
+                className="w-5 h-5 rounded-full flex items-center justify-center"
                 title="Parcheggio disponibile"
-                style={{
-                  width: 22,
-                  height: 22,
-                  background: "#f5f3ef",
-                  color: "#78716c",
-                }}
+                style={{ background: "#f5f3ef", color: "#78716c" }}
               >
-                <IcoParking size={12} />
+                <IcoParking size={11} />
               </span>
             )}
             {servizi.petFriendly && (
               <span
-                className="inline-flex items-center justify-center rounded-full"
+                className="w-5 h-5 rounded-full flex items-center justify-center"
                 title="Pet friendly"
-                style={{
-                  width: 22,
-                  height: 22,
-                  background: "#fef3c7",
-                  color: "#92400e",
-                }}
+                style={{ background: "#fef3c7", color: "#92400e" }}
               >
-                <IcoPaw size={12} />
+                <IcoPaw size={11} />
               </span>
             )}
             {servizi.prenotazioneRichiesta && (
               <span
-                className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                title="Prenotazione richiesta"
+                className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                 style={{ background: "#dbeafe", color: "#1e40af" }}
               >
-                <IcoBooking size={9} />
                 Prenota
               </span>
             )}
           </div>
         )}
 
-        {/* CTA Apple-style */}
-        <Link
-          href={`/events/${evento.id}`}
-          className="mt-auto pt-4 flex items-center justify-between group/cta"
+        {/* Separatore + CTA */}
+        <div
+          className="mt-auto pt-3 flex items-center justify-between"
+          style={{ borderTop: "1px solid #f5f3ef" }}
         >
-          <span className="text-[13px] font-semibold" style={{ color: "#16a34a" }}>
-            Scopri di più
+          <span
+            className="text-[12px] font-semibold"
+            style={{ color: colore }}
+          >
+            Scopri l&apos;evento
           </span>
-          <span className="text-[18px] text-stone-300 font-light leading-none">›</span>
-        </Link>
+          <span className="text-stone-300 text-base leading-none">›</span>
+        </div>
       </div>
-    </div>
+    </Link>
   );
 }
